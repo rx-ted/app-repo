@@ -1,0 +1,45 @@
+{
+  "unstable": ["sloppy-imports"],
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "nodeModulesDir": "auto",
+  "lint": {
+    "rules": {
+      "exclude": [
+        "no-sloppy-imports",
+        "require-await",
+        "ban-types",
+        "no-unused-vars",
+        "no-explicit-any",
+        "no-window-prefix"
+      ]
+    }
+  },
+  "imports": {
+    "@/": "./src/",
+    "@rx-ted/packages-honest": "../../packages/honest/src/index.ts",
+    "@rx-ted/packages-core": "../../packages/core/src/index.ts",
+    "hono": "npm:hono@^4.12.18",
+    "reflect-metadata": "npm:reflect-metadata@^0.2.2",
+    "mysql2": "npm:mysql2@^3.22.3",
+    "redis": "npm:redis@^4.7.1",
+    "drizzle-orm": "npm:drizzle-orm@^0.45.2",
+    "zod": "npm:zod@^4.4.3",
+    "std-env": "npm:std-env@^4.1.0",
+    "dotenv": "npm:dotenv@^16.4.7",
+    "@aws-sdk/client-s3": "npm:@aws-sdk/client-s3@^3.1045.0",
+    "@aws-sdk/s3-request-presigner": "npm:@aws-sdk/s3-request-presigner@^3.1045.0",
+    "jsonwebtoken": "npm:jsonwebtoken@^9.0.2",
+    "nodemailer": "npm:nodemailer@^8.0.10",
+    "imap-simple": "npm:imap-simple@^5.1.0",
+    "uuid": "npm:uuid@^14.0.0",
+    "resend": "npm:resend@^6.12.4",
+    "pino": "npm:pino@^9.14.0",
+    "hono-pino": "npm:hono-pino@^0.10.3",
+    "defu": "npm:defu@^6.1.4",
+    "@noble/hashes": "npm:@noble/hashes@^1.7.2",
+    "ts-ip2region2": "npm:ts-ip2region2@^1.6.0"
+  }
+}

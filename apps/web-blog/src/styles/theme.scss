@@ -1,0 +1,108 @@
+/* =========================
+   Base (Light)
+   ========================= */
+
+:root {
+  /* Brand */
+  --app-primary: #3b82f6;
+  --app-primary-hover: #2563eb;
+  --app-primary-active: #1d4ed8;
+
+  /* Background */
+  --app-bg: #ffffff;
+  --app-bg-soft: #f9fafb;
+
+  /* Text */
+  --app-text: #1f2937;
+  --app-text-secondary: #6b7280;
+
+  /* Border / Divider */
+  --app-border: #e5e7eb;
+  --app-divider: #e5e7eb;
+
+  /* Card */
+  --app-card-bg: #ffffff;
+  --app-card-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+
+  /* Code */
+  --app-bg-code: #f6f8fa;
+
+  /* Link */
+  --app-link: #3b82f6;
+
+  /* Semantic */
+  --app-success: #22c55e;
+  --app-warning: #f59e0b;
+  --app-error: #ef4444;
+  --app-info: #0ea5e9;
+
+  --app-font-size-xs: 12px;
+  --app-font-size-sm: 13px;
+  --app-font-size-base: 14px;
+  --app-font-size-lg: 16px;
+  --app-font-size-xl: 18px;
+
+  --app-line-height: 1.6;
+
+  /* Sidebar / Rail */
+  --app-sidebar-bg: #ffffff;
+  --app-sidebar-hover: #f1f5f9;
+  --app-sidebar-active: rgba(59, 130, 246, 0.08);
+  --app-sidebar-text: #475569;
+  --app-sidebar-text-active: #3b82f6;
+}
+
+/* =========================
+   Dark
+   ========================= */
+
+html.dark {
+  --app-primary: #60a5fa;
+  --app-primary-hover: #3b82f6;
+  --app-primary-active: #2563eb;
+
+  --app-bg: #0f1115;
+  --app-bg-soft: #1e2030;
+
+  --app-text: #e5e7eb;
+  --app-text-secondary: #9ca3af;
+
+  --app-border: #2a2d34;
+  --app-divider: #2a2d34;
+
+  --app-card-bg: #16181d;
+  --app-card-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+
+  --app-bg-code: #0d1117;
+
+  --app-link: #60a5fa;
+
+  --app-success: #4ade80;
+  --app-warning: #fbbf24;
+  --app-error: #f87171;
+  --app-info: #38bdf8;
+
+  /* Sidebar / Rail */
+  --app-sidebar-bg: #0c0c14;
+  --app-sidebar-hover: #222238;
+  --app-sidebar-active: rgba(96, 165, 250, 0.12);
+  --app-sidebar-text: #7a8290;
+  --app-sidebar-text-active: #60a5fa;
+}
+
+/* 🔴 禁用浏览器默认淡入淡出 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root),
+.dark::view-transition-new(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root),
+.dark::view-transition-old(root) {
+  z-index: 9999;
+}

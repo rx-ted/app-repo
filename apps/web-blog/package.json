@@ -1,0 +1,53 @@
+{
+  "name": "@rx-ted/web-blog",
+  "private": true,
+  "version": "1.0.2",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "preview": "vite preview",
+    "build": "vite build",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "npx playwright test --config=../../e2e/playwright.config.ts",
+    "test:e2e:smoke": "npx playwright test --config=../../e2e/playwright.config.ts --grep \"@smoke\"",
+    "test:e2e:incremental": "node ../../e2e/scripts/test-affected.mjs",
+    "test:e2e:failed": "node ../../e2e/scripts/test-failed.mjs",
+    "test:e2e:headed": "npx playwright test --config=../../e2e/playwright.config.ts --headed",
+    "test:e2e:ui": "npx playwright test --config=../../e2e/playwright.config.ts --ui",
+    "generate:api": "openapi-typescript ../platform-api/specs/openapi.json -o src/api/__generated__/api.d.ts",
+    "check:api": "pnpm generate:api && git diff --exit-code src/api/__generated__/api.d.ts"
+  },
+  "dependencies": {
+    "@iconify/vue": "^5.0.1",
+    "@lucide/vue": "^1.25.0",
+    "@vavt/v3-extension": "^5.0.0",
+    "@vueuse/core": "^14.3.0",
+    "@vueuse/head": "^2.0.0",
+    "md-editor-v3": "^6.5.1",
+    "naive-ui": "^2.44.1",
+    "openapi-fetch": "^0.17.0",
+    "pinia": "^3.0.4",
+    "vite-plugin-vue-devtools": "^8.1.2",
+    "vue": "^3.5.35",
+    "vue-draggable-plus": "^0.6.1",
+    "vue-router": "^5.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "@tsconfig/node22": "^22.0.5",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^25.9.1",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@vitest/coverage-v8": "4.1.7",
+    "@vue/tsconfig": "^0.9.1",
+    "jsdom": "^29.1.1",
+    "openapi-typescript": "^7.13.0",
+    "sass": "^1.100.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14",
+    "vitest": "4.1.7",
+    "vue-tsc": "^3.3.2"
+  }
+}

@@ -1,0 +1,35 @@
+export type CommentThreadVO = {
+  id: number;
+  post_id: number;
+  provider: 'internal' | 'github-discussion' | 'giscus' | 'disqus';
+  repo_owner?: string | null;
+  repo_name?: string | null;
+  discussion_category?: string | null;
+  discussion_category_id?: string | null;
+  issue_number?: number | null;
+  issue_node_id?: string | null;
+  external_thread_id?: string | null;
+  status: 'pending' | 'active' | 'closed' | 'disabled' | 'failed';
+  sync_status: 'idle' | 'syncing' | 'error';
+  last_error?: string | null;
+  created_at: string;
+  updated_at: string;
+  closed_at?: string | null;
+  github_binding_required: boolean;
+  github_connected: boolean;
+  giscus?: {
+    repo_owner: string;
+    repo_name: string;
+    repo_id: string;
+    category: string;
+    category_id: string;
+    mapping: string;
+    strict: string;
+    reactions_enabled: string;
+    emit_metadata: string;
+    input_position: string;
+    theme: string;
+    lang: string;
+    missing_fields: string[];
+  } | null;
+};

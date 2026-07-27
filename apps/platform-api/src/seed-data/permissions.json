@@ -1,0 +1,114 @@
+[
+  {
+    "resource": "permission_request",
+    "action": "access",
+    "scope": "any",
+    "name": "permission_request:access:any"
+  },
+  {
+    "resource": "permission_request",
+    "action": "read",
+    "scope": "any",
+    "name": "permission_request:read:any"
+  },
+  {
+    "resource": "permission_request",
+    "action": "approve",
+    "scope": "any",
+    "name": "permission_request:approve:any"
+  },
+  {
+    "resource": "permission_request",
+    "action": "reject",
+    "scope": "any",
+    "name": "permission_request:reject:any"
+  },
+  { "resource": "users", "action": "access", "scope": "any", "name": "users:access:any" },
+  { "resource": "users", "action": "read", "scope": "any", "name": "users:read:any" },
+  { "resource": "users", "action": "read", "scope": "own", "name": "users:read:own" },
+  { "resource": "users", "action": "read", "scope": "public", "name": "users:read:public" },
+  { "resource": "users", "action": "create", "scope": "any", "name": "users:create:any" },
+  { "resource": "users", "action": "update", "scope": "any", "name": "users:update:any" },
+  { "resource": "users", "action": "update", "scope": "own", "name": "users:update:own" },
+  { "resource": "users", "action": "delete", "scope": "any", "name": "users:delete:any" },
+  { "resource": "users", "action": "delete", "scope": "own", "name": "users:delete:own" },
+  { "resource": "audit", "action": "access", "scope": "any", "name": "audit:access:any" },
+  { "resource": "audit", "action": "read", "scope": "any", "name": "audit:read:any" },
+  { "resource": "audit", "action": "create", "scope": "any", "name": "audit:create:any" },
+  { "resource": "audit", "action": "update", "scope": "any", "name": "audit:update:any" },
+  { "resource": "audit", "action": "delete", "scope": "any", "name": "audit:delete:any" },
+  { "resource": "post", "action": "access", "scope": "any", "name": "post:access:any" },
+  { "resource": "post", "action": "read", "scope": "any", "name": "post:read:any" },
+  { "resource": "post", "action": "create", "scope": "any", "name": "post:create:any" },
+  { "resource": "post", "action": "update", "scope": "any", "name": "post:update:any" },
+  { "resource": "post", "action": "delete", "scope": "any", "name": "post:delete:any" },
+  { "resource": "tags", "action": "access", "scope": "any", "name": "tags:access:any" },
+  { "resource": "tags", "action": "list", "scope": "any", "name": "tags:list:any" },
+  { "resource": "tags", "action": "read", "scope": "any", "name": "tags:read:any" },
+  { "resource": "tags", "action": "create", "scope": "any", "name": "tags:create:any" },
+  { "resource": "tags", "action": "update", "scope": "any", "name": "tags:update:any" },
+  { "resource": "tags", "action": "delete", "scope": "any", "name": "tags:delete:any" },
+  { "resource": "tags", "action": "approve", "scope": "any", "name": "tags:approve" },
+  {
+    "resource": "announcement",
+    "action": "access",
+    "scope": "any",
+    "name": "announcement:access:any"
+  },
+  { "resource": "announcement", "action": "read", "scope": "any", "name": "announcement:read:any" },
+  {
+    "resource": "announcement",
+    "action": "create",
+    "scope": "any",
+    "name": "announcement:create:any"
+  },
+  {
+    "resource": "announcement",
+    "action": "update",
+    "scope": "any",
+    "name": "announcement:update:any"
+  },
+  {
+    "resource": "announcement",
+    "action": "delete",
+    "scope": "any",
+    "name": "announcement:delete:any"
+  },
+  { "resource": "category", "action": "access", "scope": "any", "name": "category:access:any" },
+  { "resource": "category", "action": "read", "scope": "any", "name": "category:read:any" },
+  { "resource": "category", "action": "create", "scope": "any", "name": "category:create:any" },
+  { "resource": "category", "action": "update", "scope": "any", "name": "category:update:any" },
+  { "resource": "category", "action": "delete", "scope": "any", "name": "category:delete:any" },
+  { "resource": "category", "action": "approve", "scope": "any", "name": "category:approve" },
+  { "resource": "comment", "action": "access", "scope": "any", "name": "comment:access:any" },
+  { "resource": "comment", "action": "read", "scope": "any", "name": "comment:read:any" },
+  { "resource": "comment", "action": "create", "scope": "any", "name": "comment:create:any" },
+  { "resource": "comment", "action": "update", "scope": "any", "name": "comment:update:any" },
+  { "resource": "comment", "action": "delete", "scope": "any", "name": "comment:delete:any" },
+  { "resource": "mail", "action": "send", "scope": "any", "name": "mail:send:any" },
+  { "resource": "permission", "action": "access", "scope": "any", "name": "permission:access:any" },
+  { "resource": "permission", "action": "read", "scope": "any", "name": "permission:read:any" },
+  { "resource": "permission", "action": "create", "scope": "any", "name": "permission:create:any" },
+  { "resource": "permission", "action": "update", "scope": "any", "name": "permission:update:any" },
+  { "resource": "permission", "action": "delete", "scope": "any", "name": "permission:delete:any" },
+  { "resource": "discover", "action": "access", "scope": "any", "name": "discover:access:any" },
+  { "resource": "discover", "action": "manage", "scope": "any", "name": "discover:manage" },
+  { "resource": "role", "action": "access", "scope": "any", "name": "role:access:any" },
+  { "resource": "role", "action": "read", "scope": "any", "name": "role:read:any" },
+  { "resource": "role", "action": "create", "scope": "any", "name": "role:create:any" },
+  { "resource": "role", "action": "update", "scope": "any", "name": "role:update:any" },
+  { "resource": "role", "action": "delete", "scope": "any", "name": "role:delete:any" },
+  {
+    "resource": "notification",
+    "action": "access",
+    "scope": "any",
+    "name": "notification:access:any"
+  },
+  { "resource": "notification", "action": "read", "scope": "any", "name": "notification:read:any" },
+  {
+    "resource": "notification",
+    "action": "update",
+    "scope": "any",
+    "name": "notification:update:any"
+  }
+]

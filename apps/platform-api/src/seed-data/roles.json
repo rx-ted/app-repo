@@ -1,0 +1,5 @@
+[
+  { "name": "system", "description": "System internal" },
+  { "name": "admin", "description": "Administrator" },
+  { "name": "user", "description": "Default user" }
+]

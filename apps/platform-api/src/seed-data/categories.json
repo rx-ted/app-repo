@@ -1,0 +1,6 @@
+[
+  { "name": "生活", "slug": "life", "description": "" },
+  { "name": "博客", "slug": "blog", "description": "" },
+  { "name": "架构", "slug": "architecture", "description": "Architecture guides" },
+  { "name": "指南", "slug": "guide", "description": "How-to guides" }
+]

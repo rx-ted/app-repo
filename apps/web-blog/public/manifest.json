@@ -1,0 +1,9 @@
+{
+  "name": "rx-ted's Blog",
+  "short_name": "Blog",
+  "description": "A personal rx-ted's blog about programming and technology",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#18a058"
+}

@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Vue.js",
+    "url": "https://vuejs.org",
+    "logo": "https://cdn.simpleicons.org/vuedotjs",
+    "description": "Progressive JavaScript framework for building UIs",
+    "category": "framework",
+    "status": "active",
+    "sortOrder": 0
+  },
+  {
+    "name": "TypeScript",
+    "url": "https://typescriptlang.org",
+    "logo": "https://cdn.simpleicons.org/typescript",
+    "description": "JavaScript with syntax for types",
+    "category": "docs",
+    "status": "active",
+    "sortOrder": 1
+  },
+  {
+    "name": "Drizzle ORM",
+    "url": "https://orm.drizzle.team",
+    "logo": "https://cdn.simpleicons.org/drizzle",
+    "description": "Lightweight TypeScript ORM for SQL databases",
+    "category": "framework",
+    "status": "active",
+    "sortOrder": 2
+  },
+  {
+    "name": "Biome",
+    "url": "https://biomejs.dev",
+    "logo": "https://cdn.simpleicons.org/biome",
+    "description": "Fast formatter and linter for JS/TS",
+    "category": "tool",
+    "status": "active",
+    "sortOrder": 3
+  },
+  {
+    "name": "Vitest",
+    "url": "https://vitest.dev",
+    "logo": "https://cdn.simpleicons.org/vitest",
+    "description": "Next generation testing framework",
+    "category": "tool",
+    "status": "active",
+    "sortOrder": 4
+  },
+  {
+    "name": "Turbo",
+    "url": "https://turbo.build",
+    "logo": "https://cdn.simpleicons.org/turborepo",
+    "description": "High-performance monorepo build system",
+    "category": "tool",
+    "status": "active",
+    "sortOrder": 5
+  },
+  {
+    "name": "Changesets",
+    "url": "https://changesets.dev/",
+    "logo": "https://changesets.dev/logo-light.svg",
+    "description": "PR-oriented versioning and changelogs",
+    "category": "tool",
+    "status": "active",
+    "sortOrder": 6
+  },
+  {
+    "name": "Naive UI",
+    "url": "https://www.naiveui.com",
+    "logo": "https://naiveui.oss-cn-hongkong.aliyuncs.com/naivelogo.svg",
+    "description": "Vue 3 component library",
+    "category": "framework",
+    "status": "active",
+    "sortOrder": 7
+  },
+  {
+    "name": "Hono",
+    "url": "https://hono.dev",
+    "logo": "https://cdn.simpleicons.org/hono",
+    "description": "Small fast web framework for the edge",
+    "category": "framework",
+    "status": "active",
+    "sortOrder": 8
+  },
+  {
+    "name": "Vite",
+    "url": "https://vite.dev",
+    "logo": "https://cdn.simpleicons.org/vite",
+    "description": "Lightning-fast frontend build tool",
+    "category": "tool",
+    "status": "active",
+    "sortOrder": 9
+  }
+]

@@ -1,0 +1,51 @@
+{
+  "name": "@rx-ted/platform-api",
+  "private": true,
+  "version": "1.0.2",
+  "type": "module",
+  "scripts": {
+    "dev": "DEBUG=true bun run --watch runtime/bun.ts",
+    "dev:vite": "DEBUG=true vite --mode dev",
+    "dev:cf": "DEBUG=true wrangler dev",
+    "gen:module": "node scripts/generate-module.mjs",
+    "cli": "tsx src/bin/platform-api.ts",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "NODE_ENV=production node --env-file=../../.env.dev --experimental-strip-types runtime/serve.ts",
+    "test": "vitest run",
+    "test:e2e": "vitest run --config ../../e2e/vitest.config.ts",
+    "test:e2e:smoke": "vitest run --config ../../e2e/vitest.config.ts --grep \"@smoke\"",
+    "test:snapshot": "vitest run scripts/generate-openapi-snapshot.spec.ts",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "export:openapi": "tsx scripts/export-openapi.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.0.10",
+    "@noble/hashes": "^1.8.0",
+    "@rx-ted/packages-core": "workspace:^",
+    "@rx-ted/packages-honest": "workspace:^",
+    "@rx-ted/packages-honest-plugins": "workspace:^",
+    "axios": "^1.13.0",
+    "gray-matter": "^4.0.3",
+    "hono": "^4.12.27",
+    "jsonwebtoken": "^9.0.3",
+    "pino-roll": "^4.0.0",
+    "reflect-metadata": "^0.2.2",
+    "sillyname": "^0.1.0",
+    "ts-ip2region2": "^1.6.0",
+    "valibot": "^1.4.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@hono/vite-dev-server": "^0.26.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^25.9.2",
+    "drizzle-kit": "^0.31.10",
+    "drizzle-orm": "^0.45.2",
+    "pino-pretty": "^13.1.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16",
+    "vitest": "^4.1.8"
+  }
+}
