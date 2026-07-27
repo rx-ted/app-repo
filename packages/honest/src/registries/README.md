@@ -1,0 +1,312 @@
+# Registries
+
+This directory contains the metadata and route registration systems that store and manage framework metadata, including
+decorator information, route definitions, and component registrations.
+
+## Overview
+
+Registries serve as the central storage and retrieval system for all framework metadata. They maintain decorator
+information, route definitions, component registrations, and provide APIs for accessing this data throughout the
+application lifecycle.
+
+## Files
+
+### `metadata.registry.ts`
+
+The main metadata registry that stores all decorator and component information:
+
+- **Route metadata** - Stores route definitions from HTTP method decorators
+- **Controller metadata** - Stores controller paths and options
+- **Service registration** - Tracks registered services for dependency injection
+- **Module configuration** - Stores module options and dependencies
+- **Parameter metadata** - Tracks parameter decorators and their configurations
+- **Component registrations** - Manages controller-level and handler-level components (global components are managed by
+  ComponentManager per application)
+- **Type definitions** - Defines ComponentType, ComponentInstance, and ComponentTypeMap
+
+### `metadata.repository.ts`
+
+- **MetadataRepository** - Captures an immutable per-app metadata snapshot from a root module
+
+`Application.create()` builds a `MetadataRepository` at startup so running apps are isolated from metadata mutations
+that occur later in process lifetime. The repository reads directly from the static `MetadataRegistry` during
+construction, then serves its own deep-copied data at runtime.
+
+### `route.registry.ts`
+
+The route registry that provides public access to route information:
+
+- **Route information** - Public API for accessing registered routes
+- **Route queries** - Methods for filtering and searching routes
+- **Route documentation** - Information useful for API documentation
+- **Route debugging** - Tools for debugging route registration
+
+### `index.ts`
+
+Export file that provides access to all registries.
+
+## Type Definitions
+
+### ComponentType
+
+Defines the available component types that can be registered:
+
+```typescript
+export type ComponentType = 'middleware' | 'guard' | 'pipe' | 'filter'
+```
+
+### ComponentInstance
+
+Union type of all possible component instances:
+
+```typescript
+export type ComponentInstance = MiddlewareType | GuardType | PipeType | FilterType
+```
+
+### ComponentTypeMap
+
+Maps component type identifiers to their specific instance types:
+
+```typescript
+export interface ComponentTypeMap {
+	middleware: MiddlewareType
+	guard: GuardType
+	pipe: PipeType
+	filter: FilterType
+}
+```
+
+## Metadata Registry Features
+
+### Route Metadata Storage
+
+Stores route definitions collected from decorators:
+
+```typescript
+interface RouteDefinition {
+	path: string
+	method: string
+	handlerName: string | symbol
+	version?: number | null | typeof VERSION_NEUTRAL | number[]
+	prefix?: string | null
+}
+```
+
+**Usage:**
+
+```typescript
+// Automatically stored when using decorators
+@Controller('users')
+class UsersController {
+	@Get(':id')
+	getUser(@Param('id') id: string) {
+		// Route metadata is automatically stored
+	}
+}
+```
+
+### Component Registration
+
+Manages component registrations at different levels:
+
+#### Global Components
+
+Global components are configured via `Application.create(Module, { components: { ... } })` or on the `ComponentManager`
+instance (e.g. `componentManager.registerGlobal('middleware', LoggerMiddleware)`). They are not stored in
+MetadataRegistry.
+
+#### Controller Components
+
+Components applied to specific controllers:
+
+```typescript
+// Register controller-level middleware
+MetadataRegistry.registerController('middleware', UsersController, RateLimitMiddleware)
+
+// Register controller-level guards
+MetadataRegistry.registerController('guard', AdminController, AdminGuard)
+```
+
+#### Handler Components
+
+Components applied to specific methods. Handler-level components are keyed by the controller constructor and handler
+name (not string-based keys), preventing collisions between controllers with the same class name:
+
+```typescript
+// Register handler-level pipes
+MetadataRegistry.registerHandler('pipe', UsersController, 'getUser', TransformPipe)
+
+// Register handler-level filters
+MetadataRegistry.registerHandler('filter', UsersController, 'createUser', ValidationFilter)
+```
+
+### Service Registration
+
+Tracks services for dependency injection:
+
+```typescript
+// Register a service
+MetadataRegistry.addService(UserService)
+
+// Check if a class is a service
+const isService = MetadataRegistry.isService(UserService)
+
+// Get all registered services
+const services = MetadataRegistry.getAllServices()
+```
+
+### Module Configuration
+
+Stores module options and dependencies:
+
+```typescript
+// Store module options
+MetadataRegistry.setModuleOptions(AppModule, {
+	controllers: [UsersController],
+	services: [UserService],
+	imports: [AuthModule]
+})
+
+// Retrieve module options
+const options = MetadataRegistry.getModuleOptions(AppModule)
+```
+
+## Route Registry Features
+
+`RouteRegistry` is **instance-based**: each `Application` has its own registry. Use `app.getRoutes()` to get the list of
+routes; the registry's methods (`getRoutes()`, `getRoutesByController()`, etc.) are instance methods on that registry.
+
+### Route Information Storage
+
+Stores public route information for documentation and debugging:
+
+```typescript
+interface RouteInfo {
+	controller: string | symbol
+	handler: string | symbol
+	method: string
+	prefix: string
+	version?: string
+	route: string
+	path: string
+	fullPath: string
+	parameters: ParameterMetadata[]
+}
+```
+
+### Route Queries
+
+Provides methods for querying and filtering routes:
+
+```typescript
+// Get all routes from Application public API
+const allRoutes = app.getRoutes()
+
+// If you have a RouteRegistry instance directly, use instance methods:
+// const userRoutes = routeRegistry.getRoutesByController('UsersController')
+// const getRoutes = routeRegistry.getRoutesByMethod('GET')
+// const apiRoutes = routeRegistry.getRoutesByPath(/^\/api\//)
+```
+
+### Route Registration
+
+Registers routes during the application setup:
+
+Route registration is handled internally by `RouteManager` against each app's instance-based `RouteRegistry`.
+
+## Usage Examples
+
+### Accessing Route Information
+
+```typescript
+import { Application } from '@honest/framework'
+
+const { app, hono } = await Application.create(AppModule)
+
+// Get all registered routes
+const routes = app.getRoutes()
+console.log(
+	'Registered routes:',
+	routes.map((r) => r.fullPath)
+)
+
+// Get routes for documentation
+const apiRoutes = routes.filter((r) => r.prefix === '/api')
+const v1Routes = routes.filter((r) => r.version === '/v1')
+```
+
+### Custom Route Analysis
+
+```typescript
+// Get routes from your Application (app.getRoutes() returns the RouteRegistry data)
+const routes = app.getRoutes()
+
+// Find routes with parameters
+const parameterizedRoutes = routes.filter((r) => r.parameters.some((p) => p.name === 'param'))
+
+// If you have a RouteRegistry instance (e.g. in a plugin), use its instance methods:
+// const postRoutes = routeRegistry.getRoutesByMethod('POST')
+// const adminRoutes = routeRegistry.getRoutesByPath(/\/admin\//)
+const postRoutes = routes.filter((r) => r.method.toUpperCase() === 'POST')
+const adminRoutes = routes.filter((r) => /\/admin\//.test(r.fullPath))
+```
+
+### Component Registration
+
+```typescript
+// Controller- and handler-level components (via MetadataRegistry)
+MetadataRegistry.registerController('guard', AdminController, AdminGuard)
+MetadataRegistry.registerHandler('pipe', UsersController, 'createUser', ValidationPipe)
+
+// Global components: pass to Application.create(Module, { components: { middleware: [CustomMiddleware] } })
+// or use ComponentManager.registerGlobal() when you have the manager instance
+```
+
+### Service Management
+
+```typescript
+// Register services
+MetadataRegistry.addService(UserService)
+MetadataRegistry.addService(PostService)
+
+// Check service registration
+if (MetadataRegistry.isService(UserService)) {
+	console.log('UserService is registered')
+}
+
+// Get all services
+const services = Array.from(MetadataRegistry.getAllServices())
+console.log(
+	'Registered services:',
+	services.map((s) => s.name)
+)
+```
+
+## Best Practices
+
+1. **Use registry APIs** - Access metadata through registry methods rather than direct access
+2. **Register components appropriately** - Use the correct level (global, controller, handler) for components
+3. **Leverage route queries** - Use route registry methods for filtering and analysis
+4. **Maintain consistency** - Ensure metadata is consistent across the application
+5. **Document routes** - Use route information for API documentation generation
+6. **Use type safety** - Leverage ComponentTypeMap for type-safe component registration
+
+## Framework Integration
+
+Registries and the metadata repository are central to the framework architecture:
+
+- **Decorator system** - Stores metadata from all decorators in the static MetadataRegistry
+- **MetadataRepository** - Provides immutable per-app metadata snapshots for runtime isolation
+- **Route management** - Provides route information for registration
+- **Component system** - Manages component registrations and retrieval
+- **Dependency injection** - Tracks service registrations
+- **Module system** - Stores module configurations
+- **Plugin system** - Allows plugins to access and modify metadata
+
+## Performance Considerations
+
+- **Efficient storage** - Uses Maps and Sets for fast lookups
+- **Lazy loading** - Metadata is loaded only when needed
+- **Memory management** - Automatic cleanup of unused metadata
+- **Cached queries** - Route queries are optimized for performance
+- **Minimal reflection** - Uses efficient reflection metadata access

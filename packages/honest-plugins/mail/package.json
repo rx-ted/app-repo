@@ -1,0 +1,52 @@
+{
+  "name": "@rx-ted/packages-honest-plugins-mail",
+  "version": "1.0.1",
+  "private": true,
+  "description": "Mail plugin for @rx-ted/packages-honest",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "vitest": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": [
+    "./dist/index.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rx-ted/honest.git"
+  },
+  "author": "rx-ted",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "demo": "bun run demo/send.ts"
+  },
+  "dependencies": {
+    "@rx-ted/packages-core": "workspace:^"
+  },
+  "peerDependencies": {
+    "@rx-ted/packages-honest": "workspace:^",
+    "hono": "^4.12.18"
+  },
+  "optionalDependencies": {
+    "sently": "^0.8.0",
+    "resend": "^6.14.0",
+    "@getbrevo/brevo": "^5.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "vitest": "^4.1.7"
+  }
+}

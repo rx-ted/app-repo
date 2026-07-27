@@ -1,0 +1,36 @@
+# Backport merged PRs from a public repo back to the private monorepo.
+#
+# Place this file in each public repo (e.g. rx-ted/blog) at:
+#   .github/workflows/backport.yml
+#
+# Prerequisites:
+#   - PAT_TOKEN secret with repo scope on both the public repo and rx-ted/app
+#   - The workflow file named here must match exactly:
+#     https://github.com/rx-ted/blog/.github/workflows/backport.yml
+#
+# Usage:
+#   When a PR is merged in the public repo, this workflow creates a corresponding
+#   PR in rx-ted/app for the maintainer to review and merge.
+
+name: Backport to Monorepo
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  backport:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create backport PR in monorepo
+        run: |
+          gh pr create \
+            --repo rx-ted/app \
+            --base main \
+            --head "backport/${{ github.event.repository.name }}-${{ github.event.number }}" \
+            --title "sync(${{ github.event.repository.name }}): ${{ github.event.pull_request.title }}" \
+            --body "Backport of [${{ github.event.repository.name }}#${{ github.event.number }}](${{ github.event.pull_request.html_url }}) by @${{ github.event.pull_request.user.login }}"
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}

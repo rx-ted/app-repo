@@ -1,0 +1,42 @@
+{
+  "name": "@rx-ted/packages-honest-plugins",
+  "version": "1.0.2",
+  "private": false,
+  "type": "module",
+  "description": "HonestJS plugins — db, cache, mail, s3, api-doc, counter",
+  "exports": {
+    "./db": {
+      "types": "./db/dist/index.d.ts",
+      "default": "./db/dist/index.js"
+    },
+    "./cache": {
+      "types": "./cache/dist/index.d.ts",
+      "default": "./cache/dist/index.js"
+    },
+    "./mail": {
+      "types": "./mail/dist/index.d.ts",
+      "default": "./mail/dist/index.js"
+    },
+    "./s3": {
+      "types": "./s3/dist/index.d.ts",
+      "default": "./s3/dist/index.js"
+    },
+    "./api-doc": {
+      "types": "./api-doc/dist/index.d.ts",
+      "default": "./api-doc/dist/index.js"
+    },
+    "./counter": {
+      "vitest": "./counter/src/index.ts",
+      "types": "./counter/dist/index.d.ts",
+      "default": "./counter/dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@rx-ted/packages-honest-plugins-db": "workspace:^",
+    "@rx-ted/packages-honest-plugins-cache": "workspace:^",
+    "@rx-ted/packages-honest-plugins-mail": "workspace:^",
+    "@rx-ted/packages-honest-plugins-s3": "workspace:^",
+    "@rx-ted/packages-honest-plugins-api-doc": "workspace:^",
+    "@rx-ted/packages-honest-plugins-counter": "workspace:^"
+  }
+}

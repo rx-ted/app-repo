@@ -1,0 +1,58 @@
+{
+  "name": "@rx-ted/packages-core",
+  "version": "1.0.1",
+  "private": false,
+  "type": "module",
+  "description": "Unified runtime context, environment config, and logging for multi-platform TypeScript.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "default": "./dist/index.js"
+  },
+  "author": "rx-ted",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "demo": "tsx demo/demo.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "environment",
+    "runtime",
+    "als",
+    "bun",
+    "node",
+    "deno",
+    "cloudflare",
+    "vercel-edge",
+    "logging",
+    "typescript",
+    "zod"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@types/node": "^25.9.1",
+    "pino": "^9.6.0"
+  },
+  "optionalDependencies": {
+    "pino-pretty": "^13.0.0"
+  },
+  "peerDependencies": {
+    "zod": "^3.0.0 || ^4.0.0"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.7",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7",
+    "zod": "^4.0.0"
+  }
+}

@@ -1,0 +1,25 @@
+pre-commit:
+  commands:
+    # check format and lint
+    check:
+      run: pnpm check
+
+    # pre build quickly
+    typecheck:
+      run: pnpm typecheck
+
+    # unit or e2e test
+    test:
+      run: pnpm test
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm commitlint --edit {1}
+
+pre-push:
+  commands:
+    changeset:
+      run: pnpm changeset status
+      skip:
+        - ref: changeset-release/*

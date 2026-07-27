@@ -1,0 +1,95 @@
+# Sync public repos — called by release.yml after npm publish, or manually
+# Detects affected apps via Turbo --filter and syncs them to their public repos.
+name: Sync Public Repos
+
+on:
+  workflow_call:
+    secrets:
+      GH_TOKEN:
+        required: true
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Force-sync all apps at this version (e.g. 1.0.1)"
+        required: false
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.affected.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Detect affected apps
+        id: affected
+        run: |
+          BASE=$(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)
+          echo "Comparing against: $BASE"
+          # Map app paths to public repos — extend as needed
+          node -e "
+            const apps = {
+              'apps/web-blog':      'rx-ted/blog',
+              'apps/platform-api':  'rx-ted/blog-api',
+            };
+            const { execSync } = require('child_process');
+            const out = execSync('npx turbo run build --filter=\"...[\$BASE]\" --dry=json 2>/dev/null || echo \"{}\"');
+            const affected = [];
+            try {
+              const d = JSON.parse(out);
+              (d.packages || []).forEach(p => {
+                if (apps[p]) affected.push({ app: p, repo: apps[p] });
+              });
+            } catch {}
+            // If turbo fails, include all apps
+            if (affected.length === 0) {
+              Object.entries(apps).forEach(([app, repo]) => affected.push({ app, repo }));
+            }
+            console.log(JSON.stringify(affected));
+          " | tee /tmp/affected.json
+          echo "matrix=$(cat /tmp/affected.json)" >> $GITHUB_OUTPUT
+
+  sync:
+    needs: detect
+    if: ${{ fromJson(needs.detect.outputs.matrix)[0] != null }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        entry: ${{ fromJson(needs.detect.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Get current version
+        id: version
+        run: |
+          VER=$(node -e "console.log(require('./${{ matrix.entry.app }}/package.json').version)")
+          echo "version=$VER" >> $GITHUB_OUTPUT
+
+      - name: Sync ${{ matrix.entry.app }} → ${{ matrix.entry.repo }}
+        run: |
+          node scripts/sync-public-repo.mjs \
+            ${{ matrix.entry.app }} \
+            ${{ matrix.entry.repo }} \
+            ${{ steps.version.outputs.version }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}

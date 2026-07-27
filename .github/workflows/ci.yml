@@ -1,0 +1,60 @@
+# CI workflow — runs on every PR and push to main
+# Ensures code quality, type safety, tests, and build pass before merge
+name: CI
+
+on:
+  pull_request_target:
+  push:
+    branches:
+      - main
+
+jobs:
+  versify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run lint & formatting check
+        run: pnpm check
+
+      - name: Run type checking
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build all packages
+        run: pnpm build
+
+  # e2e:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #     - uses: pnpm/action-setup@v6
+  #     - uses: actions/setup-node@v5
+  #       with:
+  #         node-version: 24
+  #         cache: pnpm
+  #     - run: pnpm install --frozen-lockfile
+  #     - name: Install Playwright browsers (Chromium + headless shell for e2e)
+  #       run: |
+  #         npx playwright install --with-deps chromium
+  #         npx playwright install chromium-headless-shell
+
+  #     - run: pnpm test:e2e
+  #       env:
+  #         CI: "1"

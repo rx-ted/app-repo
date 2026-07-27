@@ -1,0 +1,52 @@
+# Publish to npm — manual trigger only
+# Primary publish is integrated into release.yml (OIDC trusted publishing)
+# This workflow exists as a manual fallback for re-publishing.
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish (e.g. @rx-ted/packages-core@1.0.1)"
+        required: true
+
+concurrency:
+  group: publish-npm
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.tag }}
+
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: "https://registry.npmjs.org"
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - name: Publish to npm
+        run: |
+          TAG="${{ github.event.inputs.tag }}"
+          PACKAGE="${TAG%@*}"
+          echo "Publishing $PACKAGE..."
+          pnpm list -r --json --depth -1 > /tmp/wp.json
+          node -e "
+            const pkgs = JSON.parse(require('fs').readFileSync('/tmp/wp.json','utf8'));
+            const p = pkgs.find(p => p.name === '$PACKAGE');
+            if (!p) { console.error('Package $PACKAGE not found'); process.exit(1); }
+            const { execSync } = require('child_process');
+            execSync('npm publish --access public --provenance', { cwd: p.path, stdio: 'inherit' });
+          "

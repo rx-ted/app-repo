@@ -1,0 +1,37 @@
+{
+  "name": "@rx-ted/packages",
+  "version": "1.0.1",
+  "private": true,
+  "type": "module",
+  "description": "rx-ted monorepo shared packages",
+  "exports": {
+    "./core": {
+      "types": "./core/dist/index.d.ts",
+      "default": "./core/dist/index.js"
+    },
+    "./honest": {
+      "types": "./honest/dist/index.d.ts",
+      "default": "./honest/dist/index.js"
+    },
+    "./honest-plugins/db": {
+      "types": "./honest-plugins/db/dist/index.d.ts",
+      "default": "./honest-plugins/db/dist/index.js"
+    },
+    "./honest-plugins/cache": {
+      "types": "./honest-plugins/cache/dist/index.d.ts",
+      "default": "./honest-plugins/cache/dist/index.js"
+    },
+    "./honest-plugins/mail": {
+      "types": "./honest-plugins/mail/dist/index.d.ts",
+      "default": "./honest-plugins/mail/dist/index.js"
+    },
+    "./honest-plugins/s3": {
+      "types": "./honest-plugins/s3/dist/index.d.ts",
+      "default": "./honest-plugins/s3/dist/index.js"
+    },
+    "./honest-plugins/api-doc": {
+      "types": "./honest-plugins/api-doc/dist/index.d.ts",
+      "default": "./honest-plugins/api-doc/dist/index.js"
+    }
+  }
+}

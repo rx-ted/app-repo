@@ -1,0 +1,49 @@
+{
+  "name": "@rx-ted/app",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.5.0",
+  "engines": {
+    "node": ">=24.14.1"
+  },
+  "scripts": {
+    "typecheck": "turbo run typecheck",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "test:e2e": "turbo run test:e2e",
+    "check": "biome check . --fix",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "fix": "biome check --write .",
+    "changeset": "changeset",
+    "version-packages": "changeset version && git add -A && git commit -m \"chore: version packages\"",
+    "release": "changeset publish",
+    "prepare": "lefthook install",
+    "generate:api": "pnpm --filter platform-api export:openapi && pnpm --filter web-blog generate:api",
+    "db": "tsx scripts/db/index.ts",
+    "clean:run": "git clean -fdX ",
+    "clean": "git clean -fdX -n"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
+    "@changesets/cli": "^2.31.0",
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
+    "@playwright/test": "^1.61.0",
+    "@rx-ted/packages-core": "workspace:^",
+    "better-sqlite3": "^12.11.1",
+    "concurrently": "^10.0.0",
+    "drizzle-kit": "0.31.10",
+    "drizzle-orm": "0.45.2",
+    "execa": "^9.6.1",
+    "lefthook": "^2.1.8",
+    "playwright": "^1.61.0",
+    "tsx": "^4.23.0",
+    "turbo": "^2.9.16",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8",
+    "wrangler": "4.88.0"
+  }
+}

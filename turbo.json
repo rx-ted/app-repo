@@ -1,0 +1,67 @@
+{
+  "$schema": "https://v2-9-5.turborepo.dev/schema.json",
+  "tasks": {
+    "generate:api": {
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "check": {
+      "dependsOn": ["^check"],
+      "inputs": [
+        "apps/platform-api/**/*",
+        "apps/web-admin/**/*",
+        "apps/web-blog/**/*",
+        "config/ts/tsconfig*.json",
+        "biome.json",
+        "packages/**"
+      ],
+      "outputs": []
+    },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "format": {
+      "dependsOn": ["^format"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^test"],
+      "outputs": []
+    },
+    "test:coverage": {
+      "dependsOn": ["^test"],
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "dependsOn": [],
+      "outputs": ["test-results/**"],
+      "inputs": ["e2e/**", "apps/web-blog/src/**"]
+    },
+    "test:e2e:smoke": {
+      "dependsOn": [],
+      "outputs": ["test-results/**"],
+      "inputs": ["e2e/**", "apps/web-blog/src/**"]
+    },
+    "test:e2e:incremental": {
+      "dependsOn": [],
+      "outputs": ["test-results/**"],
+      "inputs": ["e2e/**", "apps/web-blog/**"]
+    },
+    "test:e2e:failed": {
+      "dependsOn": [],
+      "outputs": ["test-results/**"]
+    }
+  }
+}

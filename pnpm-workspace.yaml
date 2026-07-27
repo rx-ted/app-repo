@@ -1,0 +1,23 @@
+packages:
+  - "apps/platform-api"
+  - "apps/web-blog"
+  - "packages"
+  - "packages/core"
+  - "packages/honest"
+  - "packages/honest-plugins"
+  - "packages/honest-plugins/db"
+  - "packages/honest-plugins/cache"
+  - "packages/honest-plugins/s3"
+  - "packages/honest-plugins/mail"
+  - "packages/honest-plugins/api-doc"
+  - "packages/honest-plugins/counter"
+allowBuilds:
+  "@parcel/watcher": false
+  "@swc/core": false
+  better-sqlite3: true
+  esbuild: false
+  lefthook: true
+  msgpackr-extract: true
+  sharp: true
+  ts-ip2region2: true
+  workerd: true

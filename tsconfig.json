@@ -1,0 +1,9 @@
+{
+  "extends": "./config/ts/tsconfig.node.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./apps/platform-api/src/*"]
+    }
+  }
+}

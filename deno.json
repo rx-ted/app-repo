@@ -1,0 +1,19 @@
+{
+  "unstable": ["sloppy-imports"],
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "dev": "DEBUG=true deno run -A --unstable-detect-cjs -c apps/platform-api/deno.json --env-file=./.env.dev --watch apps/platform-api/runtime/deno.ts",
+    "prod": "deno run -A --unstable-detect-cjs -c apps/platform-api/deno.json apps/platform-api/runtime/deno.ts",
+    "lint": "deno lint -c apps/platform-api/deno.json apps/platform-api"
+  },
+  "deploy": {
+    "runtime": {
+      "entrypoint": "./apps/platform-api/runtime/deno.ts"
+    }
+  },
+  "allowScripts": ["npm:lefthook@2.1.9"]
+}

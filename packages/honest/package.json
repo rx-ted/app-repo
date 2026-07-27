@@ -1,0 +1,62 @@
+{
+  "name": "@rx-ted/packages-honest",
+  "version": "1.0.1",
+  "private": false,
+  "description": "HonestJS - a modern web framework built on top of Hono and support node.js",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "vitest": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "sideEffects": [
+    "./dist/index.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rx-ted/honest.git"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "files": [
+    "dist"
+  ],
+  "author": "rx-ted",
+  "license": "MIT",
+  "homepage": "https://github.com/rx-ted/honest",
+  "keywords": [
+    "nodejs",
+    "deno",
+    "javascript",
+    "typescript",
+    "node",
+    "framework",
+    "web-framework",
+    "hono",
+    "nest",
+    "honest"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "typescript": "6.0.3",
+    "vitest": "^4.1.7"
+  },
+  "peerDependencies": {
+    "hono": "^4.12.18"
+  },
+  "dependencies": {
+    "@rx-ted/packages-core": "workspace:^",
+    "reflect-metadata": "^0.2.2"
+  }
+}

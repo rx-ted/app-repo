@@ -1,0 +1,173 @@
+# Release & Publish — version management via Changesets
+# Modes:
+#   1. Changeset files exist   → create "Version Packages" PR with version bumps + changelog
+#   2. Version PR merged → build, tag, create GitHub Release, publish to npm (OIDC)
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: "https://registry.npmjs.org"
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: changesets/action@v1
+        id: changesets
+        with:
+          version: pnpm changeset version
+          commit: "chore(release): version packages"
+          title: "chore(release): version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge on Version PR
+        if: steps.changesets.outputs.pullRequestNumber != ''
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          pull-request-number: ${{ steps.changesets.outputs.pullRequestNumber }}
+          merge-method: squash
+
+      # Runs only on version PR merge: tag bumped packages + create GitHub Release + publish
+      - name: Build
+        if: steps.changesets.outputs.pullRequestNumber == ''
+        run: pnpm build
+
+      - name: Tag bumped packages
+        if: steps.changesets.outputs.pullRequestNumber == ''
+        id: tagger
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          pnpm list -r --json --depth -1 > /tmp/workspace-pkgs.json
+          node -e "
+            const pkgs = JSON.parse(require('fs').readFileSync('/tmp/workspace-pkgs.json','utf8'));
+            const fs = require('fs');
+            const newTags = [];
+            pkgs.forEach(p => {
+              if (p.private) return;
+              const tag = p.name + '@' + p.version;
+              try { require('child_process').execSync('git rev-parse ' + tag, {stdio:'pipe'}); }
+              catch(e) { newTags.push(tag); }
+            });
+            fs.writeFileSync('/tmp/new-tags.txt', newTags.join('\n') + (newTags.length ? '\n' : ''));
+            console.log(newTags.length + ' new tag(s):', newTags.join(', '));
+          "
+          if [ -s /tmp/new-tags.txt ]; then
+            xargs -I {} git tag {} < /tmp/new-tags.txt
+            git push --tags
+          fi
+
+      - name: Create GitHub Releases
+        if: steps.changesets.outputs.pullRequestNumber == ''
+        run: |
+          if [ ! -s /tmp/new-tags.txt ]; then
+            echo "No new tags to release"
+            exit 0
+          fi
+          while read -r tag; do
+            [ -z "$tag" ] && continue
+            if ! gh release view "$tag" >/dev/null 2>&1; then
+              gh release create "$tag" --generate-notes
+            fi
+          done < /tmp/new-tags.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to npm (OIDC)
+        if: steps.changesets.outputs.pullRequestNumber == ''
+        run: |
+          if [ ! -s /tmp/new-tags.txt ]; then
+            echo "No new packages to publish"
+            exit 0
+          fi
+          cat /tmp/workspace-pkgs.json | node -e "
+            const pkgs = JSON.parse(require('fs').readFileSync('/tmp/workspace-pkgs.json','utf8'));
+            const tags = require('fs').readFileSync('/tmp/new-tags.txt','utf8').trim().split('\n').filter(Boolean);
+            const tagMap = {};
+            tags.forEach(t => { tagMap[t.split('@').slice(0,-1).join('@')] = t; });
+            pkgs.forEach(p => {
+              if (!tagMap[p.name]) return;
+              console.log('Publishing ' + p.name + '@' + p.version + ' from ' + p.path);
+              const { execSync } = require('child_process');
+              execSync('npm publish --access public --provenance', { cwd: p.path, stdio: 'inherit' });
+            });
+          "
+
+      - name: Detect affected apps
+        id: affected
+        if: steps.changesets.outputs.pullRequestNumber == ''
+        run: |
+          if [ ! -s /tmp/new-tags.txt ]; then
+            echo "No releases — skipping"
+            exit 0
+          fi
+          BASE=$(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)
+          echo "Comparing against: $BASE"
+          node -e "
+            const apps = {
+              'apps/web-blog':      'rx-ted/blog',
+              'apps/platform-api':  'rx-ted/blog-api',
+            };
+            const { execSync } = require('child_process');
+            let affected = [];
+            try {
+              const out = execSync('npx turbo run build --filter=\"...[\$BASE]\" --dry=json 2>/dev/null');
+              const d = JSON.parse(out);
+              (d.packages || []).forEach(p => {
+                if (apps[p]) affected.push({ app: p, repo: apps[p] });
+              });
+            } catch {}
+            // fallback: include all if turbo fails
+            if (affected.length === 0) {
+              Object.entries(apps).forEach(([app, repo]) => affected.push({ app, repo }));
+            }
+            require('fs').writeFileSync('/tmp/affected.json', JSON.stringify(affected));
+            console.log(JSON.stringify(affected, null, 2));
+          "
+
+      - name: Sync public repos
+        if: steps.changesets.outputs.pullRequestNumber == ''
+        run: |
+          if [ ! -f /tmp/affected.json ]; then
+            echo "No affected apps — skipping"
+            exit 0
+          fi
+          node -e "
+            const { execSync } = require('child_process');
+            const apps = JSON.parse(require('fs').readFileSync('/tmp/affected.json','utf8'));
+            if (apps.length === 0) {
+              console.log('No affected apps to sync');
+              process.exit(0);
+            }
+            apps.forEach(({ app, repo }) => {
+              const ver = JSON.parse(require('fs').readFileSync(app + '/package.json','utf8')).version;
+              console.log('--- Syncing ' + app + ' -> ' + repo + ' @ v' + ver + ' ---');
+              execSync('node scripts/sync-public-repo.mjs ' + app + ' ' + repo + ' ' + ver, { stdio: 'inherit' });
+            });
+          "
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}

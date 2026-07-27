@@ -1,0 +1,38 @@
+import type { HttpMethodOptions } from '../interfaces';
+import { MetadataRegistry } from '../registries';
+
+/**
+ * Creates a decorator factory for HTTP method handlers
+ * @param method - The HTTP method type (GET, POST, PUT, etc.)
+ * @returns A method decorator factory that accepts a path and options
+ * @example
+ * ```ts
+ * const Get = createHttpMethodDecorator(HttpMethod.GET);
+ *
+ * class Controller {
+ *   @Get('/users')
+ *   getUsers() { }
+ * }
+ * ```
+ */
+export function createHttpMethodDecorator(method: string) {
+  return (path = '', options: HttpMethodOptions = {}): MethodDecorator => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+      const controllerClass = target.constructor;
+
+      MetadataRegistry.addRoute(controllerClass, {
+        path,
+        method,
+        handlerName: propertyKey,
+        version: options.version,
+        prefix: options.prefix,
+      });
+
+      // Only store apiDoc in reflect-metadata (zero overhead when plugin not registered)
+      if (options.apiDoc) {
+        Reflect.defineMetadata('api:method:apiDoc', options.apiDoc, target, propertyKey);
+      }
+    };
+  };
+}

@@ -1,0 +1,59 @@
+{
+  "name": "@rx-ted/packages-honest-plugins-db",
+  "version": "1.0.1",
+  "private": true,
+  "description": "Database plugin for @rx-ted/packages-honest",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "vitest": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./d1": {
+      "vitest": "./src/d1/index.ts",
+      "types": "./dist/d1/index.d.ts",
+      "default": "./dist/d1/index.js"
+    },
+    "./sqlite": {
+      "vitest": "./src/sqlite/index.ts",
+      "types": "./dist/sqlite/index.d.ts",
+      "default": "./dist/sqlite/index.js"
+    }
+  },
+  "sideEffects": [
+    "./dist/index.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rx-ted/honest.git"
+  },
+  "author": "rx-ted",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.4",
+    "@rx-ted/packages-core": "workspace:^",
+    "drizzle-orm": "^0.45.2",
+    "mysql2": "^3.22.4",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@rx-ted/packages-honest": "workspace:^",
+    "hono": "^4.12.18"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "vitest": "^4.1.7"
+  }
+}

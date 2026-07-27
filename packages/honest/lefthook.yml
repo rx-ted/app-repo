@@ -1,0 +1,10 @@
+pre-commit:
+  parallel: true
+  commands:
+    check:
+      run: pnpm check
+
+post-commit:
+  commands:
+    bump-version:
+      run: node scripts/bump-version.mjs {1}
