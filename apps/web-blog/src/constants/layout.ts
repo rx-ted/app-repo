@@ -17,9 +17,10 @@ export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
       showAsideRight: true,
       asideLeftComponents: [],
       asideRightComponents: [
-        'network-card',
+        'author-profile',
+        'blog-stats',
         'recommended-reading',
-        'trending',
+        // 'trending',
         'calendar-widget',
         'tag-list',
         'category-list',
@@ -38,7 +39,7 @@ export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
       asideLeftComponents: [
         'recommended-reading',
         'recent-posts',
-        'trending',
+        // 'trending',
         'tag-list',
         'category-list',
       ],

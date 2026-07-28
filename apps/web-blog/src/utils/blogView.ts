@@ -17,6 +17,7 @@ export function mapPostCardVOToArticle(post: BlogPostCardVO): App.BlogArticle {
     authorUsername: post.author_username ?? undefined,
     tags: post.tags ?? [],
     categories: post.categories ?? [],
+    categoryNames: post.category_names ?? [],
     coverImage: post.cover_image ?? null,
     isPinned: Boolean(post.is_pinned),
     views: Number(post.view_count ?? 0),

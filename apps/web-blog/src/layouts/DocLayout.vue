@@ -174,7 +174,6 @@ function onSearchClick() {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow-y: auto;
   position: relative; /* anchor for offsetParent chain used by TocTree scroll */
 }
 
@@ -202,6 +201,22 @@ function onSearchClick() {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  position: sticky;
+  top: 16px;
+  align-self: flex-start;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--app-border) transparent;
+}
+
+.doc-aside::-webkit-scrollbar {
+  width: 4px;
+}
+
+.doc-aside::-webkit-scrollbar-thumb {
+  background: var(--app-border);
+  border-radius: 4px;
 }
 
 .doc-aside-left {

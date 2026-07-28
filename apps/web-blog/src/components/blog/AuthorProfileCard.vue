@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia';
 import { SITE_AUTHOR, SITE_INFO } from '@/constants/author';
-import { useBlogStore } from '@/stores/blog';
 import AppIcon from '@/components/AppIcon.vue';
-import { useI18n } from '../../composables/useI18n';
+import { useI18n } from '@/composables/useI18n';
+
 const { t } = useI18n();
-const blog = useBlogStore();
-const { totalPosts, totalViews, totalComments, tagsCount, categoriesCount } = storeToRefs(blog);
 </script>
 
 <template>
-  <div class="network-card">
+  <div class="author-profile-card">
     <div class="widget-header">
       <div class="header-left">
         <svg
@@ -27,53 +24,30 @@ const { totalPosts, totalViews, totalComments, tagsCount, categoriesCount } = st
           <circle cx="12" cy="8" r="4" />
           <path d="M20 21a8 8 0 1 0-16 0" />
         </svg>
-        <h4 class="widget-title">关于我</h4>
-      </div>
-    </div>
-    <div class="nc-profile">
-      <div class="nc-avatar-wrap">
-        <img class="nc-avatar" :src="SITE_AUTHOR.avatar" :alt="SITE_AUTHOR.name">
-        <span class="nc-status" />
-      </div>
-      <div class="nc-info">
-        <h4 class="nc-name">{{ SITE_AUTHOR.nickname }}</h4>
-        <p class="nc-desc">{{ SITE_AUTHOR.description }}</p>
-        <p class="nc-motto">{{ SITE_INFO.motto }}</p>
+        <h4 class="widget-title">{{t('home.authorProfileCard.title')}}</h4>
       </div>
     </div>
 
-    <div class="nc-stats">
-      <div class="nc-stat">
-        <span class="nc-stat-value">{{ totalPosts }}</span>
-        <span class="nc-stat-label">{{ t('post.badge') }}</span>
+    <div class="apc-profile">
+      <div class="apc-avatar-wrap">
+        <img class="apc-avatar" :src="SITE_AUTHOR.avatar" :alt="SITE_AUTHOR.name">
+        <span class="apc-status" />
       </div>
-      <div class="nc-stat-divider" />
-
-      <div class="nc-stat">
-        <span class="nc-stat-value">{{ totalViews }}</span>
-        <span class="nc-stat-label">{{ t('home.stats.views') }}</span>
-      </div>
-
-      <div class="nc-stat">
-        <span class="nc-stat-value">{{ tagsCount }}</span>
-        <span class="nc-stat-label">{{ t('nav.tags') }}</span>
-      </div>
-      <div class="nc-stat-divider" />
-
-      <div class="nc-stat">
-        <span class="nc-stat-value">{{ categoriesCount }}</span>
-        <span class="nc-stat-label">{{ t('nav.categories') }}</span>
+      <div class="apc-info">
+        <h4 class="apc-name">{{ SITE_AUTHOR.nickname }}</h4>
+        <p class="apc-desc">{{ SITE_AUTHOR.description }}</p>
+        <p class="apc-motto">{{ SITE_INFO.motto }}</p>
       </div>
     </div>
 
-    <div class="nc-social">
+    <div class="apc-social">
       <a
         v-for="(link, key) in SITE_AUTHOR.social"
         :key="key"
         :href="link.url"
         target="_blank"
         rel="noopener noreferrer"
-        class="nc-social-link"
+        class="apc-social-link"
         :title="link.label"
       >
         <AppIcon :name="link.icon" :width="18" :height="18" />
@@ -84,7 +58,7 @@ const { totalPosts, totalViews, totalComments, tagsCount, categoriesCount } = st
 </template>
 
 <style scoped>
-.network-card {
+.author-profile-card {
   padding: 16px 20px;
   background: var(--app-bg-container);
   border: 1px solid var(--app-border);
@@ -117,7 +91,7 @@ const { totalPosts, totalViews, totalComments, tagsCount, categoriesCount } = st
   margin: 0;
 }
 
-.nc-profile {
+.apc-profile {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -126,13 +100,13 @@ const { totalPosts, totalViews, totalComments, tagsCount, categoriesCount } = st
   margin-bottom: 16px;
 }
 
-.nc-avatar-wrap {
+.apc-avatar-wrap {
   position: relative;
   width: 64px;
   height: 64px;
 }
 
-.nc-avatar {
+.apc-avatar {
   width: 100%;
   height: 100%;
   border-radius: 50%;
@@ -140,7 +114,7 @@ const { totalPosts, totalViews, totalComments, tagsCount, categoriesCount } = st
   border: 2px solid var(--app-primary);
 }
 
-.nc-status {
+.apc-status {
   position: absolute;
   bottom: 1px;
   right: 1px;
@@ -151,25 +125,25 @@ const { totalPosts, totalViews, totalComments, tagsCount, categoriesCount } = st
   border: 3px solid var(--app-bg-container);
 }
 
-.nc-info {
+.apc-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.nc-name {
+.apc-name {
   margin: 0;
   font-size: 16px;
   font-weight: 700;
 }
 
-.nc-desc {
+.apc-desc {
   margin: 0;
   font-size: 12px;
   color: var(--app-text-tertiary);
 }
 
-.nc-motto {
+.apc-motto {
   margin: 4px 0 0;
   font-size: 11px;
   line-height: 1.5;
@@ -178,51 +152,14 @@ const { totalPosts, totalViews, totalComments, tagsCount, categoriesCount } = st
   max-width: 220px;
 }
 
-.nc-stats {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  justify-items: center;
-  column-gap: 16px;
-  row-gap: 8px;
-  padding: 12px 0;
-  border-top: 1px solid var(--app-border);
-  border-bottom: 1px solid var(--app-border);
-  margin-bottom: 12px;
-}
-
-.nc-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.nc-stat-value {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.nc-stat-label {
-  font-size: 11px;
-  color: var(--app-text-tertiary);
-}
-
-.nc-stat-divider {
-  width: 1px;
-  height: 28px;
-  background: var(--app-border);
-}
-
-.nc-social {
+.apc-social {
   display: flex;
   justify-content: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.nc-social-link {
+.apc-social-link {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -235,7 +172,7 @@ const { totalPosts, totalViews, totalComments, tagsCount, categoriesCount } = st
   text-decoration: none;
 }
 
-.nc-social-link:hover {
+.apc-social-link:hover {
   background: color-mix(in srgb, var(--app-primary) 10%, transparent);
   color: var(--app-primary);
 }

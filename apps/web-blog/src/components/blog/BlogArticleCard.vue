@@ -5,6 +5,7 @@ import { useI18n } from '@/composables/useI18n';
 import { NCard } from 'naive-ui';
 import AppIcon from '@/components/AppIcon.vue';
 import { formatDate } from '@/utils/formatDate';
+import { getColor } from '@/utils/colors';
 
 const { t } = useI18n();
 
@@ -27,22 +28,38 @@ const emit = defineEmits<{
   (e: 'category-click', category: string): void;
 }>();
 
-const primaryCategory = computed(() => props.article.categories?.[0] ?? '');
+const primaryCategorySlug = computed(() => props.article.categories?.[0] ?? '');
+const primaryCategoryName = computed(
+  () => props.article.categoryNames?.[0] ?? primaryCategorySlug.value,
+);
 
-function getHue(name: string): number {
-  let hash = 0;
+function hashToIndex(name: string, mod: number): number {
+  let h = 0;
   for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    hash = hash & hash;
+    h = name.charCodeAt(i) + ((h << 5) - h);
+    h = h & h;
   }
-  return ((hash % 360) + 360) % 360;
+  return ((h % mod) + mod) % mod;
 }
 
 const catStyle = computed(() => {
-  if (!primaryCategory.value) return {};
-  const hue = getHue(primaryCategory.value);
-  return { '--cat-hue': String(hue) } as Record<string, string>;
+  if (!primaryCategorySlug.value) return {};
+  const c = getColor(hashToIndex(primaryCategorySlug.value, 30));
+  return {
+    background: c.light,
+    color: c.solid,
+    borderColor: c.lightBorder,
+  };
 });
+
+function tagStyle(tag: string) {
+  const c = getColor(hashToIndex(tag, 30));
+  return {
+    background: c.light,
+    color: c.solid,
+    borderColor: c.lightBorder,
+  };
+}
 
 const displayDesc = computed(() => {
   if (props.article.content) {
@@ -69,31 +86,35 @@ const displayDesc = computed(() => {
     @click="emit('open', article.slug)"
   >
     <div v-if="article.isPinned" class="pin-badge" :aria-label="t('article.pinned')" />
+
+    <!-- ===== Card Mode ===== -->
     <template v-if="mode === 'card' && variant !== 'spotlight'">
       <div class="card-body">
         <div class="card-row top-row">
-          <span
-            v-if="primaryCategory"
-            class="cat-badge"
-            :style="catStyle"
-            @click.stop="emit('category-click', primaryCategory)"
-          >
-            {{ primaryCategory }}
+            <span
+              v-if="primaryCategorySlug"
+              class="cat-badge"
+              :style="catStyle"
+              @click.stop="emit('category-click', primaryCategorySlug)"
+            >
+              {{ primaryCategoryName }}
+            </span>
+          <span class="date-text">
+            {{ t('post.updatedAt', { date: formatDate(article.updatedAt) }) }}
           </span>
-          <span class="date-text"
-            >{{ t('post.updatedAt', { date: formatDate(article.updatedAt) }) }}</span
-          >
         </div>
         <h3 class="card-title">{{ article.title }}</h3>
         <p v-if="displayDesc" class="card-desc">{{ displayDesc }}</p>
         <div v-if="article.tags.length" class="card-row tags-row">
           <span
-            v-for="tag in article.tags"
+            v-for="(tag, i) in article.tags"
             :key="tag"
             class="tag-pill"
+            :style="tagStyle(tag)"
             @click.stop="emit('tag-click', tag)"
-            >{{ tag }}</span
           >
+            {{ article.tagNames?.[i] ?? tag }}
+          </span>
         </div>
         <div class="card-row bottom-row">
           <span class="author-text" @click.stop="emit('open-author', article.authorUsername)">
@@ -113,11 +134,14 @@ const displayDesc = computed(() => {
               {{ article.comments ?? 0 }}
             </span>
           </div>
-          <span class="reading-time">{{ t('post.readTime', { min: article.readingTime }) }}</span>
+          <span class="reading-time">
+            {{ t('post.readTime', { min: article.readingTime }) }}
+          </span>
         </div>
       </div>
     </template>
 
+    <!-- ===== List Mode ===== -->
     <template v-else-if="mode === 'list' && variant !== 'spotlight'">
       <div class="list-body">
         <div class="list-content">
@@ -130,20 +154,22 @@ const displayDesc = computed(() => {
             >
               {{ primaryCategory }}
             </span>
-            <span class="date-text"
-              >{{ t('post.updatedAt', { date: formatDate(article.updatedAt) }) }}</span
-            >
+            <span class="date-text">
+              {{ t('post.updatedAt', { date: formatDate(article.updatedAt) }) }}
+            </span>
           </div>
           <h3 class="card-title">{{ article.title }}</h3>
           <p v-if="displayDesc" class="card-desc">{{ displayDesc }}</p>
           <div v-if="article.tags.length" class="card-row tags-row">
             <span
-              v-for="tag in article.tags"
+              v-for="(tag, i) in article.tags"
               :key="tag"
               class="tag-pill"
+              :style="tagStyle(tag)"
               @click.stop="emit('tag-click', tag)"
-              >{{ tag }}</span
             >
+              {{ article.tagNames?.[i] ?? tag }}
+            </span>
           </div>
           <div class="card-row bottom-row">
             <span class="author-text" @click.stop="emit('open-author', article.authorUsername)">
@@ -163,7 +189,9 @@ const displayDesc = computed(() => {
                 {{ article.comments ?? 0 }}
               </span>
             </div>
-            <span class="reading-time">{{ t('post.readTime', { min: article.readingTime }) }}</span>
+            <span class="reading-time">
+              {{ t('post.readTime', { min: article.readingTime }) }}
+            </span>
           </div>
         </div>
         <div v-if="article.coverImage" class="list-cover">
@@ -172,6 +200,7 @@ const displayDesc = computed(() => {
       </div>
     </template>
 
+    <!-- ===== Spotlight Mode ===== -->
     <template v-else>
       <div
         class="article-surface"
@@ -180,10 +209,31 @@ const displayDesc = computed(() => {
         @keyup.enter="emit('open', article.slug)"
       >
         <div class="article-main">
+          <div class="spotlight-top-row">
+            <span
+              v-if="primaryCategory"
+              class="cat-badge"
+              :style="catStyle"
+              @click.stop="emit('category-click', primaryCategory)"
+            >
+              {{ primaryCategory }}
+            </span>
+          </div>
           <h3 class="article-title">
             <span class="title-link">{{ article.title }}</span>
           </h3>
           <p class="article-desc">{{ displayDesc || t('article.noSummary') }}</p>
+          <div v-if="article.tags.length" class="spotlight-tags">
+            <span
+              v-for="(tag, i) in article.tags"
+              :key="tag"
+              class="tag-pill"
+              :style="tagStyle(tag)"
+              @click.stop="emit('tag-click', tag)"
+            >
+              {{ article.tagNames?.[i] ?? tag }}
+            </span>
+          </div>
           <div class="article-meta meta-top">
             <span class="author-link" @click.stop="emit('open-author', article.authorUsername)">
               {{ article.author }}
@@ -192,18 +242,18 @@ const displayDesc = computed(() => {
             <span>{{ t('post.readTime', { min: article.readingTime }) }}</span>
           </div>
           <div class="article-meta meta-stats">
-            <span
-              ><AppIcon name="solar:eye-linear" :width="16" :height="16" />
-              {{ article.views || 0 }}</span
-            >
-            <span
-              ><AppIcon name="solar:heart-linear" :width="16" :height="16" />
-              {{ article.likes || 0 }}</span
-            >
-            <span
-              ><AppIcon name="solar:chat-round-linear" :width="16" :height="16" />
-              {{ article.comments || 0 }}</span
-            >
+            <span>
+              <AppIcon name="solar:eye-linear" :width="16" :height="16" />
+              {{ article.views || 0 }}
+            </span>
+            <span>
+              <AppIcon name="solar:heart-linear" :width="16" :height="16" />
+              {{ article.likes || 0 }}
+            </span>
+            <span>
+              <AppIcon name="solar:chat-round-linear" :width="16" :height="16" />
+              {{ article.comments || 0 }}
+            </span>
           </div>
         </div>
         <div v-if="article.coverImage" class="cover-panel">
@@ -292,9 +342,12 @@ const displayDesc = computed(() => {
   padding: 2px 10px;
   border-radius: 999px;
   line-height: 1.6;
-  background: hsl(var(--cat-hue, 200), 45%, 92%);
-  color: hsl(var(--cat-hue, 200), 50%, 30%);
-  border: 1px solid hsl(var(--cat-hue, 200), 40%, 82%);
+  border: 1px solid;
+  transition: filter 0.15s;
+}
+
+.cat-badge:hover {
+  filter: brightness(0.95);
 }
 
 .date-text {
@@ -329,15 +382,21 @@ const displayDesc = computed(() => {
 .tags-row {
   flex-wrap: wrap;
   margin-bottom: 12px;
+  gap: 6px;
 }
 
 .tag-pill {
-  font-size: 12px;
-  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 8px;
   border-radius: 4px;
-  color: var(--app-text-tertiary);
-  background: color-mix(in srgb, var(--app-text-tertiary) 10%, transparent);
+  border: 1px solid;
   line-height: 1.6;
+  transition: filter 0.15s;
+}
+
+.tag-pill:hover {
+  filter: brightness(0.93);
 }
 
 .bottom-row {
@@ -373,7 +432,43 @@ const displayDesc = computed(() => {
   color: var(--app-text-tertiary);
 }
 
-/* ======= List & Spotlight Layout ======= */
+/* ======= List Mode ======= */
+.list-body {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.list-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.list-content .bottom-row {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.list-cover {
+  width: 180px;
+  min-height: 120px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--app-bg-muted);
+  flex-shrink: 0;
+}
+
+.list-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ======= Spotlight Mode ======= */
 .article-surface {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -383,12 +478,18 @@ const displayDesc = computed(() => {
 
 .article-main {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
 }
 
-.mode-card .article-main {
-  padding-right: 44px;
+.spotlight-top-row {
+  margin-bottom: 2px;
+}
+
+.spotlight-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .article-title {
@@ -475,44 +576,9 @@ const displayDesc = computed(() => {
   grid-template-columns: 1fr;
 }
 
-/* ======= List Mode ======= */
+/* ======= Responsive ======= */
 .mode-list .article-card {
   height: 100%;
-}
-
-.list-body {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-}
-
-.list-content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.list-content .bottom-row {
-  margin-top: auto;
-  padding-top: 12px;
-}
-
-.list-cover {
-  width: 180px;
-  min-height: 120px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--app-bg-muted);
-  flex-shrink: 0;
-}
-
-.list-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
 }
 
 @media (max-width: 900px) {

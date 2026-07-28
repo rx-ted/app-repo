@@ -6,7 +6,6 @@ import type { EditorSavePayload } from './BlogEditorSaveDialog.vue';
 import { NButton, NSpace } from 'naive-ui';
 import { Icon } from '@iconify/vue';
 import { MdEditor } from 'md-editor-v3';
-import 'md-editor-v3/lib/style.css';
 import HelpSheet from '@/components/editors/help/HelpSheet.vue';
 import BlogEditorSaveDialog from './BlogEditorSaveDialog.vue';
 import { useTheme } from '../../theme/useTheme';

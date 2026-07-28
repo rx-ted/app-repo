@@ -107,7 +107,9 @@ export namespace App {
     author: string;
     authorUsername?: string;
     tags: string[];
+    tagNames?: string[];
     categories?: string[];
+    categoryNames?: string[];
     coverImage?: string | null;
     isPinned?: boolean;
     views?: number;

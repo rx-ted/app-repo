@@ -4,7 +4,6 @@ import { computed, watch, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { usePostDetailStore } from '@/stores/postDetail';
 import { MdPreview } from 'md-editor-v3';
-import 'md-editor-v3/lib/style.css';
 import { NSpin, NAlert, NButton } from 'naive-ui';
 import SeoHead from '@/components/seo/SeoHead.vue';
 import { headingId } from '@/utils/headingId';
@@ -100,9 +99,20 @@ watch(
           </span>
         </div>
 
-        <!-- Footer tags -->
-        <div v-if="item.tags?.length" class="post-footer-tags">
-          <span v-for="tag in item.tags" :key="tag" class="tag-chip-outline">{{ tag }}</span>
+        <!-- Footer tags & categories -->
+        <div v-if="item.categories?.length || item.tags?.length" class="post-footer-taxonomy">
+          <span
+            v-for="(cat, i) in item.categories"
+            :key="'c-' + cat"
+            class="cat-chip"
+            @click="router.push(`/categories/${encodeURIComponent(cat)}`)"
+          >{{ item.categoryNames?.[i] ?? cat }}</span>
+          <span
+            v-for="(tag, i) in item.tags"
+            :key="'t-' + tag"
+            class="tag-chip"
+            @click="router.push(`/tags/${encodeURIComponent(tag)}`)"
+          >{{ item.tagNames?.[i] ?? tag }}</span>
         </div>
       </template>
     </n-spin>
@@ -153,28 +163,50 @@ watch(
   opacity: 0.6;
 }
 
-.tag-chip-outline {
-  font-size: 13px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--app-border);
-  color: var(--app-text-secondary);
-  white-space: nowrap;
-}
-
-.post-content {
-  font-size: 17px;
-  line-height: 1.85;
-  color: var(--app-text);
-}
-
-.post-footer-tags {
+.post-footer-taxonomy {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   padding-top: 32px;
   margin-top: 48px;
   border-top: 1px solid var(--app-border);
+}
+
+.cat-chip,
+.tag-chip {
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.cat-chip {
+  background: var(--app-warning-bg, rgba(255, 180, 0, 0.1));
+  border: 1px solid var(--app-warning-border, rgba(255, 180, 0, 0.3));
+  color: var(--app-warning, #e6a817);
+}
+
+.cat-chip:hover {
+  background: var(--app-warning-bg-hover, rgba(255, 180, 0, 0.18));
+}
+
+.tag-chip {
+  background: var(--app-bg-muted);
+  border: 1px solid var(--app-border);
+  color: var(--app-text-secondary);
+}
+
+.tag-chip:hover {
+  border-color: var(--app-primary);
+  color: var(--app-primary);
+}
+
+.post-content {
+  font-size: 17px;
+  line-height: 1.85;
+  color: var(--app-text);
 }
 
 .content-plain {

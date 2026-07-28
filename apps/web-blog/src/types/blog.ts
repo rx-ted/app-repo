@@ -10,7 +10,9 @@ export interface BlogPostCardVO {
   author_name?: string | null;
   author_username?: string | null;
   tags?: string[];
+  tag_names?: string[];
   categories?: string[];
+  category_names?: string[];
   reading_time?: number;
   view_count?: number;
   like_count?: number;
@@ -53,8 +55,10 @@ export interface BlogPostDetailVO {
   author_name?: string | null;
   author_username?: string | null;
   tags?: string[];
+  tag_names?: string[];
   tag_ids?: number[];
   categories?: string[];
+  category_names?: string[];
   category_ids?: number[];
   cover_image?: string | null;
   is_pinned?: boolean;

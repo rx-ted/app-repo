@@ -19,8 +19,9 @@ const routes: RouteRecordRaw[] = [
           right: {
             show: true,
             components: [
-              'network-card',
-              'trending',
+              'author-profile',
+              'blog-stats',
+              // 'trending',
               'calendar-widget',
               'category-list',
               'tag-list',
@@ -71,7 +72,7 @@ const routes: RouteRecordRaw[] = [
         aside: {
           left: {
             show: true,
-            components: ['recommended-reading'],
+            components: ['author-profile', 'recommended-reading'],
           },
           right: {
             show: true,
@@ -128,7 +129,7 @@ const routes: RouteRecordRaw[] = [
       title: '作者',
       regions: {
         aside: {
-          right: { components: ['network-card'] },
+          right: { components: ['author-profile', 'blog-stats'] },
         },
       },
     },
@@ -147,8 +148,14 @@ const routes: RouteRecordRaw[] = [
       title: '控制台',
       regions: {
         aside: {
-          left: { show: true, components: ['recent-posts', 'trending'] },
-          right: { components: ['network-card'] },
+          left: {
+            show: true,
+            components: [
+              'recent-posts',
+              // 'trending'
+            ],
+          },
+          right: { components: ['author-profile', 'blog-stats'] },
         },
         content: {
           after: { show: true, components: ['ad-banner'] },
@@ -199,7 +206,11 @@ const routes: RouteRecordRaw[] = [
       title: '搜索',
       regions: {
         aside: {
-          right: { components: ['trending'] },
+          right: {
+            components: [
+              // 'trending'
+            ],
+          },
         },
       },
     },

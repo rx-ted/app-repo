@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { MdCatalog } from 'md-editor-v3';
-import 'md-editor-v3/lib/style.css';
 import { headingId } from '@/utils/headingId';
 
 function handleClick(e: MouseEvent, t: { text: string; level: number }) {

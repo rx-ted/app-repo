@@ -106,3 +106,132 @@ html.dark {
 .dark::view-transition-old(root) {
   z-index: 9999;
 }
+
+/* =========================
+   md-editor-v3 theme overrides
+   ========================= */
+
+.md-editor {
+  --md-color: var(--app-text);
+  --md-hover-color: var(--app-primary);
+  --md-bk-color: var(--app-bg);
+  --md-bk-color-outstand: var(--app-bg-soft);
+  --md-bk-hover-color: var(--app-bg-soft);
+  --md-border-color: var(--app-border);
+  --md-border-hover-color: var(--app-border);
+  --md-border-active-color: var(--app-primary);
+  --md-modal-mask: rgba(0, 0, 0, 0.45);
+  --md-scrollbar-bg-color: transparent;
+  --md-scrollbar-thumb-color: var(--app-border);
+  --md-scrollbar-thumb-hover-color: var(--app-text-secondary);
+  --md-scrollbar-thumb-active-color: var(--app-text-secondary);
+}
+
+.md-editor-dark {
+  --md-color: var(--app-text);
+  --md-hover-color: var(--app-primary);
+  --md-bk-color: var(--app-bg);
+  --md-bk-color-outstand: var(--app-bg-soft);
+  --md-bk-hover-color: var(--app-bg-soft);
+  --md-border-color: var(--app-border);
+  --md-border-hover-color: var(--app-border);
+  --md-border-active-color: var(--app-primary);
+  --md-modal-mask: rgba(0, 0, 0, 0.6);
+  --md-scrollbar-bg-color: transparent;
+  --md-scrollbar-thumb-color: var(--app-border);
+  --md-scrollbar-thumb-hover-color: var(--app-text-secondary);
+  --md-scrollbar-thumb-active-color: var(--app-text-secondary);
+}
+
+.md-editor-catalog-dark {
+  --md-color: var(--app-text-secondary);
+  --md-hover-color: var(--app-text);
+  --md-bk-color: transparent;
+  --md-bk-color-outstand: var(--app-bg-soft);
+  --md-bk-hover-color: var(--app-bg-soft);
+}
+
+.md-editor-catalog {
+  --md-color: var(--app-text-secondary);
+  --md-hover-color: var(--app-text);
+  --md-bk-color: transparent;
+  --md-bk-color-outstand: var(--app-bg-soft);
+  --md-bk-hover-color: var(--app-bg-soft);
+}
+
+/* Toolbar header and direct color overrides */
+.md-editor-toolbar-wrapper {
+  background-color: var(--app-bg-soft) !important;
+  border-bottom-color: var(--app-border) !important;
+}
+
+.md-editor-head {
+  background-color: var(--app-bg) !important;
+  border-bottom-color: var(--app-border) !important;
+}
+
+.md-editor-preview {
+  background-color: var(--app-bg) !important;
+  color: var(--app-text) !important;
+}
+
+.md-editor-preview h1,
+.md-editor-preview h2,
+.md-editor-preview h3,
+.md-editor-preview h4,
+.md-editor-preview h5,
+.md-editor-preview h6 {
+  color: var(--app-text) !important;
+}
+
+.md-editor-preview a {
+  color: var(--app-link) !important;
+}
+
+.md-editor-preview blockquote {
+  border-left-color: var(--app-primary) !important;
+  background-color: var(--app-bg-soft) !important;
+  color: var(--app-text-secondary) !important;
+}
+
+.md-editor-preview code {
+  background-color: var(--app-bg-code) !important;
+  color: var(--app-text) !important;
+}
+
+.md-editor-preview pre {
+  background-color: var(--app-bg-code) !important;
+}
+
+.md-editor-preview pre code {
+  background-color: transparent !important;
+}
+
+.md-editor-preview table tr {
+  background-color: var(--app-bg) !important;
+}
+
+.md-editor-preview table tr:nth-child(2n) {
+  background-color: var(--app-bg-soft) !important;
+}
+
+.md-editor-preview table th,
+.md-editor-preview table td {
+  border-color: var(--app-border) !important;
+}
+
+.md-editor-preview table th {
+  background-color: var(--app-bg-soft) !important;
+}
+
+.md-editor-preview hr {
+  border-color: var(--app-border) !important;
+}
+
+.md-editor-preview img {
+  border-radius: 8px;
+}
+
+.md-editor-extension-preview .md-editor-preview {
+  background-color: var(--app-bg) !important;
+}

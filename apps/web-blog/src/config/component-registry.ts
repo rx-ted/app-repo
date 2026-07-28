@@ -4,9 +4,13 @@ import { defineAsyncComponent } from 'vue';
 type RegistryEntry = { component: Component; title: string };
 
 const aside = {
-  'network-card': {
-    component: defineAsyncComponent(() => import('@/components/blog/NetworkCard.vue')),
-    title: 'Network Card',
+  'author-profile': {
+    component: defineAsyncComponent(() => import('@/components/blog/AuthorProfileCard.vue')),
+    title: 'Author Profile',
+  },
+  'blog-stats': {
+    component: defineAsyncComponent(() => import('@/components/blog/BlogStatsCard.vue')),
+    title: 'Blog Stats',
   },
   'recommended-reading': {
     component: defineAsyncComponent(() => import('@/components/blog/RecommendedReading.vue')),

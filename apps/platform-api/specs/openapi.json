@@ -5063,6 +5063,18 @@
                           "authorUsername": {
                             "type": "string"
                           },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "categories": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
                           "readingTime": {
                             "type": "number"
                           },
@@ -5087,6 +5099,8 @@
                           "status",
                           "authorName",
                           "authorUsername",
+                          "tags",
+                          "categories",
                           "readingTime",
                           "viewCount",
                           "likeCount",

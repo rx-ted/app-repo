@@ -13,8 +13,20 @@ vi.mock('@/modules/post/mappers/post.mapper', () => ({
   },
 }));
 
+function createChainableMock(returnValue: any = []) {
+  const chain: any = {};
+  const resolve = () => Promise.resolve(returnValue);
+  chain.from = vi.fn().mockReturnValue(chain);
+  chain.innerJoin = vi.fn().mockReturnValue(chain);
+  chain.leftJoin = vi.fn().mockReturnValue(chain);
+  chain.where = vi.fn().mockReturnValue(chain);
+  chain.limit = vi.fn().mockImplementation(() => resolve());
+  chain.then = (resolve: any, reject: any) => resolve(returnValue);
+  return chain;
+}
+
 const mockDb = {
-  select: vi.fn(),
+  select: vi.fn().mockImplementation(() => createChainableMock()),
 };
 
 const mockPostRepo = {
@@ -51,6 +63,7 @@ describe('PostService', () => {
         { id: '2', title: 'Post 2' },
       ];
       mockPostRepo.list.mockResolvedValue({ list: fakePosts, total: 2 });
+      mockDb.select.mockImplementation(() => createChainableMock([]));
 
       const result = await service.list(1, 10);
 
@@ -80,6 +93,7 @@ describe('PostService', () => {
     it('should return mapped detail response when found', async () => {
       const fakePost = { id: '1', title: 'Test Post', contentHtml: '<p>hello</p>' };
       mockPostRepo.findBySlug.mockResolvedValue(fakePost);
+      mockDb.select.mockImplementation(() => createChainableMock([]));
 
       const result = await service.getBySlug('test-post');
 
@@ -99,11 +113,7 @@ describe('PostService', () => {
     };
 
     it('should generate slug from title (lowercase + replacing special chars)', async () => {
-      mockDb.select.mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
-        }),
-      });
+      mockDb.select.mockImplementation(() => createChainableMock([]));
       mockPostRepo.create.mockResolvedValue({ id: 1 });
 
       await service.create({ ...baseInput, title: 'Hello World! How Are You?' });
@@ -114,12 +124,7 @@ describe('PostService', () => {
     });
 
     it('should handle duplicate slug by appending timestamp', async () => {
-      const mockFrom = vi.fn().mockReturnThis();
-      const mockWhere = vi.fn().mockReturnThis();
-      const mockLimit = vi.fn().mockResolvedValue([{ id: 'existing' }]);
-      mockDb.select.mockReturnValue({ from: mockFrom, where: mockWhere, limit: mockLimit });
-      mockFrom.mockReturnValue({ where: mockWhere });
-      mockWhere.mockReturnValue({ limit: mockLimit });
+      mockDb.select.mockImplementation(() => createChainableMock([{ id: 'existing' }]));
       mockPostRepo.create.mockResolvedValue({ id: 1 });
 
       const before = Date.now();
@@ -135,11 +140,7 @@ describe('PostService', () => {
     });
 
     it('should call postRepo.create with correct shape', async () => {
-      mockDb.select.mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
-        }),
-      });
+      mockDb.select.mockImplementation(() => createChainableMock([]));
       mockPostRepo.create.mockResolvedValue({ id: 1 });
 
       await service.create(baseInput);
@@ -165,15 +166,15 @@ describe('PostService', () => {
         publishedAt: null,
         createdBy: 'user-1',
         updatedBy: 'user-1',
+        categories: [],
+        categoryNames: [],
+        tags: [],
+        tagNames: [],
       });
     });
 
     it('should compute readingTime as Math.max(1, ceil(contentMd.length / 1000))', async () => {
-      mockDb.select.mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
-        }),
-      });
+      mockDb.select.mockImplementation(() => createChainableMock([]));
       mockPostRepo.create.mockResolvedValue({ id: 1 });
 
       await service.create({ ...baseInput, contentMd: 'a'.repeat(500) });
@@ -183,11 +184,7 @@ describe('PostService', () => {
     });
 
     it('should set publishedAt for published status', async () => {
-      mockDb.select.mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
-        }),
-      });
+      mockDb.select.mockImplementation(() => createChainableMock([]));
       mockPostRepo.create.mockResolvedValue({ id: 1 });
 
       await service.create({ ...baseInput, status: 'published' });

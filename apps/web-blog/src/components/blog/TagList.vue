@@ -80,7 +80,7 @@ onMounted(() => {
 });
 
 function onTagSelect(name: string) {
-  router.push(`/tags/${name.toLowerCase()}`);
+  router.push(`/tags/${encodeURIComponent(name.toLowerCase())}`);
 }
 </script>
 

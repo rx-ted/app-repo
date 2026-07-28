@@ -138,7 +138,9 @@ export const useBlogStore = defineStore('blog', () => {
   async function fetchTags() {
     tagsLoading.value = true;
     try {
-      const body = await http.get<ApiResponse<{ data: TagItem[]; total: number }>>(API.TAGS_LIST);
+      const body = await http.get<ApiResponse<{ data: TagItem[]; total: number }>>(API.TAGS_LIST, {
+        query: { page: 1, pageSize: 100 },
+      });
       tagsList.value = body.data?.data ?? [];
     } catch {
       tagsList.value = [];

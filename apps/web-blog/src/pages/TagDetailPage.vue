@@ -83,7 +83,7 @@ function goToPost(slug: string) {
 }
 
 function goToTag(name: string) {
-  router.push(`/tags/${name.toLowerCase()}`);
+  router.push(`/tags/${encodeURIComponent(name.toLowerCase())}`);
 }
 
 watch(
