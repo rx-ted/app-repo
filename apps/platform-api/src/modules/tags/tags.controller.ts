@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
   Var,
 } from '@rx-ted/packages-honest';
@@ -47,10 +48,10 @@ class TagsController {
       },
     },
   })
-  async list(@Var('query') query: { page?: number; pageSize?: number }) {
-    const page = query?.page ?? 1;
-    const pageSize = query?.pageSize ?? 10;
-    return this.tagsService.findAll(page, pageSize);
+  async list(@Query('page') page?: string, @Query('pageSize') pageSize?: string) {
+    const p = page ? Math.max(1, Number(page)) : 1;
+    const ps = pageSize ? Math.max(1, Math.min(100, Number(pageSize))) : 10;
+    return this.tagsService.findAll(p, ps);
   }
 
   @Public()

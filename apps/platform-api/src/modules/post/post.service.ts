@@ -3,12 +3,18 @@ import { DbService } from '@rx-ted/packages-honest-plugins/db';
 import { CacheService, cacheable } from '@rx-ted/packages-honest-plugins/cache';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
-import { eq, and, gte, lt, sql } from 'drizzle-orm';
+import { eq, and, gte, lt, sql, inArray } from 'drizzle-orm';
 
 import { PostMapper } from '@/modules/post/mappers/post.mapper';
 import { PostRepository } from '@/modules/post/repositories/post.repository';
 import { parsePostMeta } from '@/lib/post-parser';
-import { postCore, postTagMappings, postCategoryMappings } from '@/schema';
+import {
+  postCore,
+  postTagMappings,
+  postCategoryMappings,
+  postTags,
+  postCategories,
+} from '@/schema';
 import { DEFAULTS, CACHE_KEYS } from '@/constants';
 
 function generateSlug(title: string): string {
@@ -47,8 +53,62 @@ class PostService {
     },
   ) {
     const result = await this.postRepo.list(page, pageSize, options);
+
+    const postIds = result.list.map((p) => Number(p.id)).filter((id) => id > 0);
+
+    const tagMap = new Map<number, string[]>();
+    const tagNameMap = new Map<number, string[]>();
+    const catMap = new Map<number, string[]>();
+    const catNameMap = new Map<number, string[]>();
+
+    if (postIds.length) {
+      const tagRows = await this.db
+        .select({ postId: postTagMappings.postId, name: postTags.name, slug: postTags.slug })
+        .from(postTagMappings)
+        .innerJoin(postTags, eq(postTagMappings.tagId, postTags.id))
+        .where(inArray(postTagMappings.postId, postIds));
+
+      const catRows = await this.db
+        .select({
+          postId: postCategoryMappings.postId,
+          name: postCategories.name,
+          slug: postCategories.slug,
+        })
+        .from(postCategoryMappings)
+        .innerJoin(postCategories, eq(postCategoryMappings.categoryId, postCategories.id))
+        .where(inArray(postCategoryMappings.postId, postIds));
+
+      for (const row of tagRows) {
+        const slugs = tagMap.get(row.postId) ?? [];
+        slugs.push(row.slug);
+        tagMap.set(row.postId, slugs);
+
+        const names = tagNameMap.get(row.postId) ?? [];
+        names.push(row.name);
+        tagNameMap.set(row.postId, names);
+      }
+
+      for (const row of catRows) {
+        const slugs = catMap.get(row.postId) ?? [];
+        slugs.push(row.slug);
+        catMap.set(row.postId, slugs);
+
+        const names = catNameMap.get(row.postId) ?? [];
+        names.push(row.name);
+        catNameMap.set(row.postId, names);
+      }
+    }
+
+    const enriched = result.list.map((p) => ({
+      ...p,
+      tags: tagMap.get(Number(p.id)) ?? [],
+      tagNames: tagNameMap.get(Number(p.id)) ?? [],
+      categories: catMap.get(Number(p.id)) ?? [],
+      categoryNames: catNameMap.get(Number(p.id)) ?? [],
+    }));
+
     return {
-      list: result.list.map(PostMapper.toCardResponse),
+      list: enriched.map(PostMapper.toCardResponse),
       total: result.total,
     };
   }
@@ -56,6 +116,27 @@ class PostService {
   async getBySlug(slug: string) {
     const post = await this.postRepo.findBySlug(slug);
     if (!post) return null;
+
+    const postId = Number(post.id);
+    if (postId > 0) {
+      const [tagRows, catRows] = await Promise.all([
+        this.db
+          .select({ name: postTags.name, slug: postTags.slug })
+          .from(postTagMappings)
+          .innerJoin(postTags, eq(postTagMappings.tagId, postTags.id))
+          .where(eq(postTagMappings.postId, postId)),
+        this.db
+          .select({ name: postCategories.name, slug: postCategories.slug })
+          .from(postCategoryMappings)
+          .innerJoin(postCategories, eq(postCategoryMappings.categoryId, postCategories.id))
+          .where(eq(postCategoryMappings.postId, postId)),
+      ]);
+      post.tags = tagRows.map((r) => r.slug);
+      post.tagNames = tagRows.map((r) => r.name);
+      post.categories = catRows.map((r) => r.slug);
+      post.categoryNames = catRows.map((r) => r.name);
+    }
+
     return PostMapper.toDetailResponse(post);
   }
 
@@ -140,6 +221,10 @@ class PostService {
       status: input.status ?? 'draft',
       visibility: input.visibility ?? 'public',
       allowComment: input.allowComment ?? true,
+      tags: [],
+      tagNames: [],
+      categories: [],
+      categoryNames: [],
       readingTime: Math.max(1, Math.ceil(input.contentMd.length / 1000)),
       viewCount: 0,
       likeCount: 0,

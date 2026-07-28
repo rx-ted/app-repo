@@ -153,6 +153,10 @@ export interface PostEntity {
   authorId: string;
   authorName: string;
   authorUsername: string;
+  tags: string[];
+  tagNames: string[];
+  categories: string[];
+  categoryNames: string[];
   readingTime: number;
   viewCount: number;
   likeCount: number;
@@ -172,6 +176,10 @@ export interface PostListEntity {
   status: string;
   authorName: string;
   authorUsername: string;
+  tags: string[];
+  tagNames: string[];
+  categories: string[];
+  categoryNames: string[];
   readingTime: number;
   viewCount: number;
   likeCount: number;
@@ -187,6 +195,8 @@ export const PostListEntitySchema = z.object({
   status: z.string(),
   authorName: z.string(),
   authorUsername: z.string(),
+  tags: z.array(z.string()),
+  categories: z.array(z.string()),
   readingTime: z.number(),
   viewCount: z.number(),
   likeCount: z.number(),
