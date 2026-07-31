@@ -496,8 +496,6 @@ class SystemInitService {
           userId: SYSTEM_USER_ID,
           slug: doc.slug,
           title: doc.title,
-          contentMd: doc.content_md,
-          contentHtml: null,
           coverImage: null,
           isPinned: doc.is_pinned ?? false,
           featuredWeight: doc.featured_weight ?? 0,
@@ -556,10 +554,12 @@ class SystemInitService {
         created++;
         logger.info(`  [seed] ${doc.slug} → CREATE`);
       } else {
+        const postId = Number(existing[0].id);
+
         const existingContent = await this.db
-          .select({ contentMd: schema.postCore.contentMd })
-          .from(schema.postCore)
-          .where(eq(schema.postCore.slug, doc.slug))
+          .select({ contentMd: schema.postContent.contentMd })
+          .from(schema.postContent)
+          .where(eq(schema.postContent.postId, postId))
           .limit(1);
 
         const storedHash = existingContent[0]?.contentMd?.match(
@@ -571,7 +571,6 @@ class SystemInitService {
           continue;
         }
 
-        const postId = Number(existing[0].id);
         await this.db
           .update(schema.postCore)
           .set({

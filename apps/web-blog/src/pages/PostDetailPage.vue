@@ -3,22 +3,21 @@ import { storeToRefs } from 'pinia';
 import { computed, watch, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { usePostDetailStore } from '@/stores/postDetail';
-import { MdPreview } from 'md-editor-v3';
+import MarkdownRenderer from '@/components/markdown/MarkdownRenderer.vue';
 import { NSpin, NAlert, NButton } from 'naive-ui';
 import SeoHead from '@/components/seo/SeoHead.vue';
-import { headingId } from '@/utils/headingId';
-import { useTheme } from '../theme/useTheme';
 import { http } from '@/http';
 import { API } from '@/constants/api';
+import { stripFrontMatter } from '@/utils/stripFrontMatter';
 
 const route = useRoute();
 const router = useRouter();
 const detailStore = usePostDetailStore();
 const { item, loading, error } = storeToRefs(detailStore);
 
-const { themeMode } = useTheme();
-
 const slug = computed(() => String(route.params.slug || ''));
+
+const content = computed(() => stripFrontMatter(item.value?.content ?? ''));
 
 const views = ref(0);
 const likes = ref(0);
@@ -63,34 +62,22 @@ watch(
       </n-alert>
 
       <template v-else-if="item">
-        <!-- Cover image -->
         <div v-if="item.coverImage" class="post-cover">
           <img :src="item.coverImage ?? ''" :alt="item.title">
         </div>
 
-        <!-- Content -->
         <div v-if="item.content" class="post-content">
-          <MdPreview
-            editorId="post-detail"
-            :theme="themeMode"
-            :mdHeadingId="headingId"
-            :modelValue="item.content ?? ''"
-            previewTheme="github"
-            codeTheme="github"
-            :noKatex="false"
-            :noMermaid="false"
-          />
+          <MarkdownRenderer :content="content" />
         </div>
-        <pre v-else class="content-plain">{{ item.content }}</pre>
+        <pre v-else class="content-plain">{{ content }}</pre>
 
-        <!-- Footer stats -->
         <div class="post-footer-stats">
           <span class="stat-item">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             {{ views }}
           </span>
           <span class="stat-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1-2 2h4"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2 2h4"/></svg>
             {{ likes }}
           </span>
           <span class="stat-item">
@@ -99,7 +86,6 @@ watch(
           </span>
         </div>
 
-        <!-- Footer tags & categories -->
         <div v-if="item.categories?.length || item.tags?.length" class="post-footer-taxonomy">
           <span
             v-for="(cat, i) in item.categories"

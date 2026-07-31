@@ -5,7 +5,6 @@ import { createHead } from '@vueuse/head';
 import App from '@/App.vue';
 import { router } from '@/router';
 
-import 'md-editor-v3/lib/style.css';
 import './styles/main.scss';
 
 import { dataSymbol } from './theme/data';

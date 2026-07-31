@@ -21,6 +21,7 @@ featured_weight: 0
 | [packages](./packages.md) | 共享包说明 |
 | [e2e-testing](./e2e-testing.md) | E2E 测试流程 |
 | [api-routes](./api-routes.md) | API 路由完整文档 |
+| [markdown-editor](./markdown-editor.md) | Markdown 编辑器与渲染（语法 / 管线 / SourceMap / 滚动同步） |
 
 ## 快速链接
 

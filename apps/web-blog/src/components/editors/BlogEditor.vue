@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { ref, watch, onBeforeUnmount, reactive } from 'vue';
-import { onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, watch, onBeforeUnmount, onMounted, nextTick } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import type { EditorSavePayload } from './BlogEditorSaveDialog.vue';
-import { NButton, NSpace } from 'naive-ui';
+import { NButton, NSpace, NIcon } from 'naive-ui';
 import { Icon } from '@iconify/vue';
-import { MdEditor } from 'md-editor-v3';
-import HelpSheet from '@/components/editors/help/HelpSheet.vue';
+import MarkdownRenderer, { type ReadyPayload } from '@/components/markdown/MarkdownRenderer.vue';
 import BlogEditorSaveDialog from './BlogEditorSaveDialog.vue';
-import { useTheme } from '../../theme/useTheme';
-import { Emoji, Mark } from '@vavt/v3-extension';
-import { buildToolBars } from './components/defToolbars';
+import { MarkdownIndex, HeadingTree } from '@/utils/sourcemap';
+import { DomIndex } from '@/utils/domIndex';
+import { SyncEngine, SyncReason } from '@/utils/syncEngine';
+import type { SourceNode } from '@/utils/sourcemap';
 
 const props = defineProps<{
   modelValue: string;
@@ -27,47 +26,252 @@ const emit = defineEmits<{
   (e: 'cancel'): void;
 }>();
 
-const showHelp = ref(false);
+const showPreview = ref(true);
 const route = useRoute();
-
+const router = useRouter();
 const DRAFT_STORAGE_KEY = 'editor:draft';
+const textareaRef = ref<HTMLTextAreaElement | null>(null);
+const previewScrollRef = ref<HTMLElement | null>(null);
 
-let saveTimer: ReturnType<typeof setTimeout> | null = null;
+const syncEngine = new SyncEngine();
+const headingTree = ref<HeadingTree>();
 
-const { themeMode } = useTheme();
+let isTyping = false;
+let typingTimer: ReturnType<typeof setTimeout> | null = null;
+
+/* ── State ─────────────────────────────────────────── */
+
+const END_THRESHOLD = 30;
+
+function isEditorNearEnd(ta: HTMLTextAreaElement): boolean {
+  const totalLines = currentValue.value.split('\n').length;
+  const lh = parseFloat(getComputedStyle(ta).lineHeight) || 23.8;
+  const currentLine = Math.floor(ta.scrollTop / lh) + 1;
+  return totalLines - currentLine <= END_THRESHOLD;
+}
+
+/* ── Sync helpers ──────────────────────────────────── */
+
+function onReady(payload: ReadyPayload) {
+  const elements = new Map<number, HTMLElement>();
+  for (const el of payload.rootEl.querySelectorAll<HTMLElement>('[data-node]')) {
+    const id = Number(el.getAttribute('data-node'));
+    if (!Number.isNaN(id)) elements.set(id, el);
+  }
+  const mi = new MarkdownIndex(payload.nodes);
+  const di = new DomIndex(elements);
+  di.buildPositions(payload.rootEl);
+  headingTree.value = new HeadingTree(payload.nodes);
+
+  syncEngine.setConfig({
+    textarea: textareaRef.value!,
+    previewScroll: previewScrollRef.value!,
+    markdownIndex: mi,
+    domIndex: di,
+    isTyping: () => isTyping,
+  });
+
+  syncEngine.reason = SyncReason.Render;
+  if (isTyping && textareaRef.value && previewScrollRef.value) {
+    if (isEditorNearEnd(textareaRef.value)) {
+      previewScrollRef.value.scrollTop = previewScrollRef.value.scrollHeight;
+    } else {
+      syncEngine.followByOffset(textareaRef.value.selectionStart);
+    }
+  }
+  requestAnimationFrame(() => {
+    syncEngine.reason = SyncReason.None;
+  });
+}
+
+function onEditorScroll() {
+  if (syncEngine.isSyncing || isTyping || !textareaRef.value) return;
+  const ta = textareaRef.value;
+  const lh = parseFloat(getComputedStyle(ta).lineHeight) || 23.8;
+  const line = Math.floor(ta.scrollTop / lh);
+  syncEngine.editorScroll(line + 1);
+}
+
+function onEditorClick() {
+  if (syncEngine.isSyncing || !textareaRef.value) return;
+  syncEngine.editorClick(textareaRef.value.selectionStart);
+}
+
+function onPreviewScroll() {
+  if (syncEngine.isSyncing || isTyping) return;
+  syncEngine.previewScroll();
+}
+
+/* ── Event handlers ────────────────────────────────── */
+
+function onInput(v: string) {
+  isTyping = true;
+  if (typingTimer) clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => {
+    isTyping = false;
+  }, 500);
+  emitValue(v);
+}
+
+const currentValue = ref(props.modelValue);
 
 watch(
   () => props.modelValue,
-  () => {
-    if (saveTimer) clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      localStorage.setItem(DRAFT_STORAGE_KEY, props.modelValue);
-    }, 2000);
+  (v) => {
+    currentValue.value = v;
+    if (textareaRef.value && textareaRef.value.value !== v) {
+      textareaRef.value.value = v;
+    }
   },
 );
 
-function saveBeforeUnload() {
-  localStorage.setItem(DRAFT_STORAGE_KEY, props.modelValue);
+function emitValue(v: string) {
+  currentValue.value = v;
+  emit('update:modelValue', v);
 }
+
+function insertBeforeAfter(before: string, after: string) {
+  const ta = textareaRef.value;
+  if (!ta) return;
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const text = currentValue.value;
+  const selected = text.slice(start, end);
+  const replaced = before + selected + after;
+  emitValue(text.slice(0, start) + replaced + text.slice(end));
+  nextTick(() => {
+    ta.focus();
+    ta.setSelectionRange(start + before.length, start + before.length + selected.length);
+  });
+}
+
+function insertLinePrefix(prefix: string) {
+  const ta = textareaRef.value;
+  if (!ta) return;
+  const start = ta.selectionStart;
+  const text = currentValue.value;
+  const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+  const lineEnd = text.indexOf('\n', start);
+  const line = text.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
+  const replaced = prefix + line;
+  emitValue(text.slice(0, lineStart) + replaced + text.slice(lineEnd === -1 ? undefined : lineEnd));
+  nextTick(() => {
+    ta.focus();
+    ta.setSelectionRange(lineStart + prefix.length, lineStart + prefix.length);
+  });
+}
+
+function wrapSelection(before: string, after: string) {
+  insertBeforeAfter(before, after);
+}
+
+function insertInline(type: string) {
+  const pairs: Record<string, [string, string]> = {
+    bold: ['**', '**'],
+    italic: ['*', '*'],
+    strikethrough: ['~~', '~~'],
+    code: ['`', '`'],
+    link: ['[', '](url)'],
+    image: ['![', '](url)'],
+  };
+  const p = pairs[type];
+  if (p) wrapSelection(p[0], p[1]);
+}
+
+function insertBlock(type: string) {
+  const ta = textareaRef.value;
+  if (!ta) return;
+  const text = currentValue.value;
+  const start = ta.selectionStart;
+  const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+  const after = text.slice(start);
+  const line = text.slice(lineStart, start);
+
+  const blocks: Record<string, string> = {
+    h1: '# ',
+    h2: '## ',
+    h3: '### ',
+    h4: '#### ',
+    blockquote: '> ',
+    ul: '- ',
+    ol: '1. ',
+    task: '- [ ] ',
+  };
+
+  const prefix = blocks[type];
+  if (prefix) {
+    emitValue(text.slice(0, lineStart) + prefix + line + after);
+  } else if (type === 'codeblock') {
+    const insertion = '\n```\n\n```\n';
+    emitValue(text.slice(0, start) + insertion + text.slice(start));
+  } else if (type === 'table') {
+    const tbl = '\n| Header | Header |\n| ------ | ------ |\n| Cell | Cell |\n';
+    emitValue(text.slice(0, start) + tbl + text.slice(start));
+  } else if (type === 'hr') {
+    emitValue(`${text.slice(0, start)}\n---\n${text.slice(start)}`);
+  }
+}
+
+// Save on Ctrl+S / Cmd+S
+function onKeydown(e: KeyboardEvent) {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+    e.preventDefault();
+    requestSave();
+  }
+}
+
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+watch(currentValue, () => {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    localStorage.setItem(DRAFT_STORAGE_KEY, currentValue.value);
+  }, 2000);
+});
+
+function saveBeforeUnload() {
+  localStorage.setItem(DRAFT_STORAGE_KEY, currentValue.value);
+}
+
 onBeforeUnmount(() => {
   saveBeforeUnload();
   if (saveTimer) clearTimeout(saveTimer);
 });
 
+function attachScrollListeners() {
+  if (textareaRef.value) {
+    textareaRef.value.removeEventListener('scroll', onEditorScroll);
+    textareaRef.value.addEventListener('scroll', onEditorScroll, { passive: true });
+    textareaRef.value.removeEventListener('click', onEditorClick);
+    textareaRef.value.addEventListener('click', onEditorClick);
+  }
+  if (previewScrollRef.value) {
+    previewScrollRef.value.removeEventListener('scroll', onPreviewScroll);
+    previewScrollRef.value.addEventListener('scroll', onPreviewScroll, { passive: true });
+  }
+}
+
 onMounted(() => {
+  if (textareaRef.value && textareaRef.value.value !== currentValue.value) {
+    textareaRef.value.value = currentValue.value;
+  }
   const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
   if (saved && saved !== props.modelValue && !props.isEdit) {
     if (route.query.restoreDraft === '1') {
-      emit('update:modelValue', saved);
+      emitValue(saved);
     } else if (window.confirm('检测到未保存的草稿，是否恢复？')) {
-      emit('update:modelValue', saved);
+      emitValue(saved);
     } else {
       localStorage.removeItem(DRAFT_STORAGE_KEY);
     }
   }
+  nextTick(attachScrollListeners);
 });
 
-// Clear draft on successful save
+watch(showPreview, () => {
+  nextTick(attachScrollListeners);
+});
+
 watch(
   () => props.loading,
   (newVal, oldVal) => {
@@ -79,17 +283,15 @@ watch(
 
 const dialogRef = ref<InstanceType<typeof BlogEditorSaveDialog>>();
 
+function openHelp() {
+  router.push('/posts/guides-markdown-editor');
+}
+
 function requestSave() {
-  dialogRef.value?.open(props.modelValue, {
+  dialogRef.value?.open(currentValue.value, {
     ...props.initialMeta,
   });
 }
-
-const customToolbarItems = [0, 1];
-
-const state = reactive({
-  toolbar: buildToolBars(customToolbarItems),
-});
 </script>
 
 <template>
@@ -100,36 +302,62 @@ const state = reactive({
           <h1>写作页面</h1>
         </div>
         <NSpace>
-          <NButton @click="showHelp = true">
+          <NButton quaternary size="small" @click="showPreview = !showPreview">
+            <template #icon>
+              <NIcon><Icon :icon="showPreview ? 'mdi:eye-off-outline' : 'mdi:eye-outline'" width="16" /></NIcon>
+            </template>
+            {{ showPreview ? '隐藏预览' : '显示预览' }}
+          </NButton>
+          <NButton @click="openHelp">
             <template #icon>
               <Icon icon="mdi:help-circle-outline" width="16" />
             </template>
+            帮助
           </NButton>
           <NButton type="primary" :loading="props.loading" @click="requestSave"> 保存 </NButton>
         </NSpace>
       </div>
 
-      <div class="editor-body">
-        <MdEditor
-          editorId="blog-editor"
-          :model-value="props.modelValue"
-          language="zh-CN"
-          previewTheme="github"
-          codeTheme="github"
-          :noKatex="false"
-          :noMermaid="false"
-          :toolbarExclude="['htmlPreview', 'catalog']"
-          @onSave="requestSave"
-          @onChange="(v) => emit('update:modelValue', v)"
-          :style="{ height: '100%' }"
-          :theme="themeMode"
-          :toolbars="state.toolbar"
-        >
-          <template #defToolbars>
-            <Mark />
-            <Emoji />
-          </template>
-        </MdEditor>
+      <div class="editor-body" :class="{ 'with-preview': showPreview }">
+        <div class="editor-pane">
+          <div class="toolbar">
+            <button class="tb-btn" title="粗体" @click="insertInline('bold')"><Icon icon="mdi:format-bold" width="16" /></button>
+            <button class="tb-btn" title="斜体" @click="insertInline('italic')"><Icon icon="mdi:format-italic" width="16" /></button>
+            <button class="tb-btn" title="删除线" @click="insertInline('strikethrough')"><Icon icon="mdi:format-strikethrough" width="16" /></button>
+            <button class="tb-btn" title="行内代码" @click="insertInline('code')"><Icon icon="mdi:code-tags" width="16" /></button>
+            <span class="tb-sep"></span>
+            <button class="tb-btn" title="标题1" @click="insertBlock('h1')"><Icon icon="mdi:format-header-1" width="16" /></button>
+            <button class="tb-btn" title="标题2" @click="insertBlock('h2')"><Icon icon="mdi:format-header-2" width="16" /></button>
+            <button class="tb-btn" title="标题3" @click="insertBlock('h3')"><Icon icon="mdi:format-header-3" width="16" /></button>
+            <span class="tb-sep"></span>
+            <button class="tb-btn" title="无序列表" @click="insertBlock('ul')"><Icon icon="mdi:format-list-bulleted" width="16" /></button>
+            <button class="tb-btn" title="有序列表" @click="insertBlock('ol')"><Icon icon="mdi:format-list-numbered" width="16" /></button>
+            <button class="tb-btn" title="任务列表" @click="insertBlock('task')"><Icon icon="mdi:check-box-outline" width="16" /></button>
+            <span class="tb-sep"></span>
+            <button class="tb-btn" title="引用" @click="insertBlock('blockquote')"><Icon icon="mdi:format-quote-close" width="16" /></button>
+            <button class="tb-btn" title="代码块" @click="insertBlock('codeblock')"><Icon icon="mdi:code-braces" width="16" /></button>
+            <button class="tb-btn" title="表格" @click="insertBlock('table')"><Icon icon="mdi:table" width="16" /></button>
+            <button class="tb-btn" title="分割线" @click="insertBlock('hr')"><Icon icon="mdi:minus" width="16" /></button>
+            <span class="tb-sep"></span>
+            <button class="tb-btn" title="链接" @click="insertInline('link')"><Icon icon="mdi:link-variant" width="16" /></button>
+            <button class="tb-btn" title="图片" @click="insertInline('image')"><Icon icon="mdi:image-outline" width="16" /></button>
+          </div>
+          <textarea
+            ref="textareaRef"
+            class="editor-textarea"
+            @input="onInput(($event.target as HTMLTextAreaElement).value)"
+            @keydown="onKeydown"
+            placeholder="开始写作..."
+            spellcheck="true"
+            wrap="off"
+          />
+        </div>
+        <div v-if="showPreview" class="preview-pane">
+          <div class="preview-header">预览</div>
+          <div ref="previewScrollRef" class="preview-scroll">
+            <MarkdownRenderer :content="currentValue" @ready="onReady" />
+          </div>
+        </div>
       </div>
     </section>
 
@@ -139,8 +367,6 @@ const state = reactive({
       :category-options="props.categoryOptions"
       @confirm="emit('save', $event)"
     />
-
-    <HelpSheet :visible="showHelp" @close="showHelp = false" />
   </div>
 </template>
 
@@ -157,7 +383,7 @@ const state = reactive({
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  gap: 12px;
+  gap: 8px;
 }
 
 .editor-topbar {
@@ -168,13 +394,116 @@ const state = reactive({
   flex-shrink: 0;
 }
 
-.editor-body {
-  flex: 1;
-  min-height: 0;
-}
-
 .editor-topbar h1 {
   margin: 6px 0 0;
+}
+
+.editor-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 12px;
+}
+
+.editor-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.with-preview .editor-pane {
+  max-width: 50%;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  background-color: var(--app-bg-soft);
+  border-bottom: 1px solid var(--app-border);
+  flex-shrink: 0;
+}
+
+.tb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--app-text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s;
+  font-size: 16px;
+}
+
+.tb-btn:hover {
+  background-color: var(--app-border);
+  color: var(--app-text);
+}
+
+.tb-sep {
+  width: 1px;
+  height: 20px;
+  background-color: var(--app-border);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.editor-textarea {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 16px;
+  font-family: 'Space Mono', 'Fira Code', Menlo, Monaco, 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--app-text);
+  background: var(--app-bg);
+  tab-size: 2;
+}
+
+.editor-textarea::placeholder {
+  color: var(--app-text-secondary);
+  opacity: 0.6;
+}
+
+.preview-pane {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-header {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--app-text-secondary);
+  background-color: var(--app-bg-soft);
+  border-bottom: 1px solid var(--app-border);
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.preview-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
 }
 
 @media (max-width: 1080px) {
