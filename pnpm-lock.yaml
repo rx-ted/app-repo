@@ -150,21 +150,15 @@ importers:
       '@rehype-pretty/transformers':
         specifier: ^0.13.2
         version: 0.13.2
+      '@rx-ted/packages-markdown-editor':
+        specifier: workspace:^
+        version: link:../../packages/markdown-editor
       '@vueuse/core':
         specifier: ^14.3.0
         version: 14.3.0(vue@3.5.40(typescript@6.0.3))
       '@vueuse/head':
         specifier: ^2.0.0
         version: 2.0.0(vue@3.5.40(typescript@6.0.3))
-      katex:
-        specifier: ^0.18.1
-        version: 0.18.1
-      mdast-util-to-string:
-        specifier: ^4.0.0
-        version: 4.0.0
-      mermaid:
-        specifier: ^11.16.0
-        version: 11.16.0
       naive-ui:
         specifier: ^2.44.1
         version: 2.44.1(vue@3.5.40(typescript@6.0.3))
@@ -174,48 +168,6 @@ importers:
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@6.0.3)(vue@3.5.40(typescript@6.0.3))
-      rehype-autolink-headings:
-        specifier: ^7.1.0
-        version: 7.1.0
-      rehype-katex:
-        specifier: ^7.0.1
-        version: 7.0.1
-      rehype-pretty-code:
-        specifier: ^0.14.5
-        version: 0.14.5(shiki@4.3.1)
-      rehype-raw:
-        specifier: ^7.0.0
-        version: 7.0.0
-      rehype-slug:
-        specifier: ^6.0.0
-        version: 6.0.0
-      rehype-stringify:
-        specifier: ^10.0.1
-        version: 10.0.1
-      remark-directive:
-        specifier: ^4.0.0
-        version: 4.0.0
-      remark-gfm:
-        specifier: ^4.0.1
-        version: 4.0.1
-      remark-math:
-        specifier: ^6.0.0
-        version: 6.0.0
-      remark-parse:
-        specifier: ^11.0.0
-        version: 11.0.0
-      remark-rehype:
-        specifier: ^11.1.2
-        version: 11.1.2
-      shiki:
-        specifier: ^4.3.1
-        version: 4.3.1
-      unified:
-        specifier: ^11.0.5
-        version: 11.0.5
-      unist-util-visit:
-        specifier: ^5.1.0
-        version: 5.1.0
       vite-plugin-vue-devtools:
         specifier: ^8.1.2
         version: 8.2.1(vite@8.0.16(@types/node@25.9.2)(esbuild@0.28.1)(jiti@2.6.1)(sass@1.102.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.40(typescript@6.0.3))

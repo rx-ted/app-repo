@@ -3,19 +3,22 @@ import { storeToRefs } from 'pinia';
 import { computed, watch, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { usePostDetailStore } from '@/stores/postDetail';
-import MarkdownRenderer from '@/components/markdown/MarkdownRenderer.vue';
+import { MarkdownRenderer, stripFrontMatter } from '@rx-ted/packages-markdown-editor';
 import { NSpin, NAlert, NButton } from 'naive-ui';
 import SeoHead from '@/components/seo/SeoHead.vue';
 import { http } from '@/http';
 import { API } from '@/constants/api';
-import { stripFrontMatter } from '@/utils/stripFrontMatter';
+import { useThemeStore } from '@/stores/theme';
 
 const route = useRoute();
 const router = useRouter();
 const detailStore = usePostDetailStore();
+const themeStore = useThemeStore();
 const { item, loading, error } = storeToRefs(detailStore);
 
 const slug = computed(() => String(route.params.slug || ''));
+
+const previewTheme = computed(() => (themeStore.isDark ? 'github-dark' : 'github-light'));
 
 const content = computed(() => stripFrontMatter(item.value?.content ?? ''));
 
@@ -67,7 +70,7 @@ watch(
         </div>
 
         <div v-if="item.content" class="post-content">
-          <MarkdownRenderer :content="content" />
+          <MarkdownRenderer :content="content" :theme="previewTheme" :interactive-tasks="false" />
         </div>
         <pre v-else class="content-plain">{{ content }}</pre>
 

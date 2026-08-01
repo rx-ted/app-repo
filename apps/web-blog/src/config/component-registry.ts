@@ -33,7 +33,9 @@ const aside = {
     title: 'Ad Banner',
   },
   toc: {
-    component: defineAsyncComponent(() => import('@/components/taxonomy/TocTree.vue')),
+    component: defineAsyncComponent(() =>
+      import('@rx-ted/packages-markdown-editor').then((m) => m.TocTree),
+    ),
     title: 'Table of Contents',
   },
   'recent-posts': {

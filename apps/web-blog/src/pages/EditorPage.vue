@@ -1,20 +1,24 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import type { EditorSavePayload } from '@/components/editors/BlogEditorSaveDialog.vue';
+import type { EditorSavePayload } from '@rx-ted/packages-markdown-editor';
 import { http } from '@/http';
 import type { ApiResponse } from '@/http/types';
 import type { BlogPostDetailVO } from '@/types/blog';
 import { fetchCategories, fetchTags } from '@/api/taxonomy';
 import { toSelectOptions } from '@/utils/taxonomy';
 import { NAlert } from 'naive-ui';
-import BlogEditor from '../components/editors/BlogEditor.vue';
+import { BlogEditor } from '@rx-ted/packages-markdown-editor';
 import { useSessionStore } from '@/stores/session';
+import { useThemeStore } from '@/stores/theme';
 import { API } from '@/constants';
 
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const themeStore = useThemeStore();
+const previewTheme = computed(() => (themeStore.isDark ? 'github-dark' : 'github-light'));
+const editorTheme = computed(() => (themeStore.isDark ? 'dark' : 'light'));
 const isEdit = computed(() => Boolean(route.params.slug));
 const slug = computed(() => String(route.params.slug || ''));
 const loading = ref(false);
@@ -115,6 +119,10 @@ onMounted(async () => {
       :tag-options="tagOptions"
       :category-options="categoryOptions"
       :initial-meta="draft.meta"
+      :help-href="'/posts/guides-markdown-editor'"
+      :auto-restore="route.query.restoreDraft === '1'"
+      :editor-theme="editorTheme"
+      :preview-theme="previewTheme"
       :on-before-save="() => loadOptions(true)"
       @save="save"
       @cancel="router.push('/dashboard')"
