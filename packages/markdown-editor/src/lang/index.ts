@@ -7,7 +7,6 @@ export type { EnMessageSchema } from './en';
 
 export type Locale = 'zh-CN' | 'en';
 
-type MessageKey = keyof typeof zhCN;
 type MessageTable = Record<string, string>;
 
 const BUILTIN: Record<string, MessageTable> = { 'zh-CN': zhCN, en };
