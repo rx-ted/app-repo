@@ -11,6 +11,7 @@ packages:
   - "packages/honest-plugins/mail"
   - "packages/honest-plugins/api-doc"
   - "packages/honest-plugins/counter"
+  - "packages/markdown-editor"
 allowBuilds:
   "@parcel/watcher": false
   "@swc/core": false
