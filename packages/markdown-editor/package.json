@@ -4,6 +4,10 @@
   "private": false,
   "type": "module",
   "description": "Reusable markdown editor + render pipeline (source-consumed, no build)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rx-ted/app-repo.git"
+  },
   "exports": {
     ".": {
       "vitest": "./src/index.ts",

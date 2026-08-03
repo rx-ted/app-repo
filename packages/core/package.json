@@ -12,6 +12,10 @@
   },
   "author": "rx-ted",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rx-ted/app-repo.git"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",

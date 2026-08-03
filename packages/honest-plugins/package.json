@@ -4,6 +4,10 @@
   "private": false,
   "type": "module",
   "description": "HonestJS plugins — db, cache, mail, s3, api-doc, counter",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rx-ted/app-repo.git"
+  },
   "exports": {
     "./db": {
       "types": "./db/dist/index.d.ts",

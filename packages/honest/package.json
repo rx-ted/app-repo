@@ -18,7 +18,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rx-ted/honest.git"
+    "url": "git+https://github.com/rx-ted/app-repo.git"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -31,7 +31,7 @@
   ],
   "author": "rx-ted",
   "license": "MIT",
-  "homepage": "https://github.com/rx-ted/honest",
+  "homepage": "https://github.com/rx-ted/app-repo",
   "keywords": [
     "nodejs",
     "deno",
