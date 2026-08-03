@@ -22,6 +22,7 @@ featured_weight: 0
 | [e2e-testing](./e2e-testing.md) | E2E 测试流程 |
 | [api-routes](./api-routes.md) | API 路由完整文档 |
 | [markdown-editor](./markdown-editor.md) | Markdown 编辑器与渲染（语法 / 管线 / SourceMap / 滚动同步） |
+| [github-actions](./github-actions.md) | GitHub Actions 工作流（CI / auto-merge / release / npm OIDC） |
 
 ## 快速链接
 
