@@ -5,6 +5,7 @@ import remarkParse from 'remark-parse';
 import remarkDirective from 'remark-directive';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
+import remarkEmoji from 'remark-emoji';
 import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
 import rehypeKatex from 'rehype-katex';
@@ -30,6 +31,24 @@ import {
 export interface MarkdownPipelineOptions {
   sourceMap?: boolean;
   codeTheme?: string;
+  interactiveTasks?: boolean;
+}
+
+function headingDepthFromTag(tag: string): number {
+  const match = /^h([1-6])$/.exec(tag);
+  return match ? Number(match[1]) : 1;
+}
+
+// ── Rehype plugin: make GFM task checkboxes clickable (remove `disabled`) ──
+export function rehypeInteractiveTasks() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any) => {
+      if (node.tagName !== 'input') return;
+      if (node.properties?.type !== 'checkbox') return;
+      delete node.properties.disabled;
+      node.properties.className = ['task-checkbox'];
+    });
+  };
 }
 
 // ── Remark plugin: transform ::directive containers ──
@@ -101,6 +120,91 @@ export function rehypeMermaid() {
   };
 }
 
+// ── Remark plugin: turn leading YAML front matter into a table (or drop it) ──
+export interface RemarkFrontMatterOptions {
+  render?: 'hide' | 'table';
+}
+
+export function remarkFrontMatter(options: RemarkFrontMatterOptions = {}) {
+  const { render = 'table' } = options;
+  return (tree: any, file: any) => {
+    const source = String(file);
+    if (!source.startsWith('---\n')) return;
+    const end = source.indexOf('\n---\n', 4);
+    if (end === -1) return;
+    const yaml = source.slice(4, end);
+
+    const root = tree as any;
+    // Drop every node that falls inside the front-matter block by source
+    // offset. remark parses YAML into different shapes (setext heading, list,
+    // paragraph with blank lines, …), so shape-based removal leaks the raw
+    // front matter into the preview next to the rendered table.
+    const frontMatterEnd = end + 5;
+    root.children = (root.children ?? []).filter(
+      (node: any) => (node.position?.start?.offset ?? -1) >= frontMatterEnd,
+    );
+
+    if (render !== 'table') return;
+    const rows = yaml
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (!rows.length) return;
+
+    const cells = rows
+      .filter((row) => row.includes(':'))
+      .map((row) => {
+        const colon = row.indexOf(':');
+        if (colon === -1) return { key: row, value: '' };
+        return { key: row.slice(0, colon).trim(), value: row.slice(colon + 1).trim() };
+      });
+
+    const tableHtml =
+      `<table class="front-matter-table"><tbody>` +
+      cells
+        .map(
+          ({ key, value }) => `<tr><th>${escapeHtml(key)}</th><td>${escapeHtml(value)}</td></tr>`,
+        )
+        .join('') +
+      `</tbody></table>`;
+
+    root.children.unshift({ type: 'html', value: tableHtml });
+  };
+}
+
+// ── Remark plugin: convert ==text== spans into <mark> ──
+const MARK_PATTERN = /==([^=\n]+?)==/g;
+
+export function remarkHighlight() {
+  return (tree: any) => {
+    visit(tree, 'text', (node: any, index: number | undefined, parent: any) => {
+      if (!parent || !node.value?.includes('==')) return;
+      if (parent.type === 'inlineCode' || parent.type === 'code') return;
+      const parts: any[] = [];
+      let last = 0;
+      const matches = [...node.value.matchAll(MARK_PATTERN)];
+      for (const match of matches) {
+        if (match.index > last) {
+          parts.push({ type: 'text', value: node.value.slice(last, match.index) });
+        }
+        parts.push({
+          type: 'html',
+          value: `<mark>${escapeHtml(match[1])}</mark>`,
+        });
+        last = match.index + match[0].length;
+      }
+      if (last < node.value.length) parts.push({ type: 'text', value: node.value.slice(last) });
+      if (parts.length && index != null && parent.children) {
+        parent.children.splice(index, 1, ...parts);
+      }
+    });
+  };
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 // ── Rehype plugin: convert data-summary → <summary> in <details> ──
 export function rehypeDetailsHeading() {
   return (tree: any) => {
@@ -152,20 +256,24 @@ export function getPrettyCodeOptions(codeTheme: string): PrettyCodeOptions {
 
 // ── Build the shared remark→rehype pipeline ──
 export function buildMarkdownPipeline(options: MarkdownPipelineOptions = {}) {
-  const { sourceMap = true, codeTheme = 'github-light' } = options;
+  const { sourceMap = true, codeTheme = 'github-light', interactiveTasks = false } = options;
   const sourceNodes: SourceNode[] = [];
 
   const sourceMapPlugins: PluggableList = sourceMap ? [[remarkSourceMap, sourceNodes]] : [];
+  const interactivePlugins: PluggableList = interactiveTasks ? [[rehypeInteractiveTasks, {}]] : [];
 
   return {
     pipeline: unified()
       .use(remarkParse)
       .use(remarkDirective)
       .use(remarkDirectiveHandler)
+      .use(remarkFrontMatter)
       .use(remarkCodeLabel)
       .use(sourceMapPlugins)
       .use(remarkGfm)
       .use(remarkMath)
+      .use(remarkEmoji)
+      .use(remarkHighlight)
       .use(remarkRehype, { allowDangerousHtml: true })
       .use(rehypeCaptureCodeMeta)
       .use(rehypeRaw)
@@ -183,8 +291,12 @@ export function buildMarkdownPipeline(options: MarkdownPipelineOptions = {}) {
       .use(rehypeAutolinkHeadings, {
         behavior: 'prepend',
         properties: { className: ['heading-anchor'] },
-        content: { type: 'text', value: '#' },
+        content: (node: any) => ({
+          type: 'text',
+          value: '#'.repeat(headingDepthFromTag(node.tagName)),
+        }),
       })
+      .use(interactivePlugins)
       .use(rehypeStringify),
     sourceNodes,
   };

@@ -45,6 +45,17 @@ async function loadOptions(noCache = false) {
   categoryOptions.value = toSelectOptions(categories);
 }
 
+async function beforeSave(content: string) {
+  await loadOptions(true);
+  const hasFrontMatter = content.startsWith('---') && /^---\n[\s\S]*\n---(\n|$)/.test(content);
+  if (content.trim() && !hasFrontMatter) {
+    window.alert(
+      '文章缺少 front-matter（---\ntitle: 标题\n---）\n博客系统需要 front-matter 才能保存文章。',
+    );
+    throw new Error('missing front matter');
+  }
+}
+
 async function loadPost() {
   if (!isEdit.value) return;
   const response = await http.get<ApiResponse<BlogPostDetailVO>>(`/posts/${slug.value}`);
@@ -121,9 +132,10 @@ onMounted(async () => {
       :initial-meta="draft.meta"
       :help-href="'/posts/guides-markdown-editor'"
       :auto-restore="route.query.restoreDraft === '1'"
+      :save-mode="'dialog'"
       :editor-theme="editorTheme"
       :preview-theme="previewTheme"
-      :on-before-save="() => loadOptions(true)"
+      :on-before-save="beforeSave"
       @save="save"
       @cancel="router.push('/dashboard')"
     />

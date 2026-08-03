@@ -1,8 +1,19 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import {
+  ref,
+  watch,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+  h,
+  defineComponent,
+} from 'vue';
+import type { PropType, Component, VNode } from 'vue';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import { visit } from 'unist-util-visit';
+import { toString } from 'mdast-util-to-string';
 import { headingId } from '../core/headingId';
 
 interface TocItem {
@@ -11,90 +22,178 @@ interface TocItem {
   level: number;
 }
 
-const props = defineProps<{
-  content: string;
-}>();
+interface TocNode extends TocItem {
+  children: TocNode[];
+}
+
+const props = withDefaults(
+  defineProps<{
+    content: string;
+    scrollRoot?: string;
+    scrollOffset?: number;
+    maxDepth?: number;
+  }>(),
+  {
+    scrollRoot: '',
+    scrollOffset: 16,
+    maxDepth: 6,
+  },
+);
+
+const activeId = defineModel<string>('activeId', { default: '' });
 
 const headings = ref<TocItem[]>([]);
-const activeId = ref('');
-let observer: IntersectionObserver | null = null;
+const tree = computed<TocNode[]>(() => buildTree(headings.value));
+
+let scrollEl: HTMLElement | null = null;
+let rafId = 0;
 
 function extractHeadings(markdown: string): TocItem[] {
-  const tree = unified().use(remarkParse).parse(markdown);
   const items: TocItem[] = [];
-  visit(tree, 'heading', (node: any) => {
-    const text = node.children
-      .filter((c: any) => c.type === 'text')
-      .map((c: any) => c.value)
-      .join('');
-    const id = headingId({ text });
-    items.push({ id, text, level: node.depth });
+  if (!markdown) return items;
+  const ast = unified().use(remarkParse).parse(markdown);
+  visit(ast, 'heading', (node: any) => {
+    if (node.depth > props.maxDepth) return;
+    const text = toString(node);
+    if (!text) return;
+    items.push({ id: headingId({ text }), text, level: node.depth });
   });
   return items;
 }
 
-function handleClick(e: MouseEvent, h: TocItem) {
-  e.preventDefault();
-  const el = document.getElementById(h.id);
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+function buildTree(items: TocItem[]): TocNode[] {
+  const roots: TocNode[] = [];
+  const stack: TocNode[] = [];
+  for (const item of items) {
+    const node: TocNode = { ...item, children: [] };
+    while (stack.length && stack[stack.length - 1].level >= node.level) stack.pop();
+    if (stack.length) stack[stack.length - 1].children.push(node);
+    else roots.push(node);
+    stack.push(node);
+  }
+  return roots;
+}
+
+function getScrollContainer(): HTMLElement | null {
+  if (props.scrollRoot) return document.querySelector<HTMLElement>(props.scrollRoot);
+  return (document.scrollingElement as HTMLElement) || null;
+}
+
+function activeFromScroll(): string {
+  let active = '';
+  const offset = props.scrollOffset;
+  for (const h of headings.value) {
+    const el = document.getElementById(h.id);
+    if (!el) continue;
+    const top = el.getBoundingClientRect().top;
+    const rootTop = scrollEl ? scrollEl.getBoundingClientRect().top : 0;
+    if (top - rootTop - offset <= 0) active = h.id;
+    else break;
+  }
+  return active;
+}
+
+function onScroll() {
+  if (rafId) return;
+  rafId = requestAnimationFrame(() => {
+    rafId = 0;
+    const id = activeFromScroll();
+    if (id && id !== activeId.value) activeId.value = id;
+  });
+}
+
+function attachScroll() {
+  detachScroll();
+  scrollEl = getScrollContainer();
+  const target = scrollEl ?? window;
+  target.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
+
+function detachScroll() {
+  const target = scrollEl ?? window;
+  target.removeEventListener('scroll', onScroll);
+  scrollEl = null;
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = 0;
+}
+
+function scrollToHeading(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (scrollEl) {
+    const containerTop = scrollEl.getBoundingClientRect().top;
+    const top =
+      el.getBoundingClientRect().top - containerTop + scrollEl.scrollTop - props.scrollOffset;
+    scrollEl.scrollTo({ top, behavior: 'smooth' });
+  } else {
+    const top = el.getBoundingClientRect().top + window.scrollY - props.scrollOffset;
+    window.scrollTo({ top, behavior: 'smooth' });
   }
 }
 
-function setupObserver() {
-  observer?.disconnect();
-  observer = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          activeId.value = entry.target.id;
-        }
-      }
-    },
-    { root: document.querySelector('.doc-body'), rootMargin: '0px 0px -80% 0px', threshold: 0 },
-  );
-  for (const h of headings.value) {
-    const el = document.getElementById(h.id);
-    if (el) observer!.observe(el);
-  }
+function onClick(e: Event, id: string) {
+  e.preventDefault();
+  activeId.value = id;
+  scrollToHeading(id);
 }
 
 watch(
   () => props.content,
   (md) => {
-    if (md) {
-      headings.value = extractHeadings(md);
-      requestAnimationFrame(setupObserver);
-    } else {
-      headings.value = [];
-    }
+    activeId.value = '';
+    headings.value = extractHeadings(md);
+    nextTick(attachScroll);
   },
   { immediate: true },
 );
 
 onMounted(() => {
-  if (props.content) {
-    headings.value = extractHeadings(props.content);
-    requestAnimationFrame(setupObserver);
-  }
+  if (!headings.value.length) headings.value = extractHeadings(props.content);
+  nextTick(attachScroll);
 });
 
-onBeforeUnmount(() => {
-  observer?.disconnect();
+onBeforeUnmount(detachScroll);
+
+const TocList: Component = defineComponent({
+  name: 'TocList',
+  props: {
+    nodes: { type: Array as PropType<TocNode[]>, required: true },
+  },
+  setup(listProps): () => VNode {
+    return (): VNode =>
+      h(
+        'ul',
+        { class: 'toc-list' },
+        listProps.nodes.map((node) =>
+          h(
+            'li',
+            {
+              class: [
+                'toc-item',
+                `toc-level-${node.level}`,
+                { active: activeId.value === node.id },
+              ],
+              key: node.id,
+            },
+            [
+              h(
+                'a',
+                { href: `#${node.id}`, onClick: (e: Event) => onClick(e, node.id) },
+                node.text,
+              ),
+              node.children.length ? h(TocList, { nodes: node.children }) : null,
+            ],
+          ),
+        ),
+      );
+  },
 });
 </script>
 
 <template>
-  <nav v-if="headings.length" class="toc-tree">
-    <ul>
-      <li
-        v-for="h in headings"
-        :key="h.id"
-        :class="['toc-item', `toc-level-${h.level}`, { active: activeId === h.id }]"
-      >
-        <a :href="`#${h.id}`" @click="handleClick($event, h)">{{ h.text }}</a>
-      </li>
-    </ul>
+  <nav v-if="tree.length" class="toc-tree" :data-me-active-id="activeId">
+    <TocList :nodes="tree" />
   </nav>
 </template>
 
@@ -104,10 +203,20 @@ onBeforeUnmount(() => {
   line-height: 1.6;
 }
 
-.toc-tree ul {
+.toc-list {
   list-style: none;
   padding: 0;
   margin: 0;
+}
+
+.toc-children,
+.toc-list ul {
+  list-style: none;
+  margin: 0;
+}
+
+.toc-list ul {
+  padding-left: 14px;
 }
 
 .toc-item a {
@@ -115,7 +224,7 @@ onBeforeUnmount(() => {
   padding: 3px 0 3px 12px;
   color: var(--me-text-secondary);
   text-decoration: none;
-  transition: color 0.15s;
+  transition: color 0.15s, border-color 0.15s;
   border-left: 2px solid transparent;
 }
 
@@ -123,14 +232,15 @@ onBeforeUnmount(() => {
   color: var(--me-text);
 }
 
-.toc-item.active a {
+.toc-item.active > a {
   color: var(--me-primary);
   border-left-color: var(--me-primary);
 }
 
-.toc-level-2 a { padding-left: 12px; }
-.toc-level-3 a { padding-left: 24px; }
-.toc-level-4 a { padding-left: 36px; }
-.toc-level-5 a { padding-left: 48px; }
-.toc-level-6 a { padding-left: 60px; }
+.toc-level-1 a { padding-left: 8px; }
+.toc-level-2 a { padding-left: 8px; }
+.toc-level-3 a { padding-left: 16px; }
+.toc-level-4 a { padding-left: 24px; }
+.toc-level-5 a { padding-left: 32px; }
+.toc-level-6 a { padding-left: 40px; }
 </style>

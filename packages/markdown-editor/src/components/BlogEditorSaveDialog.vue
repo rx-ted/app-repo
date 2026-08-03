@@ -21,10 +21,12 @@ const props = withDefaults(
     categoryOptions: { label: string; value: number }[];
     locale?: Locale;
     messages?: Partial<MessageSchema>;
+    to?: string | HTMLElement;
   }>(),
   {
     locale: 'zh-CN',
     messages: () => ({}),
+    to: undefined,
   },
 );
 
@@ -145,6 +147,7 @@ defineExpose({ open });
     v-model:show="visible"
     preset="card"
     :title="t('saveArticle')"
+    :to="props.to"
     style="width:50vw;max-width:720px;min-width:400px"
   >
     <div class="field">

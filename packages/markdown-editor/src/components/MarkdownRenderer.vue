@@ -3,6 +3,7 @@ import { ref, watch, onMounted, nextTick, computed } from 'vue';
 import { renderMarkdown } from '../core/markdown';
 import type { SourceNode } from '../core/sourcemap';
 import { applyPreviewTheme, getPreviewTheme } from '../core/themes';
+import { isTaskChecked, toggleTask } from '../core/tasks';
 
 import 'katex/dist/katex.min.css';
 
@@ -12,11 +13,13 @@ const props = withDefaults(
     theme?: string;
     codeTheme?: string;
     interactiveTasks?: boolean;
+    headingInsert?: boolean;
   }>(),
   {
     theme: 'github-light',
     codeTheme: undefined,
     interactiveTasks: false,
+    headingInsert: false,
   },
 );
 
@@ -25,7 +28,11 @@ export interface ReadyPayload {
   rootEl: HTMLElement;
 }
 
-const emit = defineEmits<(e: 'ready', payload: ReadyPayload) => void>();
+const emit = defineEmits<{
+  (e: 'ready', payload: ReadyPayload): void;
+  (e: 'insertHeading', marker: string): void;
+  (e: 'update:content', content: string): void;
+}>();
 
 const html = ref('');
 const ready = ref(false);
@@ -38,7 +45,10 @@ const codeTheme = computed(() => props.codeTheme ?? previewTheme.value.codeTheme
 
 async function render() {
   try {
-    const result = await renderMarkdown(props.content, { codeTheme: codeTheme.value });
+    const result = await renderMarkdown(props.content, {
+      codeTheme: codeTheme.value,
+      interactiveTasks: props.interactiveTasks,
+    });
     html.value = result.html;
     sourceNodes.length = 0;
     sourceNodes.push(...result.nodes);
@@ -59,7 +69,7 @@ watch([() => props.content, () => props.theme, () => props.codeTheme], () => {
 
 // ── Client-side interactions ──
 function addCodeInteractions() {
-  const root = document.querySelector('.markdown-body');
+  const root = markdownBodyRef.value;
   if (!root) return;
 
   root.querySelectorAll('pre[data-theme]').forEach((pre) => {
@@ -95,7 +105,7 @@ function addCodeInteractions() {
 }
 
 async function initMermaid() {
-  const root = document.querySelector('.markdown-body');
+  const root = markdownBodyRef.value;
   if (!root) return;
   const els: HTMLElement[] = [...root.querySelectorAll<HTMLElement>(':scope > .mermaid')];
   if (!els.length) return;
@@ -104,6 +114,8 @@ async function initMermaid() {
     mermaid.initialize({
       startOnLoad: false,
       theme: previewTheme.value.mermaidTheme,
+      fontFamily:
+        "'trebuchet ms', verdana, arial, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Hiragino Sans GB', sans-serif",
     });
     await mermaid.run({ nodes: els });
   } catch (e) {
@@ -122,31 +134,48 @@ watch(html, async () => {
 });
 
 onMounted(() => {
-  const root = document.querySelector('.markdown-body-root');
+  const root = rootRef.value;
   if (!root) return;
 
   root.addEventListener('click', (e: Event) => {
     const target = e.target as HTMLElement;
 
-    // Heading anchor → copy permalink + update address bar hash
+    // Heading marker → insert into the editor (when embedded) or copy to clipboard
     const headingAnchor = target.closest('a.heading-anchor') as HTMLElement | null;
     if (headingAnchor) {
-      const href = headingAnchor.getAttribute('href');
-      if (href?.startsWith('#')) {
-        const url = new URL(href, window.location.href).href;
-        history.pushState(null, '', href);
-        navigator.clipboard
-          .writeText(url)
-          .then(() => {
-            const original = headingAnchor.textContent;
-            headingAnchor.textContent = '✓';
-            setTimeout(() => {
-              headingAnchor.textContent = original;
-            }, 1500);
-          })
-          .catch(() => {});
-      }
       e.preventDefault();
+      const marker = headingAnchor.textContent?.trim() ?? '';
+      if (!marker) return;
+      const original = headingAnchor.textContent;
+      headingAnchor.textContent = '✓';
+      setTimeout(() => {
+        headingAnchor.textContent = original;
+      }, 1500);
+      if (props.headingInsert) {
+        emit('insertHeading', marker);
+      } else {
+        navigator.clipboard.writeText(`${marker} `).catch(() => {});
+      }
+      return;
+    }
+
+    // Interactive task checkbox → toggle the source markdown.
+    // Note: in a `click` handler the browser has already flipped `input.checked`,
+    // so the next state must be derived from the source marker, not the DOM.
+    const checkbox = target.closest('input[type="checkbox"]') as HTMLInputElement | null;
+    if (checkbox) {
+      if (!props.interactiveTasks) return;
+      e.preventDefault();
+      const li = checkbox.closest('li[data-node]') as HTMLElement | null;
+      const id = li ? Number(li.getAttribute('data-node')) : NaN;
+      const node = sourceNodes.find((n) => n.id === id);
+      if (!Number.isNaN(id) && node) {
+        const current = isTaskChecked(props.content, node.startOffset);
+        if (current === null) return;
+        const next = !current;
+        checkbox.checked = next;
+        emit('update:content', toggleTask(props.content, node.startOffset, next));
+      }
       return;
     }
 
@@ -169,7 +198,7 @@ onMounted(() => {
     // Line number toggle (global)
     const lnBtn = target.closest('.code-ln-btn') as HTMLElement | null;
     if (lnBtn) {
-      const rootEl = document.querySelector('.markdown-body');
+      const rootEl = markdownBodyRef.value;
       if (!rootEl) return;
       const currentPre = lnBtn.closest('pre') as HTMLElement | null;
       const hidden = currentPre ? currentPre.hasAttribute('data-ln-hidden') : false;
@@ -232,6 +261,7 @@ onMounted(() => {
 <style scoped>
 .markdown-body-root {
   position: relative;
+  background: var(--me-bg, transparent);
 }
 
 .markdown-loading {
@@ -247,7 +277,7 @@ onMounted(() => {
   word-wrap: break-word;
 }
 
-// ── Headings ──
+/* ── Headings ── */
 .markdown-body :deep(h1),
 .markdown-body :deep(h2),
 .markdown-body :deep(h3),
@@ -268,7 +298,7 @@ onMounted(() => {
 .markdown-body :deep(h5) { font-size: 1em; }
 .markdown-body :deep(h6) { font-size: 0.9em; color: var(--me-text-secondary); }
 
-// ── Heading anchors ──
+/* ── Heading anchors ── */
 .markdown-body :deep(.heading-anchor) {
   color: var(--me-primary);
   text-decoration: none;
@@ -288,13 +318,13 @@ onMounted(() => {
   opacity: 1;
 }
 
-// ── Paragraphs & Lists ──
+/* ── Paragraphs & Lists ── */
 .markdown-body :deep(p) { margin: 0 0 1em; }
 .markdown-body :deep(ul), .markdown-body :deep(ol) { margin: 0 0 1em; padding-left: 2em; }
 .markdown-body :deep(li) { margin: 0.25em 0; }
 .markdown-body :deep(li > p) { margin: 0.25em 0; }
 
-// ── Task list: remove bullet from items with checkbox ──
+/* ── Task list: remove bullet from items with checkbox ── */
 .markdown-body :deep(li:has(input[type="checkbox"])) {
   list-style: none;
   margin-left: -1.5em;
@@ -302,7 +332,12 @@ onMounted(() => {
 
 .markdown-body :deep(input[type='checkbox']) { margin-right: 6px; }
 
-// ── Inline code ──
+.markdown-body :deep(input[type='checkbox'].task-checkbox) {
+  cursor: pointer;
+  accent-color: var(--me-primary);
+}
+
+/* ── Inline code ── */
 .markdown-body :deep(code:not(figure[data-rehype-pretty-code-figure] code)) {
   background-color: var(--me-bg-code, #f0f0f0);
   color: var(--me-text);
@@ -313,7 +348,35 @@ onMounted(() => {
   border: 1px solid var(--me-border, #e0e0e0);
 }
 
-// ── Code figure wrapper ──
+/* ── ==highlight== marker ── */
+.markdown-body :deep(mark) {
+  background-color: var(--me-bg-warning, #fff8c5);
+  color: var(--me-text, #1f2328);
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+}
+
+/* ── Front matter metadata table ── */
+.markdown-body :deep(table.front-matter-table) {
+  width: auto;
+  min-width: 40%;
+  max-width: 100%;
+  font-size: 14px;
+  margin-bottom: 1.5em;
+}
+
+.markdown-body :deep(table.front-matter-table th) {
+  width: 34%;
+  background-color: var(--me-bg-soft);
+  white-space: nowrap;
+}
+
+.markdown-body :deep(table.front-matter-table th),
+.markdown-body :deep(table.front-matter-table td) {
+  padding: 4px 12px;
+}
+
+/* ── Code figure wrapper ── */
 .markdown-body :deep(figure[data-rehype-pretty-code-figure]) {
   margin: 0 0 1em;
   border-radius: 8px;
@@ -322,9 +385,9 @@ onMounted(() => {
   background: var(--me-bg-code);
 }
 
-// ── Code blocks ──
+/* ── Code blocks ── */
 .markdown-body :deep(pre[data-theme]) {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   margin: 0;
   position: relative;
@@ -342,7 +405,7 @@ onMounted(() => {
   background-color: transparent;
 }
 
-// ── Line numbers ──
+/* ── Line numbers ── */
 .markdown-body :deep(pre[data-theme]) {
   counter-reset: line;
 }
@@ -363,12 +426,12 @@ onMounted(() => {
   user-select: none;
 }
 
-// ── Hide line numbers when toggled off ──
+/* ── Hide line numbers when toggled off ── */
 .markdown-body :deep(pre[data-ln-hidden] [data-line]::before) {
   display: none;
 }
 
-// ── Language badge ──
+/* ── Language badge ── */
 .markdown-body :deep(pre[data-theme][data-language]:not([data-language="plaintext"])::before) {
   content: attr(data-language);
   position: absolute;
@@ -384,7 +447,7 @@ onMounted(() => {
   user-select: none;
 }
 
-// ── Code title (figcaption) ──
+/* ── Code title (figcaption) ── */
 .markdown-body :deep(figcaption[data-rehype-pretty-code-title]) {
   font-size: 13px;
   font-weight: 600;
@@ -394,13 +457,13 @@ onMounted(() => {
   color: var(--me-text-secondary);
 }
 
-// ── Line highlight ──
+/* ── Line highlight ── */
 .markdown-body :deep(pre[data-theme] [data-line][data-highlighted-line]) {
   background-color: var(--me-bg-highlight, rgba(59, 130, 246, 0.15));
   box-shadow: inset 2px 0 0 var(--me-primary);
 }
 
-// ── Diff gutter markers ──
+/* ── Diff gutter markers ── */
 .markdown-body :deep(pre[data-theme] [data-line] .code-diff-mark) {
   display: inline-block;
   width: 1.3em;
@@ -417,7 +480,7 @@ onMounted(() => {
   color: var(--me-danger);
 }
 
-// ── Diff highlight ──
+/* ── Diff highlight ── */
 .markdown-body :deep(pre[data-theme] [data-line][data-diff-add]) {
   background: rgba(34, 197, 94, 0.18);
 }
@@ -426,7 +489,7 @@ onMounted(() => {
   background: rgba(239, 68, 68, 0.18);
 }
 
-// ── Code copy button ──
+/* ── Code copy button ── */
 .markdown-body :deep(.code-copy-btn) {
   position: absolute;
   top: 6px;
@@ -461,7 +524,7 @@ onMounted(() => {
   font-size: 14px;
 }
 
-// ── Line number toggle button ──
+/* ── Line number toggle button ── */
 .markdown-body :deep(.code-ln-btn) {
   position: absolute;
   top: 6px;
@@ -498,7 +561,7 @@ onMounted(() => {
   opacity: 1;
 }
 
-// ── Code fold ──
+/* ── Code fold ── */
 .markdown-body :deep(.code-fold-btn) {
   position: absolute;
   bottom: 6px;
@@ -524,7 +587,7 @@ onMounted(() => {
   -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
 }
 
-// ── Code group tabs ──
+/* ── Code group tabs ── */
 .markdown-body :deep(.code-group) {
   margin: 0 0 1em;
   border-radius: 8px;
@@ -573,7 +636,7 @@ onMounted(() => {
   display: none;
 }
 
-// ── Directives ──
+/* ── Directives ── */
 .markdown-body :deep(.directive) {
   border-radius: 8px;
   padding: 12px 16px;
@@ -627,7 +690,7 @@ onMounted(() => {
   padding: 12px 16px;
 }
 
-// ── Mermaid ──
+/* ── Mermaid ── */
 .markdown-body :deep(.mermaid) {
   margin: 0 0 1em;
   text-align: center;
@@ -638,7 +701,7 @@ onMounted(() => {
   overflow-x: auto;
 }
 
-// ── Blockquotes ──
+/* ── Blockquotes ── */
 .markdown-body :deep(blockquote) {
   border-left: 4px solid var(--me-primary);
   background-color: var(--me-bg-soft);
@@ -650,7 +713,7 @@ onMounted(() => {
 
 .markdown-body :deep(blockquote p:last-child) { margin-bottom: 0; }
 
-// ── Links ──
+/* ── Links ── */
 .markdown-body :deep(a) {
   color: var(--me-link);
   text-decoration: none;
@@ -658,7 +721,7 @@ onMounted(() => {
 
 .markdown-body :deep(a:hover) { text-decoration: underline; }
 
-// ── Images ──
+/* ── Images ── */
 .markdown-body :deep(img) {
   max-width: 100%;
   height: auto;
@@ -667,7 +730,7 @@ onMounted(() => {
   margin: 1em auto;
 }
 
-// ── Tables ──
+/* ── Tables ── */
 .markdown-body :deep(table) {
   width: 100%;
   border-collapse: collapse;
@@ -689,14 +752,14 @@ onMounted(() => {
   background-color: var(--me-bg-soft);
 }
 
-// ── Horizontal rule ──
+/* ── Horizontal rule ── */
 .markdown-body :deep(hr) {
   border: none;
   border-top: 1px solid var(--me-border);
   margin: 2em 0;
 }
 
-// ── KaTeX ──
+/* ── KaTeX ── */
 .markdown-body :deep(.katex) { font-size: 1.05em; }
 
 @media (max-width: 768px) {

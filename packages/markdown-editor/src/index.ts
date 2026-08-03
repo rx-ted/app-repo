@@ -27,21 +27,30 @@ export {
   buildMarkdownPipeline,
   renderMarkdown,
   remarkDirectiveHandler,
+  remarkFrontMatter,
+  remarkHighlight,
   rehypeMermaid,
   rehypeDetailsHeading,
   rehypeCodeData,
+  rehypeInteractiveTasks,
   getPrettyCodeOptions,
   type MarkdownPipelineOptions,
   type MarkdownRenderResult,
 } from './core/markdown';
+export { isTaskChecked, toggleTask } from './core/tasks';
 export {
   PREVIEW_THEMES,
   REQUIRED_PREVIEW_VARS,
   DEFAULT_PREVIEW_THEME,
+  CODE_THEMES,
   EDITOR_THEMES,
+  EDITOR_THEME_VARS,
   getPreviewTheme,
   applyPreviewTheme,
+  getEditorTheme,
+  applyEditorTheme,
   type PreviewThemeConfig,
+  type EditorThemeConfig,
   type EditorTheme,
 } from './core/themes';
 export {
