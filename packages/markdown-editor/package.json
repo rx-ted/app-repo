@@ -1,6 +1,6 @@
 {
   "name": "@rx-ted/packages-markdown-editor",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": false,
   "type": "module",
   "description": "Reusable markdown editor + render pipeline (source-consumed, no build)",
