@@ -1,5 +1,11 @@
 # @rx-ted/packages-core
 
+## 1.0.2
+
+### Patch Changes
+
+- 32b8b81: Accumulate miscellaneous fixes and refinements.
+
 ## 1.0.1
 
 ### Patch Changes

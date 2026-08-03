@@ -1,5 +1,11 @@
 # @rx-ted/packages-markdown-editor
 
+## 0.0.3
+
+### Patch Changes
+
+- 32b8b81: Accumulate markdown editor fixes and refinements.
+
 ## 0.0.2
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @rx-ted/packages-honest
 
+## 1.0.2
+
+### Patch Changes
+
+- 32b8b81: Accumulate miscellaneous fixes and refinements.
+- Updated dependencies [32b8b81]
+  - @rx-ted/packages-core@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes
