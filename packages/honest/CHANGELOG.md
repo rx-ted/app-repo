@@ -1,5 +1,13 @@
 # @rx-ted/packages-honest
 
+## 1.0.3
+
+### Patch Changes
+
+- 312bbb3: Test changeset to verify automated patch version bump.
+- Updated dependencies [312bbb3]
+  - @rx-ted/packages-core@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes

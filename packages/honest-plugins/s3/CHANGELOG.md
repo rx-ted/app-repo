@@ -1,5 +1,15 @@
 # @rx-ted/packages-honest-plugins-s3
 
+## 1.0.2
+
+### Patch Changes
+
+- ecd82a4: Test changeset to verify automated patch version bump.
+- Updated dependencies [312bbb3]
+- Updated dependencies [312bbb3]
+  - @rx-ted/packages-core@1.0.3
+  - @rx-ted/packages-honest@1.0.3
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@rx-ted/packages-honest-plugins-cache",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "Cache plugin for @rx-ted/packages-honest",
   "type": "module",
