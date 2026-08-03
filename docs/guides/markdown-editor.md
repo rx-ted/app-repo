@@ -16,7 +16,7 @@ featured_weight: 0
 
 > 本文整合了原先分散的若干文档：
 >
-> - **Markdown 语法参考**
+> - **Markdown语法参考**
 > - **渲染管线**
 > - **源码映射 SourceMap**
 > - **滚动同步**
