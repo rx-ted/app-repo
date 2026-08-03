@@ -1,5 +1,5 @@
 ---
-"@rx-ted/packages-honest-plugins-cache": patch
+"@rx-ted/packages-honest-plugins": patch
 ---
 
 Test changeset to verify automated patch version bump.
