@@ -1,5 +1,13 @@
 # @rx-ted/web-blog
 
+## 1.0.3
+
+### Patch Changes
+
+- e4e6aa3: Add taxonomy enrichment (tags/categories with slugs and names) to post list and detail endpoints, redesign blog pages with new components, fix DocLayout sticky sidebar, add md-editor-v3 global theme overrides matching app design tokens
+- Updated dependencies [869ff07]
+  - @rx-ted/packages-markdown-editor@0.0.2
+
 ## 1.0.2
 
 ### Patch Changes
