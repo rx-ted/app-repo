@@ -100,19 +100,20 @@ jobs:
       - name: Publish to npm (OIDC)
         if: steps.changesets.outputs.pullRequestNumber == ''
         run: |
-          if [ ! -s /tmp/new-tags.txt ]; then
-            echo "No new packages to publish"
-            exit 0
-          fi
+          pnpm list -r --json --depth -1 > /tmp/workspace-pkgs.json
           cat /tmp/workspace-pkgs.json | node -e "
             const pkgs = JSON.parse(require('fs').readFileSync('/tmp/workspace-pkgs.json','utf8'));
-            const tags = require('fs').readFileSync('/tmp/new-tags.txt','utf8').trim().split('\n').filter(Boolean);
-            const tagMap = {};
-            tags.forEach(t => { tagMap[t.split('@').slice(0,-1).join('@')] = t; });
+            const { execSync } = require('child_process');
             pkgs.forEach(p => {
-              if (!tagMap[p.name]) return;
-              console.log('Publishing ' + p.name + '@' + p.version + ' from ' + p.path);
-              const { execSync } = require('child_process');
+              if (p.private) return;
+              const tag = p.name + '@' + p.version;
+              try { execSync('git rev-parse ' + tag + '^{commit}', { stdio: 'pipe' }); }
+              catch(e) { console.log('Skip ' + tag + ' (no tag at HEAD)'); return; }
+              let published = false;
+              try { published = execSync('npm view ' + p.name + '@' + p.version + ' version', { stdio: 'pipe' }).toString().trim() === p.version; }
+              catch(e) {}
+              if (published) { console.log('Skip ' + tag + ' (already on npm)'); return; }
+              console.log('Publishing ' + tag + ' from ' + p.path);
               execSync('npm publish --access public --provenance', { cwd: p.path, stdio: 'inherit' });
             });
           "
