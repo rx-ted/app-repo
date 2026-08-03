@@ -1,5 +1,23 @@
 # @rx-ted/packages-honest-plugins
 
+## 1.0.4
+
+### Patch Changes
+
+- 312bbb3: Test changeset to verify automated patch version bump.
+- Updated dependencies [ecd82a4]
+- Updated dependencies [ecd82a4]
+- Updated dependencies [ecd82a4]
+- Updated dependencies [ecd82a4]
+- Updated dependencies [ecd82a4]
+- Updated dependencies [ecd82a4]
+  - @rx-ted/packages-honest-plugins-api-doc@1.0.2
+  - @rx-ted/packages-honest-plugins-cache@1.0.2
+  - @rx-ted/packages-honest-plugins-counter@1.0.2
+  - @rx-ted/packages-honest-plugins-db@1.0.2
+  - @rx-ted/packages-honest-plugins-mail@1.0.2
+  - @rx-ted/packages-honest-plugins-s3@1.0.2
+
 ## 1.0.3
 
 ### Patch Changes

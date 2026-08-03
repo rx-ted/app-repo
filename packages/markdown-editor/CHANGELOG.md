@@ -1,5 +1,11 @@
 # @rx-ted/packages-markdown-editor
 
+## 0.0.4
+
+### Patch Changes
+
+- 312bbb3: Test changeset to verify automated patch version bump.
+
 ## 0.0.3
 
 ### Patch Changes

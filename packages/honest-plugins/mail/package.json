@@ -1,6 +1,6 @@
 {
   "name": "@rx-ted/packages-honest-plugins-mail",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "Mail plugin for @rx-ted/packages-honest",
   "type": "module",

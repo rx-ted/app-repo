@@ -1,6 +1,6 @@
 {
   "name": "@rx-ted/packages-core",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": false,
   "type": "module",
   "description": "Unified runtime context, environment config, and logging for multi-platform TypeScript.",
