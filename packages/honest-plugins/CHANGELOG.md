@@ -1,5 +1,11 @@
 # @rx-ted/packages-honest-plugins
 
+## 1.0.3
+
+### Patch Changes
+
+- 32b8b81: Accumulate miscellaneous fixes and refinements.
+
 ## 1.0.2
 
 ### Patch Changes
