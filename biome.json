@@ -70,7 +70,8 @@
       "!**/*.d.ts",
       "!**/logs",
       "!**/test-results",
-      "!apps/platform-api/specs/openapi.json"
+      "!apps/platform-api/specs/openapi.json",
+      "!packages/markdown-editor/src/components/blog-editor/editor.css"
     ],
     "ignoreUnknown": true
   },
