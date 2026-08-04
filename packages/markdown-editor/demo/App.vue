@@ -23,19 +23,6 @@ watch(editorTheme, (v) => {
   previewTheme.value = v === 'dark' ? 'github-dark' : 'github-light';
 });
 
-const tagOptions = [
-  { label: 'Engineering', value: 1 },
-  { label: 'Vue', value: 2 },
-  { label: 'Markdown', value: 3 },
-  { label: 'Notes', value: 4 },
-];
-
-const categoryOptions = [
-  { label: 'Post', value: 1 },
-  { label: 'Draft', value: 2 },
-  { label: 'Docs', value: 3 },
-];
-
 function uploadImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -46,7 +33,15 @@ function uploadImage(file: File): Promise<string> {
 }
 
 function onSave(payload: EditorSavePayload) {
-  lastSave.value = JSON.stringify(payload);
+  const filename = `${payload.title.trim() || 'untitled'}.md`.replace(/[/\\:*?"<>|]/g, '-');
+  const blob = new Blob([content.value], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  lastSave.value = `saved ${filename}`;
 }
 </script>
 
@@ -89,8 +84,6 @@ function onSave(payload: EditorSavePayload) {
       <MarkdownEditor
         v-model="content"
         :is-edit="true"
-        :tag-options="tagOptions"
-        :category-options="categoryOptions"
         :editor-theme="editorTheme"
         :preview-theme="previewTheme"
         :code-theme="codeTheme"

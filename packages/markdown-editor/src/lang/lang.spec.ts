@@ -7,12 +7,12 @@ describe('i18n', () => {
   it('defaults to zh-CN', () => {
     const { locale, t } = createI18n();
     expect(locale).toBe('zh-CN');
-    expect(t('saveArticle')).toBe('保存文章');
+    expect(t('saveArticle')).toBe('保存到本地');
   });
 
   it('switches to en', () => {
     const { t } = createI18n({ locale: 'en' });
-    expect(t('saveArticle')).toBe('Save Article');
+    expect(t('saveArticle')).toBe('Save Locally');
   });
 
   it('falls back to zh-CN for keys missing in a registered locale', () => {

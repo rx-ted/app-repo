@@ -76,7 +76,7 @@ describe('package entry', () => {
 
   it('exposes i18n', () => {
     const { t } = createI18n();
-    expect(t('saveArticle')).toBe('保存文章');
+    expect(t('saveArticle')).toBe('保存到本地');
     registerLocale('xx' as never, { saveArticle: 'X' });
     expect(createI18n({ locale: 'xx' as never }).t('saveArticle')).toBe('X');
   });

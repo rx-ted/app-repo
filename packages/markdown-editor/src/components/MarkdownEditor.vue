@@ -468,8 +468,6 @@ defineExpose({
     <MarkdownEditorSaveDialog
       :key="localeRef"
       ref="dialogRef"
-      :tag-options="props.tagOptions"
-      :category-options="props.categoryOptions"
       :locale="localeRef"
       :messages="props.messages"
       :to="overlayTarget"

@@ -6,8 +6,9 @@ export interface MarkdownEditorProps {
   modelValue: string;
   loading?: boolean;
   isEdit?: boolean;
-  tagOptions: { label: string; value: number }[];
-  categoryOptions: { label: string; value: number }[];
+  /** Kept for backwards compatibility; the title-only save dialog no longer uses them. */
+  tagOptions?: { label: string; value: number }[];
+  categoryOptions?: { label: string; value: number }[];
   initialMeta?: Partial<EditorSavePayload>;
   helpHref?: string;
   draftStorageKey?: string;
