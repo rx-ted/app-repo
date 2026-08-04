@@ -1,3 +1,14 @@
+/* The component root is wrapped by naive-ui's NConfigProvider, which renders a
+   block-level div. As a plain block it would break the flex height chain between
+   the consumer's flex container and the editor grid, letting the grid grow to
+   its content and killing internal scrolling. Keep it flexing like the grid. */
+.n-config-provider {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .editor-grid {
   display: flex;
   flex-direction: column;
