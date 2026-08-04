@@ -88,35 +88,3 @@ body {
   display: flex;
   flex-direction: column;
 }
-
-.demo-compare {
-  flex-shrink: 0;
-  border-top: 2px solid #d1d5db;
-  background: #fff;
-}
-
-.demo-compare[open] {
-  max-height: 45%;
-  overflow: auto;
-}
-
-.demo-compare summary {
-  padding: 8px 16px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  color: #4b5563;
-  user-select: none;
-}
-
-.demo-compare .compare-body {
-  padding: 12px 16px 24px;
-}
-
-.demo-compare h2 {
-  font-size: 12px;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 4px 0 8px;
-}

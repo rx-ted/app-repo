@@ -3,7 +3,6 @@ import { computed, ref, watch } from 'vue';
 import { Icon } from '@iconify/vue';
 import {
   MarkdownEditor,
-  MarkdownRenderer,
   PREVIEW_THEMES,
   EDITOR_THEMES,
   type EditorSavePayload,
@@ -14,12 +13,7 @@ const editorTheme = ref<'light' | 'dark'>('light');
 const previewTheme = ref('github-light');
 const codeTheme = ref<string | undefined>(undefined);
 const locale = ref<'zh-CN' | 'en'>('zh-CN');
-const showCompare = ref(true);
 const lastSave = ref('');
-
-const compareTheme = computed(
-  () => PREVIEW_THEMES.find((t) => t.id !== previewTheme.value && !t.dark)?.id ?? 'github-dark',
-);
 
 const previewOptions = computed(() =>
   PREVIEW_THEMES.filter((t) => t.dark === (editorTheme.value === 'dark')),
@@ -87,10 +81,6 @@ function onSave(payload: EditorSavePayload) {
       </select>
     </label>
 
-    <button :data-active="showCompare" type="button" @click="showCompare = !showCompare">
-      Compare
-    </button>
-
     <span class="save-log">last save: {{ lastSave || '—' }}</span>
   </header>
 
@@ -112,20 +102,6 @@ function onSave(payload: EditorSavePayload) {
         @save="onSave"
       />
     </section>
-
-    <details class="demo-compare" :open="showCompare">
-      <summary>MarkdownRenderer (independent render, theme: {{ compareTheme }})</summary>
-      <div class="compare-body">
-        <h2>Same source, rendered directly by MarkdownRenderer</h2>
-        <MarkdownRenderer
-          :content="content"
-          :theme="compareTheme"
-          :code-theme="codeTheme"
-          interactive-tasks
-          heading-insert
-        />
-      </div>
-    </details>
   </main>
 </template>
 
