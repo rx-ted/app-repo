@@ -53,75 +53,12 @@ function extractTitle(markdown: string) {
   return match?.[1]?.trim() ?? '';
 }
 
-function parseFrontmatter(markdown: string): Record<string, string | string[]> {
-  const result: Record<string, string | string[]> = {};
-
-  if (!markdown.startsWith('---\n')) return result;
-
-  const endIndex = markdown.indexOf('\n---\n', 4);
-  if (endIndex === -1) return result;
-
-  const frontmatter = markdown.slice(4, endIndex);
-  const lines = frontmatter.split('\n');
-
-  for (const line of lines) {
-    const colonIndex = line.indexOf(':');
-    if (colonIndex === -1) continue;
-
-    const key = line.slice(0, colonIndex).trim();
-    let value: string = line.slice(colonIndex + 1).trim();
-
-    if (value.startsWith('"') && value.endsWith('"')) {
-      value = value.slice(1, -1);
-    }
-
-    if (key === 'tags' || key === 'tag') {
-      const tags = value
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean);
-      result[key] = tags;
-    } else {
-      result[key] = value;
-    }
-  }
-
-  return result;
-}
-
 function open(markdown: string, initial?: Partial<EditorSavePayload>) {
-  const fm = parseFrontmatter(markdown);
-
-  const extractedTitle = extractTitle(markdown);
-  const fmTitle = typeof fm.title === 'string' ? fm.title : '';
-  form.title = fmTitle || extractedTitle || initial?.title || '';
-
-  form.cover_image = (typeof fm.cover === 'string' ? fm.cover : '') || initial?.cover_image || '';
-
-  if (fm.tag || fm.tags) {
-    const tagNames = (fm.tags || fm.tag) as string[];
-    const matched = props.tagOptions
-      .filter((opt) => tagNames.includes(opt.label))
-      .map((opt) => opt.value);
-    form.tag_ids = matched;
-  } else {
-    form.tag_ids = initial?.tag_ids ? [...initial.tag_ids] : [];
-  }
-
-  if (fm.category) {
-    const catName = fm.category as string;
-    const matched = props.categoryOptions.find((opt) => opt.label === catName);
-    form.category_id = matched?.value ?? null;
-  } else {
-    form.category_id = initial?.category_ids?.[0] ?? null;
-  }
-
-  if (fm.status === 'draft' || fm.status === 'published' || fm.status === 'archived') {
-    form.status = fm.status;
-  } else {
-    form.status = initial?.status ?? 'draft';
-  }
-
+  form.title = extractTitle(markdown) || initial?.title || '';
+  form.cover_image = initial?.cover_image ?? '';
+  form.tag_ids = initial?.tag_ids ? [...initial.tag_ids] : [];
+  form.category_id = initial?.category_ids?.[0] ?? null;
+  form.status = initial?.status ?? 'draft';
   form.is_pinned = initial?.is_pinned ?? false;
   form.featured_weight = initial?.featured_weight ?? 0;
   form.visibility = initial?.visibility ?? 'public';

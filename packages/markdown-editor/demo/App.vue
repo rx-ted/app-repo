@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Icon } from '@iconify/vue';
 import {
-  BlogEditor,
+  MarkdownEditor,
   MarkdownRenderer,
   PREVIEW_THEMES,
   EDITOR_THEMES,
@@ -20,6 +20,14 @@ const lastSave = ref('');
 const compareTheme = computed(
   () => PREVIEW_THEMES.find((t) => t.id !== previewTheme.value && !t.dark)?.id ?? 'github-dark',
 );
+
+const previewOptions = computed(() =>
+  PREVIEW_THEMES.filter((t) => t.dark === (editorTheme.value === 'dark')),
+);
+
+watch(editorTheme, (v) => {
+  previewTheme.value = v === 'dark' ? 'github-dark' : 'github-light';
+});
 
 const tagOptions = [
   { label: 'Engineering', value: 1 },
@@ -65,7 +73,7 @@ function onSave(payload: EditorSavePayload) {
     <label>
       Preview theme
       <select v-model="previewTheme">
-        <option v-for="t in PREVIEW_THEMES" :key="t.id" :value="t.id">
+        <option v-for="t in previewOptions" :key="t.id" :value="t.id">
           {{ t.label }}{{ t.dark ? ' (dark)' : '' }}
         </option>
       </select>
@@ -88,7 +96,7 @@ function onSave(payload: EditorSavePayload) {
 
   <main class="demo-main">
     <section class="demo-editor">
-      <BlogEditor
+      <MarkdownEditor
         v-model="content"
         :is-edit="true"
         :tag-options="tagOptions"

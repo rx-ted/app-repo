@@ -930,7 +930,7 @@ SyncEngine 永远等待 `DOM Ready`，Mermaid/Tabs 等异步渲染不影响同�
 | `src/utils/syncEngine.ts`      | `SyncEngine`, `SyncReason`                   |
 | `src/utils/remarkSourceMap.ts` | Remark 插件（生成 SourceNode + data-node）   |
 | `MarkdownRenderer.vue`         | 渲染管道，emit `ready`                       |
-| `BlogEditor.vue`               | 消费方，组合所有模块                         |
+| `MarkdownEditor.vue`            | 消费方，组合所有模块                         |
 
 ### 设计原则
 

@@ -1,13 +1,23 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, toRef, watch } from 'vue';
-import { NButton, NSpace, NIcon, NDropdown, NPopover, NModal, NInput } from 'naive-ui';
+import {
+  darkTheme,
+  NButton,
+  NSpace,
+  NIcon,
+  NDropdown,
+  NPopover,
+  NModal,
+  NInput,
+  NConfigProvider,
+} from 'naive-ui';
 import { Icon } from '@iconify/vue';
 import MarkdownRenderer from './MarkdownRenderer.vue';
-import BlogEditorSaveDialog, { type EditorSavePayload } from './BlogEditorSaveDialog.vue';
+import MarkdownEditorSaveDialog, { type EditorSavePayload } from './MarkdownEditorSaveDialog.vue';
 import { getPreviewTheme, PREVIEW_THEMES } from '../core/themes';
 import { createI18n } from '../lang';
 import type { Locale } from '../lang';
-import type { BlogEditorProps } from './blog-editor/props';
+import type { MarkdownEditorProps } from './blog-editor/props';
 import { EMOJIS, TABLE_MAX_COLS, TABLE_MAX_ROWS, THEME_SAMPLE } from './blog-editor/constants';
 import { useEditor } from './blog-editor/useEditor';
 import { useSyncToc } from './blog-editor/useSyncToc';
@@ -22,7 +32,7 @@ import { useImagePicker } from './blog-editor/useImagePicker';
 import { useFrontMatter } from './blog-editor/useFrontMatter';
 import { useSave } from './blog-editor/useSave';
 
-const props = withDefaults(defineProps<BlogEditorProps>(), {
+const props = withDefaults(defineProps<MarkdownEditorProps>(), {
   helpHref: undefined,
   draftStorageKey: 'editor:draft',
   autoRestore: false,
@@ -118,7 +128,7 @@ const frontMatter = useFrontMatter({
   emitValue: editor.emitValue,
 });
 
-const dialogRef = ref<InstanceType<typeof BlogEditorSaveDialog>>();
+const dialogRef = ref<InstanceType<typeof MarkdownEditorSaveDialog>>();
 
 const save = useSave({
   props,
@@ -135,6 +145,10 @@ function openHelp() {
   if (props.helpHref) {
     window.open(props.helpHref, '_blank');
   }
+}
+
+function exportPdf() {
+  window.print();
 }
 
 /* ── Template bindings (flattened from composables) ── */
@@ -208,6 +222,12 @@ const { frontMatterOpen, frontMatterRaw, openFrontMatter, applyFrontMatter, remo
 
 const { requestSave, onKeydown } = save;
 
+// Preview themes offered in the picker always match the editor theme's
+// lightness, so the sample output below stays consistent (no light/dark mix).
+const filteredPreviewThemes = computed(() =>
+  PREVIEW_THEMES.filter((p) => p.dark === (themeDraft.editor === 'dark')),
+);
+
 defineExpose({
   openSave: requestSave,
   requestSave,
@@ -218,12 +238,13 @@ defineExpose({
 </script>
 
 <template>
-  <div
-    ref="editorGridRef"
-    class="editor-grid"
-    :class="{ 'is-window-fullscreen': windowFullscreen }"
-    :data-me-editor-theme="editorThemeRef"
-  >
+  <n-config-provider :theme="editorThemeRef === 'dark' ? darkTheme : null">
+    <div
+      ref="editorGridRef"
+      class="editor-grid"
+      :class="{ 'is-window-fullscreen': windowFullscreen }"
+      :data-me-editor-theme="editorThemeRef"
+    >
     <section class="editor-main">
       <div class="editor-topbar">
         <div>
@@ -362,6 +383,7 @@ defineExpose({
 
           <span class="tb-sep"></span>
           <button class="tb-btn" :title="t('editor.save')" @click="requestSave"><Icon icon="mdi:content-save-outline" width="16" /></button>
+          <button class="tb-btn" :title="t('editor.toolbar.exportPdf')" @click="exportPdf"><Icon icon="mdi:file-pdf-box" width="16" /></button>
           <button class="tb-btn tb-btn-drop tb-btn-wide" :title="getPreviewTheme(previewThemeRef).label" :class="{ active: themeModalOpen }" @click="openThemeModal">
             <Icon icon="mdi:brush" width="16" />
             {{ getPreviewTheme(previewThemeRef).label }}
@@ -443,7 +465,7 @@ defineExpose({
 
     <input ref="imageFileRef" type="file" accept="image/*" class="image-file-input" @change="onImageFileChange" />
 
-    <BlogEditorSaveDialog
+    <MarkdownEditorSaveDialog
       :key="localeRef"
       ref="dialogRef"
       :tag-options="props.tagOptions"
@@ -505,7 +527,7 @@ defineExpose({
             <label class="theme-label">{{ t('editor.toolbar.previewTheme') }}</label>
             <div class="theme-list">
               <button
-                v-for="p in PREVIEW_THEMES"
+                v-for="p in filteredPreviewThemes"
                 :key="p.id"
                 class="theme-opt"
                 :class="{ active: themeDraft.preview === p.id }"
@@ -558,6 +580,7 @@ defineExpose({
       </template>
     </n-modal>
   </div>
+  </n-config-provider>
 </template>
 
 <style scoped src="./blog-editor/editor.css" />

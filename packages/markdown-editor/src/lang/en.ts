@@ -73,6 +73,7 @@ const en = {
   'editor.toolbar.emoji': 'Emoji',
   'editor.toolbar.toc': 'Table of Contents',
   'editor.toolbar.theme': 'Theme',
+  'editor.toolbar.exportPdf': 'Export PDF',
   'editor.toolbar.editorTheme': 'Editor Theme',
   'editor.toolbar.previewTheme': 'Preview Theme',
   'editor.toolbar.codeTheme': 'Code Theme',

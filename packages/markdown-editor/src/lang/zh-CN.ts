@@ -73,6 +73,7 @@ const zhCN = {
   'editor.toolbar.emoji': '表情',
   'editor.toolbar.toc': '目录',
   'editor.toolbar.theme': '主题',
+  'editor.toolbar.exportPdf': '导出 PDF',
   'editor.toolbar.editorTheme': '编辑器主题',
   'editor.toolbar.previewTheme': '预览主题',
   'editor.toolbar.codeTheme': '代码主题',

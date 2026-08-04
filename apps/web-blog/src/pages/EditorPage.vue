@@ -8,7 +8,7 @@ import type { BlogPostDetailVO } from '@/types/blog';
 import { fetchCategories, fetchTags } from '@/api/taxonomy';
 import { toSelectOptions } from '@/utils/taxonomy';
 import { NAlert } from 'naive-ui';
-import { BlogEditor } from '@rx-ted/packages-markdown-editor';
+import { MarkdownEditor } from '@rx-ted/packages-markdown-editor';
 import { useSessionStore } from '@/stores/session';
 import { useThemeStore } from '@/stores/theme';
 import { API } from '@/constants';
@@ -123,7 +123,7 @@ onMounted(async () => {
 <template>
   <div class="editor-shell">
     <n-alert v-if="error" type="error" :show-icon="false">{{ error }}</n-alert>
-    <BlogEditor
+    <MarkdownEditor
       v-model="draft.content"
       :loading="loading"
       :is-edit="isEdit"

@@ -1,8 +1,8 @@
-import type { EditorSavePayload } from '../BlogEditorSaveDialog.vue';
+import type { EditorSavePayload } from '../MarkdownEditorSaveDialog.vue';
 import type { EditorTheme } from '../../core/themes';
 import type { Locale, MessageSchema } from '../../lang';
 
-export interface BlogEditorProps {
+export interface MarkdownEditorProps {
   modelValue: string;
   loading?: boolean;
   isEdit?: boolean;

@@ -1,20 +1,20 @@
 import { onBeforeUnmount, onMounted, watch } from 'vue';
 import type { Ref } from 'vue';
-import type BlogEditorSaveDialog from '../BlogEditorSaveDialog.vue';
-import type { EditorSavePayload } from '../BlogEditorSaveDialog.vue';
-import type { BlogEditorProps } from './props';
+import type MarkdownEditorSaveDialog from '../MarkdownEditorSaveDialog.vue';
+import type { EditorSavePayload } from '../MarkdownEditorSaveDialog.vue';
+import type { MarkdownEditorProps } from './props';
 
 /**
  * Save flow: Ctrl/Cmd+S, save-file vs save-dialog modes, the debounced draft
  * autosave to localStorage, draft restore on mount and the save on unload.
  */
 export function useSave(opts: {
-  props: BlogEditorProps;
+  props: MarkdownEditorProps;
   currentValue: Ref<string>;
   emitValue: (value: string) => void;
   dirty: Ref<boolean>;
   t: Ref<(key: string) => string>;
-  dialogRef: Ref<InstanceType<typeof BlogEditorSaveDialog> | undefined>;
+  dialogRef: Ref<InstanceType<typeof MarkdownEditorSaveDialog> | undefined>;
   emitSave: (payload: EditorSavePayload) => void;
   emitSaveFile: (content: string) => void;
 }) {
@@ -43,7 +43,7 @@ export function useSave(opts: {
     try {
       await opts.props.onBeforeSave?.(opts.currentValue.value);
     } catch (cause) {
-      console.error('[BlogEditor] onBeforeSave aborted save', cause);
+      console.error('[MarkdownEditor] onBeforeSave aborted save', cause);
       return;
     }
     if (opts.props.saveMode === 'dialog') {

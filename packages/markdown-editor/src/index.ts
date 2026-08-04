@@ -61,9 +61,9 @@ export {
   type MessageSchema,
 } from './lang';
 export { default as MarkdownRenderer, type ReadyPayload } from './components/MarkdownRenderer.vue';
-export { default as BlogEditor } from './components/BlogEditor.vue';
+export { default as MarkdownEditor } from './components/MarkdownEditor.vue';
 export {
-  default as BlogEditorSaveDialog,
+  default as MarkdownEditorSaveDialog,
   type EditorSavePayload,
-} from './components/BlogEditorSaveDialog.vue';
+} from './components/MarkdownEditorSaveDialog.vue';
 export { default as TocTree } from './components/TocTree.vue';

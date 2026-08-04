@@ -3,12 +3,18 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  background: var(--me-bg, #ffffff);
+  border: 1px solid var(--me-border, #d0d7de);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 /* Screen fullscreen paints the top layer without the page behind it, so the
    grid needs its own background or transparent panes fall back to black. */
 .editor-grid:fullscreen {
   background: var(--me-bg, #ffffff);
+  border: 0;
+  border-radius: 0;
 }
 
 .editor-grid.is-window-fullscreen {
@@ -45,7 +51,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 12px;
+  gap: 0;
   flex: 1;
   min-height: 0;
 }
@@ -66,9 +72,12 @@
   flex: 1;
   min-height: 0;
   min-width: 0;
-  border: 1px solid var(--me-border, #d0d7de);
-  border-radius: 8px;
   overflow: hidden;
+}
+
+/* Single outer box: the panes sit flush, separated by an internal divider. */
+.editor-body.with-preview .editor-pane {
+  border-right: 1px solid var(--me-border, #d0d7de);
 }
 
 .editor-pane-body {
@@ -85,8 +94,7 @@
   gap: 2px;
   padding: 6px 8px;
   background-color: var(--me-bg-soft, #f6f8fa);
-  border: 1px solid var(--me-border, #d0d7de);
-  border-radius: 8px;
+  border-bottom: 1px solid var(--me-border, #d0d7de);
   grid-column: 1 / -1;
   flex-shrink: 0;
 }
@@ -596,8 +604,6 @@
   flex: 1;
   min-width: 0;
   min-height: 0;
-  border: 1px solid var(--me-border, #d0d7de);
-  border-radius: 8px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -625,5 +631,43 @@
   .editor-topbar {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+/* ── Print / PDF export: render only the rendered preview, full width, with
+   the current theme variables applied on the fly. ── */
+@media print {
+  .editor-topbar,
+  .toolbar,
+  .editor-pane,
+  .toc-float,
+  .preview-header,
+  .editor-statusbar {
+    display: none !important;
+  }
+
+  .editor-grid,
+  .editor-grid:fullscreen {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .editor-main {
+    gap: 0;
+  }
+
+  .editor-body,
+  .editor-body.with-preview {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .preview-pane {
+    border: 0;
+  }
+
+  .preview-scroll {
+    overflow: visible;
+    padding: 0;
   }
 }
