@@ -1,7 +1,7 @@
 ---
-title: E2E 测试流程规范
+title: E2E testing workflow
 author: rx-ted
-date: 2026-07-22
+date: 2026-08-05
 category: guide
 tags:
   - testing
@@ -13,75 +13,78 @@ visibility: public
 allow_comment: true
 pinned: false
 featured_weight: 0
+lang: en
 ---
 
-# E2E 测试流程规范
+**English** | [中文](./e2e-testing.zh.md)
 
-**项目：TS + Playwright（前端）/ Vitest（后端）**
+# E2E testing workflow
+
+**Project: TS + Playwright (frontend) / Vitest (backend)**
 
 ---
 
-## 一、架构概览
+## 1. Architecture overview
 
-本项目有两种 E2E 测试，统一放在 `e2e/` 目录下：
+This project has two kinds of E2E tests, all living under the `e2e/` directory:
 
 ```
 e2e/
-  vitest.config.ts          # 后端 E2E（各后端模块通用）
-  playwright.config.ts      # 前端 E2E（web-blog）
+  vitest.config.ts          # backend E2E (shared by all backend modules)
+  playwright.config.ts      # frontend E2E (web-blog)
   tests/
-    <module>/                # 按后端模块分目录，如 platform-api/
-    web-blog/                # Playwright 前端测试
+    <module>/                # organised by backend module, e.g. platform-api/
+    web-blog/                # Playwright frontend tests
   mocks/
-    data.ts                  # Playwright mock API 数据 + 路由定义
+    data.ts                  # Playwright mock API data + route definitions
   fixtures/
-    test.ts                  # Playwright 自定义 fixture
+    test.ts                  # Playwright custom fixture
   reporters/
-    failed-reporter.mjs      # 失败用例信息收集
+    failed-reporter.mjs      # failed-test case info collection
   scripts/
-    test-affected.mjs        # 增量测试
-    test-failed.mjs          # 重跑失败用例
-  auth.setup.ts              # Playwright auth 状态设置
-  test-users.json            # 测试用户数据
+    test-affected.mjs        # incremental testing
+    test-failed.mjs          # rerun failed tests
+  auth.setup.ts              # Playwright auth state setup
+  test-users.json            # test user data
 ```
 
-| 类型 | 工具 | 测试对象 | 验证方式 | Mock 方式 |
+| Type | Tool | Target | Verification | Mocking |
 |------|------|----------|----------|-----------|
-| 前端 E2E | Playwright | web-blog 页面 | 浏览器操作 + DOM 断言 | `page.route()` 拦截 API |
-| 后端 E2E | Vitest | 后端 controller / handler | 直接调用 handler + 返回断言 | `vi.mock()` 替换 service/repo |
+| Frontend E2E | Playwright | web-blog pages | browser operations + DOM assertions | `page.route()` intercepts the API |
+| Backend E2E | Vitest | backend controllers / handlers | call the handler directly + assert on the return | `vi.mock()` replaces service/repo |
 
 ---
 
-## 二、快速开始
+## 2. Quick start
 
-### 运行全部 E2E
+### Run all E2E
 
 ```bash
 pnpm test:e2e
 ```
 
-通过 turbo 编排，同时运行前端和后端 E2E。
+Runs the frontend and backend E2E in parallel, orchestrated by turbo.
 
-### 分开运行
+### Run separately
 
 ```bash
-# 前端 Playwright
+# Frontend Playwright
 pnpm --filter @rx-ted/web-blog exec npx playwright test --config=../../e2e/playwright.config.ts
 
-# 前端 Playwright（带浏览器界面）
+# Frontend Playwright (with browser UI)
 pnpm --filter @rx-ted/web-blog exec npx playwright test --config=../../e2e/playwright.config.ts --headed
 
-# 前端 Playwright（UI 模式调试）
+# Frontend Playwright (UI mode debugging)
 pnpm --filter @rx-ted/web-blog exec npx playwright test --config=../../e2e/playwright.config.ts --ui
 
-# 后端 Vitest（以 platform-api 为例）
+# Backend Vitest (platform-api as an example)
 pnpm --filter @rx-ted/platform-api exec vitest run --config ../../e2e/vitest.config.ts
 
-# 后端 Vitest（watch 模式）
+# Backend Vitest (watch mode)
 pnpm --filter @rx-ted/platform-api exec vitest --config ../../e2e/vitest.config.ts
 ```
 
-### Smoke 测试（只跑 @smoke 标记的用例）
+### Smoke tests (only the cases tagged `@smoke`)
 
 ```bash
 pnpm test:e2e:smoke
@@ -89,117 +92,117 @@ pnpm test:e2e:smoke
 
 ---
 
-## 三、前端 E2E（Playwright）
+## 3. Frontend E2E (Playwright)
 
-### 配置说明
+### Configuration
 
 `e2e/playwright.config.ts`:
 
-- `testDir: './tests'` — 测试文件目录
-- `testIgnore: ['**/platform-api/**']` — 排除后端 Vitest 测试
-- `webServer` — 自动启动 web-blog 的 Vite dev server
-- `CI` 环境变量控制是否进行 authenticated setup（存储 auth cookie）
+- `testDir: './tests'` — test file directory
+- `testIgnore: ['**/platform-api/**']` — excludes the backend Vitest tests
+- `webServer` — automatically starts web-blog's Vite dev server
+- the `CI` environment variable controls whether authenticated setup runs (stores the auth cookie)
 
-### 测试环境
+### Test environments
 
-| 模式 | baseURL | API 来源 |
+| Mode | baseURL | API source |
 |------|---------|----------|
-| CI | `http://localhost:5173` | `page.route()` 全部 Mock |
-| 开发调试 | `http://localhost:5173` | 走真实 `localhost:3000` 或 Mock |
+| CI | `http://localhost:5173` | all mocked via `page.route()` |
+| dev/debugging | `http://localhost:5173` | real `localhost:3000` or mocks |
 
-CI 中全部 mock API，不依赖后端服务。
+In CI all APIs are mocked, so no backend service is required.
 
 ### Mock API
 
-在 `e2e/mocks/data.ts` 中集中定义所有 mock 数据和 API 路由拦截：
+All mock data and API route interception are defined centrally in `e2e/mocks/data.ts`:
 
 ```ts
 import { setupApiMocks } from '../../mocks/data';
 
 test.beforeEach(async ({ page }) => {
-  await setupApiMocks(page, false); // 未登录
+  await setupApiMocks(page, false); // not logged in
 });
 
-test('访问首页', async ({ page }) => {
+test('visit the home page', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('text=Tech Blog')).toBeVisible();
 });
 ```
 
-`setupApiMocks(page, authenticated)` 自动注册所有 API 路由的 mock 响应。
+`setupApiMocks(page, authenticated)` registers mock responses for all API routes automatically.
 
-### 认证状态
+### Auth state
 
-Playwright 通过 `storageState` 机制模拟登录：
+Playwright simulates login via the `storageState` mechanism:
 
 ```ts
-// 全局 auth-setup project（CI 模式下启用）
+// global auth-setup project (enabled in CI mode)
 test.use({ storageState: '.auth/user.json' });
 ```
 
-- CI：先运行 `auth.setup.ts` 登录并保存 cookie，后续用例复用
-- 本地：默认不认证，按需手动调用 `setupApiMocks(page, true)` 或 `page.route()` 覆盖
+- CI: runs `auth.setup.ts` first to log in and save the cookie; later tests reuse it
+- local: not authenticated by default; call `setupApiMocks(page, true)` manually or override with `page.route()` as needed
 
-### 目录规范
+### Directory conventions
 
 ```
 e2e/tests/web-blog/
-  <page>/                     # 按页面/功能分目录
-  <page>.spec.ts              # 或单文件
+  <page>/                     # organised by page/feature
+  <page>.spec.ts              # or single-file
   home.spec.ts
   author.spec.ts
   static-pages.spec.ts
 ```
 
-### 编写规范
+### Writing conventions
 
 ```ts
-import { test, expect } from '../../fixtures/test';  // 使用自定义 fixture
+import { test, expect } from '../../fixtures/test';  // use the custom fixture
 import { setupApiMocks } from '../../mocks/data';
 
 test.describe('页面名 - 分类名', () => {
   test('测试描述 @smoke', async ({ page }) => {
-    // 1. Arrange: setupApiMocks + mock 覆盖
+    // 1. Arrange: setupApiMocks + mock overrides
     await setupApiMocks(page, true);
 
-    // 2. Act: 页面操作
+    // 2. Act: page operations
     await page.goto('/some-page');
 
-    // 3. Assert: DOM 断言
+    // 3. Assert: DOM assertions
     await expect(page.locator('...')).toBeVisible();
   });
 });
 ```
 
-命名规则：
-- 文件名：`<page>.spec.ts`（全量）、`<page>.smoke.spec.ts`（仅 smoke）
-- `describe`：`页面名 - 分类名`（如 `Home Page - 核心业务流程`）
-- `it`：`中文描述测试场景 @tag`
-- tag：`@smoke` 标记关键链路（P0），CI 中可用 `--grep @smoke` 过滤
+Naming rules:
+- file name: `<page>.spec.ts` (full suite), `<page>.smoke.spec.ts` (smoke only)
+- `describe`: `Page name - category name` (e.g. `Home Page - Core business flow`)
+- `it`: `test scenario description @tag`
+- tags: `@smoke` marks the critical path (P0); CI can filter with `--grep @smoke`
 
 ---
 
-## 四、后端 E2E（Vitest）
+## 4. Backend E2E (Vitest)
 
-### 配置说明
+### Configuration
 
 `e2e/vitest.config.ts`:
 
-- `root: __dirname` — 以 e2e/ 为根目录
-- `include: ['tests/<module>/**/*.spec.ts']` — 各后端模块在自己的子目录下
-- `setupFiles: ['tests/<module>/setup.ts']` — 每个模块可独立配置全局 mock
-- `resolve.alias` — 为每个后端模块配置 alias，如 `@platform-api` → `apps/platform-api/src`
+- `root: __dirname` — uses e2e/ as the root
+- `include: ['tests/<module>/**/*.spec.ts']` — each backend module lives in its own subdirectory
+- `setupFiles: ['tests/<module>/setup.ts']` — each module can configure its global mocks independently
+- `resolve.alias` — configures an alias per backend module, e.g. `@platform-api` → `apps/platform-api/src`
 
-### 新增后端模块
+### Adding a new backend module
 
-1. 在 `e2e/tests/` 下创建 `<new-module>/` 目录
-2. 在 `e2e/vitest.config.ts` 的 `include` 和 `resolve.alias` 中添加新模块
-3. 在 `<new-module>/setup.ts` 中 mock 全局框架依赖
-4. 编写测试文件 `.e2e.spec.ts`
+1. Create a `<new-module>/` directory under `e2e/tests/`
+2. Add the new module to `include` and `resolve.alias` in `e2e/vitest.config.ts`
+3. Mock the global framework dependencies in `<new-module>/setup.ts`
+4. Write test files `.e2e.spec.ts`
 
-### 测试方式
+### How tests work
 
-后端 E2E 直接调用 controller handler，不启动 HTTP 服务器：
+Backend E2E calls controller handlers directly, without starting an HTTP server:
 
 ```ts
 import { AuthController } from 'your-module/auth/auth.controller';
@@ -209,19 +212,19 @@ const result = await controller.login(body, mockCtx);
 expect(result.accessToken).toBeDefined();
 ```
 
-### Mock 方式
+### Mocking
 
-通过 `vi.mock()` 在 `setup.ts` 中全局 mock 外部依赖：
+External dependencies are mocked globally in `setup.ts` via `vi.mock()`:
 
-| 层次 | Mock 方式 |
+| Layer | Mocking |
 |------|-----------|
-| 框架/ORM 依赖（DI、decorators、drizzle 等） | `setup.ts` 全局 mock |
-| 模块内部依赖（config、lib） | `setup.ts` 或测试文件内 `vi.mock()` |
-| service / repository | 测试文件内 `vi.mock()` + 构造 mock 实例传入 controller |
-| `hono/cookie` 等外部库 | 测试文件内 `vi.mock()`，或 mock context 的 `header` 方法 |
+| framework/ORM dependencies (DI, decorators, drizzle, etc.) | global mocks in `setup.ts` |
+| intra-module dependencies (config, lib) | `setup.ts` or `vi.mock()` in the test file |
+| service / repository | `vi.mock()` in the test file + construct a mock instance passed to the controller |
+| external libraries such as `hono/cookie` | `vi.mock()` in the test file, or mock the context's `header` method |
 
 ```ts
-// 测试文件
+// test file
 import { vi } from 'vitest';
 vi.mock('your-module/auth/auth.service', () => ({
   default: vi.fn(),
@@ -234,30 +237,30 @@ function mockCtx() {
 }
 ```
 
-**注意**：`vi.mock()` 在 vitest 中会被提升（hoist）到文件顶部，比 import 先执行。如果 mock 没有生效，检查模块路径是否匹配 vitest 的解析结果。
+**Note**: `vi.mock()` is hoisted to the top of the file in Vitest and runs before imports. If a mock doesn't take effect, check whether the module path matches Vitest's resolution result.
 
-### 目录规范
+### Directory conventions
 
 ```
 e2e/tests/<module>/
-  <module>.e2e.spec.ts        # 按模块分文件
-  setup.ts                    # 全局 mock 和 helper
+  <module>.e2e.spec.ts        # one file per module
+  setup.ts                    # global mocks and helpers
 ```
 
 ---
 
-## 五、三层环境策略
+## 5. Three-environment strategy
 
-| 环境 | 用途 | 前端（Playwright） | 后端（Vitest） | 数据 |
+| Environment | Purpose | Frontend (Playwright) | Backend (Vitest) | Data |
 |------|------|-------------------|----------------|------|
-| test | CI + 本地开发 | mock API（`page.route()`） | mock service/repo（`vi.mock()`） | 无关 |
-| staging | 上线前验证 | 真实 API 服务器，只跑 `@smoke` | 暂不运行 | 独立测试库 |
-| prod | 零风险上线 | 仅 test + staging 均通过才发布 | — | 真实用户数据 |
+| test | CI + local development | mock API (`page.route()`) | mock service/repo (`vi.mock()`) | irrelevant |
+| staging | pre-release verification | real API server, only `@smoke` | not run for now | separate test database |
+| prod | zero-risk release | release only when both test and staging pass | — | real user data |
 
-CI 流程：
+CI flow:
 
 ```yaml
-# 当前实现（.github/workflows/ci.yml）
+# current implementation (.github/workflows/ci.yml)
 jobs:
   versify:
     - lint & format check
@@ -266,12 +269,12 @@ jobs:
     - build
 
   e2e:
-    - pnpm test:e2e  # 全部 mock，不依赖任何外部服务
+    - pnpm test:e2e  # all mocked, no external services
 ```
 
 ---
 
-## 六、turbo.json 配置
+## 6. turbo.json configuration
 
 ```json
 {
@@ -283,21 +286,21 @@ jobs:
 }
 ```
 
-- 各后端模块的 `test:e2e` script 通过 `--config ../../e2e/vitest.config.ts` 指向共享配置
-- `web-blog` 的 `test:e2e` script 通过 `--config=../../e2e/playwright.config.ts` 指向共享配置
-- 所有 E2E 任务互不依赖，可并行运行
+- each backend module's `test:e2e` script points at the shared config via `--config ../../e2e/vitest.config.ts`
+- `web-blog`'s `test:e2e` script points at the shared config via `--config=../../e2e/playwright.config.ts`
+- all E2E tasks are independent of each other and run in parallel
 
 ---
 
-## 七、注意事项
+## 7. Notes
 
-| 事项 | 说明 |
+| Topic | Description |
 |------|------|
-| 两种 E2E 互不干扰 | Playwright 通过 `testIgnore` 排除 `<module>/` 目录 |
-| 每个用例独立 | 不依赖上一个用例的数据或状态 |
-| Playwright mock 集中管理 | 新增 API 路由时在 `mocks/data.ts` 添加，避免散落在各测试文件 |
-| Vitest mock 就近声明 | service/repo mock 在各测试文件中声明，`setup.ts` 只 mock 全局框架依赖 |
-| 别名解析 | 每个后端模块需在 `vitest.config.ts` 的 `resolve.alias` 中配置别名 |
-| Playwright web server | 测试前自动启动 Vite，测试结束后自动关闭 |
-| 增量测试 | 通过 `e2e/scripts/test-affected.mjs` 只跑受影响的测试文件 |
-| 失败重跑 | CI 中 Playwright 自动重试 2 次，Vitest 不重试（默认） |
+| the two E2E kinds don't interfere | Playwright excludes the `<module>/` directories via `testIgnore` |
+| every test is independent | no dependency on the data or state of a previous test |
+| Playwright mocks are centralised | add new API routes to `mocks/data.ts` instead of scattering them across test files |
+| Vitest mocks are declared locally | service/repo mocks are declared in each test file; `setup.ts` only mocks global framework dependencies |
+| alias resolution | every backend module needs an alias in `resolve.alias` of `vitest.config.ts` |
+| Playwright web server | Vite starts automatically before tests and shuts down after them |
+| incremental testing | `e2e/scripts/test-affected.mjs` runs only the affected test files |
+| failed-test rerun | Playwright retries twice in CI; Vitest does not retry (default) |

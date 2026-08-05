@@ -145,6 +145,22 @@
           }
         }
       }
+    },
+    {
+      "includes": ["packages/markdown-editor/src/themes/__gen/**", "**/*.css"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noShorthandPropertyOverrides": "off"
+          },
+          "style": {
+            "noDescendingSpecificity": "off"
+          },
+          "complexity": {
+            "noImportantStyles": "off"
+          }
+        }
+      }
     }
   ],
   "assist": {

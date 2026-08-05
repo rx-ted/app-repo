@@ -53,8 +53,15 @@ describe('package entry', () => {
   });
 
   it('exposes theme registry', () => {
-    expect(PREVIEW_THEMES.length).toBeGreaterThanOrEqual(15);
-    expect(DEFAULT_PREVIEW_THEME).toBe('github-light');
+    expect(PREVIEW_THEMES.map((t) => t.id).sort()).toEqual([
+      'cyanosis',
+      'github',
+      'mk-cute',
+      'smart-blue',
+      'vscode',
+      'vuepress',
+    ]);
+    expect(DEFAULT_PREVIEW_THEME).toBe('github');
     expect(EDITOR_THEMES).toEqual(['light', 'dark']);
     expect(CODE_THEMES).toContain('github-light');
     expect(getPreviewTheme('nope').id).toBe(DEFAULT_PREVIEW_THEME);

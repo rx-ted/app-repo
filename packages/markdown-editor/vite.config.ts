@@ -24,6 +24,7 @@ function isExternal(id: string): boolean {
 
 export default defineConfig({
   plugins: [vue()],
+  base: './',
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
@@ -33,6 +34,12 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       external: isExternal,
+      output: {
+        assetFileNames: (assetInfo) =>
+          assetInfo.originalFileName?.includes('themes/__gen/')
+            ? 'themes/[name][extname]'
+            : 'assets/[name][extname]',
+      },
     },
   },
 });

@@ -17,7 +17,7 @@ const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
 const themeStore = useThemeStore();
-const previewTheme = computed(() => (themeStore.isDark ? 'github-dark' : 'github-light'));
+const previewTheme = computed(() => 'github');
 const editorTheme = computed(() => (themeStore.isDark ? 'dark' : 'light'));
 const isEdit = computed(() => Boolean(route.params.slug));
 const slug = computed(() => String(route.params.slug || ''));

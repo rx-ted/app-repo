@@ -1,7 +1,7 @@
 ---
-title: 本地开发运行指南
+title: Local development guide
 author: rx-ted
-date: 2026-07-22
+date: 2026-08-05
 category: guide
 tags:
   - setup
@@ -11,50 +11,53 @@ visibility: public
 allow_comment: true
 pinned: false
 featured_weight: 0
+lang: en
 ---
 
-# 本地开发运行指南
+**English** | [中文](./getting-started.zh.md)
 
-本指南帮助你在本地环境启动整个项目，包括基础设施（MySQL、Redis）和应用服务。
+# Local development guide
 
-## 前置条件
+This guide helps you start the whole project in a local environment, including the infrastructure (MySQL, Redis) and the application services.
 
-| 工具           | 推荐版本   | 安装说明                                                                                                                                  |
+## Prerequisites
+
+| Tool | Recommended version | Installation |
 | -------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Docker         | 最新稳定版 | Mac: `brew install docker`<br>Windows: [Docker Desktop](https://docs.docker.com/get-started/get-docker/)<br>Linux: 系统包管理器或官方脚本 |
-| Docker Compose | 最新稳定版 | Mac: `brew install docker-compose`<br>Windows/Linux: 同上                                                                                 |
-| pnpm           | >= 9       | `npm install -g pnpm`                                                                                                                     |
-| Node.js        | >= 24.14.1 | 推荐使用 nvm 管理版本                                                                                                                     |
-| Bun            | 最新版     | 用于 `platform-api` 开发模式运行时                                                                                                        |
+| Docker | Latest stable | Mac: `brew install docker`<br>Windows: [Docker Desktop](https://docs.docker.com/get-started/get-docker/)<br>Linux: system package manager or the official script |
+| Docker Compose | Latest stable | Mac: `brew install docker-compose`<br>Windows/Linux: same as above |
+| pnpm | >= 9 | `npm install -g pnpm` |
+| Node.js | >= 24.14.1 | nvm recommended for version management |
+| Bun | Latest | used as the runtime for `platform-api` dev mode |
 
-### Mac 无 Docker Desktop 说明
+### Note for Mac without Docker Desktop
 
-使用 Colima 提供 Docker 虚拟化：
+Use Colima to provide Docker virtualization:
 
 ```bash
 brew install colima
 colima start --cpu 4 --memory 4 --disk 60
 ```
 
-Colima 自动与 Docker CLI 配合，无需 Docker Desktop。
+Colima works with the Docker CLI automatically, so Docker Desktop is not needed.
 
-### Windows / Linux 说明
+### Windows / Linux notes
 
-- **Windows** — 推荐 Docker Desktop，PowerShell 下环境变量语法不同，建议使用 `.env` 文件配置
-- **Linux** — 使用系统 Docker + Compose 即可，注意端口冲突和防火墙设置
+- **Windows** — Docker Desktop recommended; the PowerShell environment-variable syntax differs, so prefer configuring via a `.env` file
+- **Linux** — use the system Docker + Compose; watch out for port conflicts and firewall settings
 
-## 项目初始化
+## Project initialization
 
-### 克隆项目
+### Clone the repo
 
 ```bash
-git clone <项目仓库地址>
-cd <项目目录>
+git clone <repo-url>
+cd <project-directory>
 ```
 
-### 配置环境变量
+### Configure environment variables
 
-在项目根目录创建 `.env` 文件：
+Create a `.env` file in the project root:
 
 ```env
 # MySQL
@@ -71,96 +74,96 @@ REDIS_USERNAME=
 REDIS_PASSWORD=
 ```
 
-## 启动基础设施
+## Start the infrastructure
 
-### 启动容器
+### Start the containers
 
 ```bash
-# Mac：先确保 Colima 已启动
+# Mac: make sure Colima is running first
 colima start
 
-# 启动 MySQL 和 Redis
+# Start MySQL and Redis
 docker compose up -d
 
-# 查看容器状态
+# Check container status
 docker compose ps
 ```
 
-等待 `mysql` 和 `redis` 状态变为 `healthy`。
+Wait until the `mysql` and `redis` status becomes `healthy`.
 
-### 连接信息
+### Connection info
 
-| 服务  | 主机      | 端口 | 用户 | 密码 | 数据库 |
+| Service | Host | Port | User | Password | Database |
 | ----- | --------- | ---- | ---- | ---- | ------ |
 | MySQL | localhost | 3306 | root | root | rx_ted |
-| Redis | localhost | 6379 | -    | -    | -      |
+| Redis | localhost | 6379 | - | - | - |
 
-数据卷：`mysql-data`、`redis-data` 分别持久化 MySQL 和 Redis 数据。
+The `mysql-data` and `redis-data` volumes persist the MySQL and Redis data respectively.
 
-> 端口被占用时，可修改 `docker-compose.yml` 中的端口映射，例如 `3307:3306`。
+> If a port is occupied, edit the port mapping in `docker-compose.yml`, e.g. `3307:3306`.
 
-## 安装应用依赖
+## Install app dependencies
 
 ```bash
 pnpm install
 ```
 
-> Mac M1/M2 用户请确保 Node.js 与 pnpm 为 ARM 版本，避免安装依赖报错。
+> On Mac M1/M2, make sure Node.js and pnpm are ARM builds to avoid dependency install errors.
 
-## 数据库迁移
+## Database migration
 
 ```bash
 pnpm db push
 ```
 
-成功后可用 MySQL 客户端确认数据库表已生成。
+On success, you can confirm the database tables were created with a MySQL client.
 
-## 启动应用
+## Start the apps
 
-### 全部应用（推荐开发模式）
+### All apps (recommended for development)
 
 ```bash
 pnpm dev
 ```
 
-开发模式支持热重载，修改代码后自动重启。
+Dev mode supports hot reload — apps restart automatically when you edit code.
 
-### 仅 platform-api
+### platform-api only
 
 ```bash
 pnpm --filter @rx-ted/platform-api dev
 ```
 
-## 快速开始（一键执行）
+## Quick start (one-shot)
 
-以下命令按顺序完成全部环境搭建：
+The following commands set up the entire environment in order:
 
 ```bash
-# 1. 启动 Colima
+# 1. Start Colima
 colima start --cpu 4 --memory 4 --disk 60
 
-# 2. 克隆项目
-git clone <项目仓库地址>
-cd <项目目录>
+# 2. Clone the repo
+git clone <repo-url>
+cd <project-directory>
 
-# 3. 配置环境变量
+# 3. Configure environment variables
 cp .env.example .env
-# 编辑 .env 填入 MySQL/Redis 配置
+# edit .env and fill in the MySQL/Redis config
 
-# 4. 启动基础设施
+# 4. Start the infrastructure
 docker compose up -d
 
-# 5. 安装依赖
+# 5. Install dependencies
 pnpm install
 
-# 6. 数据库迁移
+# 6. Database migration
 pnpm db push
 
-# 7. 启动应用
+# 7. Start the apps
 pnpm dev
 ```
 
-## 本地开发架构
+## Local development architecture
 
 ```mermaid
 flowchart LR
@@ -181,23 +184,23 @@ flowchart LR
     C --> E
 ```
 
-## Docker 常用命令
+## Common Docker commands
 
-| 操作                    | 命令                                                   |
+| Action | Command |
 | ----------------------- | ------------------------------------------------------ |
-| 停止容器                | `docker compose stop`                                  |
-| 停止并删除容器          | `docker compose down`                                  |
-| 停止并删除容器 + 数据卷 | `docker compose down -v`                               |
-| 查看所有日志            | `docker compose logs -f`                               |
-| 查看 MySQL 日志         | `docker compose logs -f mysql`                         |
-| 查看 Redis 日志         | `docker compose logs -f redis`                         |
-| 进入 MySQL 容器         | `docker compose exec mysql mysql -uroot -proot rx_ted` |
-| 进入 Redis 容器         | `docker compose exec redis redis-cli`                  |
-| 清理未使用的镜像/卷     | `docker system prune -a && docker volume prune`        |
+| Stop containers | `docker compose stop` |
+| Stop and remove containers | `docker compose down` |
+| Stop and remove containers + volumes | `docker compose down -v` |
+| View all logs | `docker compose logs -f` |
+| View MySQL logs | `docker compose logs -f mysql` |
+| View Redis logs | `docker compose logs -f redis` |
+| Enter the MySQL container | `docker compose exec mysql mysql -uroot -proot rx_ted` |
+| Enter the Redis container | `docker compose exec redis redis-cli` |
+| Clean up unused images/volumes | `docker system prune -a && docker volume prune` |
 
-## 故障排查
+## Troubleshooting
 
-### Docker 无法连接
+### Docker connection fails
 
 ```text
 Cannot connect to the Docker daemon
@@ -209,47 +212,47 @@ docker context use colima
 docker context ls
 ```
 
-确认 `colima` 上下文旁有 `*` 标记。
+Confirm the `colima` context is marked with `*`.
 
-### MySQL 启动失败
+### MySQL fails to start
 
 ```bash
 docker compose logs mysql
 ```
 
-常见原因：3306 端口被占用、数据卷损坏、配置错误。必要时重建：
+Common causes: port 3306 occupied, a corrupted data volume, or a configuration error. Recreate if necessary:
 
 ```bash
 docker compose down -v
 docker compose up -d
 ```
 
-### Redis 无法连接
+### Redis connection fails
 
 ```bash
 docker compose logs redis
 docker compose exec redis redis-cli ping
-# 正常返回 PONG
+# should return PONG
 ```
 
-### 数据库迁移失败
+### Database migration fails
 
-确认 MySQL 状态是否为 `healthy`：
+Confirm the MySQL status is `healthy`:
 
 ```bash
 docker compose ps
 docker compose exec mysql mysql -uroot -proot
 ```
 
-### Colima 管理
+### Managing Colima
 
 ```bash
-colima status   # 查看状态
-colima stop     # 停止
-colima restart  # 重启
+colima status   # view status
+colima stop     # stop
+colima restart  # restart
 ```
 
-资源不足时重新分配：
+Reallocate resources when they're insufficient:
 
 ```bash
 colima stop

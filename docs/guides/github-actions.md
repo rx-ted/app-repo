@@ -1,7 +1,7 @@
 ---
-title: GitHub Actions 工作流说明
+title: GitHub Actions workflows
 author: rx-ted
-date: 2026-08-03
+date: 2026-08-05
 category: guide
 tags:
   - github-actions
@@ -14,26 +14,29 @@ visibility: public
 allow_comment: true
 pinned: false
 featured_weight: 0
+lang: en
 ---
 
-# GitHub Actions 工作流说明
+**English** | [中文](./github-actions.zh.md)
 
-本仓库的自动化全部基于 GitHub Actions，覆盖 **CI 校验、PR 自动合并、npm 发布**。核心原则：
+# GitHub Actions workflows
 
-- **GitHub 内部操作** 使用 GitHub 自动注入的 `GITHUB_TOKEN`，无需任何手动 secret。
-- **npm 发布** 使用 **OIDC Trusted Publishing**（`id-token: write` + npm 后台配置），不存放任何 npm token。
-- 唯一的非自动操作是 npmjs.com 上的一次性 OIDC 配置（详见下文）。
+All automation in this repo runs on GitHub Actions, covering **CI checks, PR auto-merge, and npm publishing**. Core principles:
 
-## 工作流总览
+- **GitHub-internal operations** use the automatically injected `GITHUB_TOKEN`; no manual secrets are needed.
+- **npm publishing** uses **OIDC Trusted Publishing** (`id-token: write` + npm backend configuration); no npm token is stored.
+- The only non-automated step is the one-time OIDC configuration on npmjs.com (details below).
 
-| 文件 | 触发时机 | 作用 |
+## Workflow overview
+
+| File | Trigger | Purpose |
 | --- | --- | --- |
-| `ci.yml` | `pull_request`（opened/synchronize/reopened/ready_for_review）+ `push` main | lint/format/typecheck/test/build |
-| `pr-auto-merge.yml` | `pull_request_target` | 为每个 PR 开启 auto-merge（squash） |
-| `release.yml` | `push` main | Changesets 版本管理 + tag + GitHub Release + npm 发布 |
-| `publish.yml` | 手动 `workflow_dispatch`（填 tag） | 兜底：手动重新发布某个包 |
+| `ci.yml` | `pull_request` (opened/synchronize/reopened/ready_for_review) + `push` main | lint/format/typecheck/test/build |
+| `pr-auto-merge.yml` | `pull_request_target` | enables auto-merge (squash) for every PR |
+| `release.yml` | `push` main | Changesets versioning + tag + GitHub Release + npm publishing |
+| `publish.yml` | manual `workflow_dispatch` (fill in a tag) | fallback: manually re-publish a single package |
 
-## CI（`ci.yml`）
+## CI (`ci.yml`)
 
 ```yaml
 on:
@@ -44,72 +47,72 @@ on:
       - main
 ```
 
-`versify` job 依次执行：
+The `versify` job runs in sequence:
 
-1. `pnpm check` — Biome lint + format 检查
-2. `pnpm typecheck` — 全量类型检查
-3. `pnpm test` — vitest 测试
-4. `pnpm build` — 构建所有包
+1. `pnpm check` — Biome lint + format check
+2. `pnpm typecheck` — full type check
+3. `pnpm test` — vitest tests
+4. `pnpm build` — build all packages
 
-> **注意**：CI 必须同时在 PR 和 main 上运行。之前只挂了 `pull_request_target`，导致 PR 上永远没有 status check，branch protection 的必需检查一直 pending，auto-merge 无法工作。
+> **Note**: CI must run on both PRs and main. It previously only hooked `pull_request_target`, so PRs never got a status check, the required checks in branch protection stayed pending forever, and auto-merge could never work.
 
-## PR 自动合并（`pr-auto-merge.yml`）
+## PR auto-merge (`pr-auto-merge.yml`)
 
-任何 PR 打开/更新时，用 `peter-evans/enable-pull-request-automerge@v3` 开启 auto-merge（squash）。
+Whenever a PR is opened/updated, `peter-evans/enable-pull-request-automerge@v3` enables auto-merge (squash).
 
-前置条件（仓库设置，需 admin）：
+Prerequisites (repo settings, admin required):
 
-1. **Settings → General → Pull Requests → Allow auto-merge**：必须勾选。
-2. **Settings → Branches → branch protection rule（main）**：必须启用 **Require status checks to pass before merging** 并选择 `versify`（CI）。
+1. **Settings → General → Pull Requests → Allow auto-merge**: must be checked.
+2. **Settings → Branches → branch protection rule (main)**: **Require status checks to pass before merging** must be enabled, with `versify` (CI) selected.
 
-> 两个典型的坑：
-> - 报错 `Auto merge is not allowed for this repository` → Allow auto-merge 未开。
-> - 报错 `Protected branch rules not configured for this branch` → main 没有 branch protection。
-> - 报错 `Pull request is in clean status` → branch protection 没真正关联 status check，PR 无待满足条件。
+> Two typical pitfalls:
+> - `Auto merge is not allowed for this repository` → Allow auto-merge is not enabled.
+> - `Protected branch rules not configured for this branch` → main has no branch protection.
+> - `Pull request is in clean status` → branch protection isn't actually tied to a status check, so the PR has nothing pending to satisfy.
 
-## 发布（`release.yml`）
+## Release (`release.yml`)
 
-触发：push 到 main。核心逻辑由 `changesets/action` 驱动：
+Trigger: push to main. Core logic is driven by `changesets/action`:
 
 ```
-push main → 检查 .changeset/*.md
-  ├─ 有 changeset → 创建/更新 "Version Packages" PR → 开启 auto-merge
-  │     PR 合并（CI 通过后）→ version bump + changelog 落在 main → 再次触发本流程
-  └─ 无 changeset（版本 PR 合并后）→ Build → Tag → GitHub Release → npm publish (OIDC)
+push main → check .changeset/*.md
+  ├─ has changesets → create/update the "Version Packages" PR → enable auto-merge
+  │     PR merged (after CI passes) → version bump + changelog lands on main → triggers this flow again
+  └─ no changesets (after the version PR merges) → Build → Tag → GitHub Release → npm publish (OIDC)
 ```
 
-### 版本变更
+### Version changes
 
-- 版本只通过 **changeset 文件**驱动，日常开发不手动改 `package.json`。
-- 写 `feat` / `fix` 等变更时，记得提交对应的 `.changeset/*.md`（patch/minor/major）。
-- 缺失 changeset 时可手动补一个 patch changeset，push 后由 CI 自动打版本。
+- Versions are driven **only by changeset files**; daily development never edits `package.json` by hand.
+- When you write `feat` / `fix` changes, remember to commit the corresponding `.changeset/*.md` (patch/minor/major).
+- If a changeset is missing, manually add a patch changeset and push; CI versions it automatically.
 
-### npm 发布（OIDC）
+### npm publishing (OIDC)
 
-发布步骤为幂等逻辑：遍历所有非 private 包，满足以下条件才执行 `npm publish --access public --provenance`：
+The publish step is idempotent: it iterates all non-private packages and only runs `npm publish --access public --provenance` when:
 
-- 当前版本存在对应 git tag（`@rx-ted/packages-<name>@<version>`）
-- 该版本尚未发布到 npm
+- a git tag exists for the current version (`@rx-ted/packages-<name>@<version>`)
+- that version hasn't been published to npm yet
 
-因此即使版本 PR 合并后 workflow 未触发（见下方"常见问题"），重新触发一次也会把缺失版本补齐发布。
+So even if the workflow didn't trigger after the version PR merged (see the FAQ below), re-triggering it once publishes any missing versions.
 
-### npm 后台一次性配置
+### One-time npm backend configuration
 
-在 npmjs.com 上为**每个要发布的包**单独配置 Trusted Publisher（OIDC）：
+Configure Trusted Publisher (OIDC) on npmjs.com for **every package you want to publish**:
 
-1. 进入 `https://www.npmjs.com/package/<包名>` → **Settings** → **Trusted publishing**
-2. 选择 GitHub Actions，填写：
+1. Go to `https://www.npmjs.com/package/<package-name>` → **Settings** → **Trusted publishing**
+2. Choose GitHub Actions and fill in:
    - **Organization or user**: `rx-ted`
    - **Repository**: `app-repo`
-   - **Workflow filename**: `release.yml`（必须与实际执行 npm publish 的 workflow 一致，含 `.yml`）
+   - **Workflow filename**: `release.yml` (must match the workflow that actually runs `npm publish`, including the `.yml`)
    - **Allowed actions**: `npm publish`
-3. 保存后重复配置所有包：`@rx-ted/packages-core`、`@rx-ted/packages-honest`、`@rx-ted/packages-honest-plugins`、`@rx-ted/packages-markdown-editor`
+3. Save, then repeat for every package: `@rx-ted/packages-core`, `@rx-ted/packages-honest`, `@rx-ted/packages-honest-plugins`, `@rx-ted/packages-markdown-editor`
 
-> 常见报错 `404 Not Found ... you do not have permission to access it`：Trusted Publisher 没覆盖该包，或 workflow filename 填错（例如填了 `publish.yml`）。npm 保存时不校验，发布时才报错。
+> Common error `404 Not Found ... you do not have permission to access it`: the Trusted Publisher doesn't cover that package, or the workflow filename is wrong (e.g. `publish.yml` was entered). npm doesn't validate on save — the error only appears at publish time.
 
-### `repository` 字段要求
+### `repository` field requirement
 
-每个**非 private** 包必须在 `package.json` 中配置 `repository`，且必须指向真实源码仓库（`git+https://github.com/rx-ted/app-repo.git`）。缺失或指向错误会导致 provenance 校验失败：
+Every **non-private** package must have a `repository` field in `package.json` pointing at the real source repo (`git+https://github.com/rx-ted/app-repo.git`). A missing or wrong value fails provenance verification:
 
 ```text
 Error verifying sigstore provenance bundle: Failed to validate repository information:
@@ -123,32 +126,32 @@ Error verifying sigstore provenance bundle: Failed to validate repository inform
 }
 ```
 
-## 手动兜底发布（`publish.yml`）
+## Manual fallback publishing (`publish.yml`)
 
-正常发布已集成在 `release.yml`，`publish.yml` 仅作为**手动补发**工具：
+Normal publishing is integrated into `release.yml`; `publish.yml` only serves as a **manual backfill** tool:
 
 1. Actions → Publish → Run workflow
-2. 输入 tag，如 `@rx-ted/packages-core@1.0.3`
-3. 使用 OIDC 重新发布该版本
+2. Enter a tag, e.g. `@rx-ted/packages-core@1.0.3`
+3. Re-publish that version using OIDC
 
-## Token 策略
+## Token strategy
 
-| 用途 | 方式 | 是否需要手动配置 |
+| Purpose | Method | Manual config needed? |
 | --- | --- | --- |
-| CI / PR 合并 / 打 tag / 建 Release | `GITHUB_TOKEN`（自动注入） | 否 |
-| npm 发布 | OIDC Trusted Publishing（`id-token: write`） | 一次性 npm 后台配置 |
-| 跨仓库同步（已移除） | 曾需 `PAT_TOKEN` | 已删除，不再需要 |
+| CI / PR merge / tagging / creating Releases | `GITHUB_TOKEN` (auto-injected) | No |
+| npm publishing | OIDC Trusted Publishing (`id-token: write`) | one-time npm backend configuration |
+| cross-repo sync (removed) | used to need `PAT_TOKEN` | deleted, no longer needed |
 
-## 常见问题
+## FAQ
 
-### 版本合并后没有自动发布
+### No auto-publish after the version PR merges
 
-changesets 的 "Version Packages" PR 自动合并到 main 时，偶尔不会触发新的 push workflow run。处理方式：向 main 推一个空 commit（`git commit --allow-empty -m "ci: trigger release"`）重新触发 `release.yml`。发布步骤是幂等的，会自动补齐所有缺失版本。
+When changesets' "Version Packages" PR auto-merges into main, the resulting push occasionally doesn't trigger a new workflow run. Fix: push an empty commit to main (`git commit --allow-empty -m "ci: trigger release"`) to re-trigger `release.yml`. The publish step is idempotent and fills in all missing versions.
 
-### PR 上 CI 不运行
+### CI not running on PRs
 
-`ci.yml` 必须使用 `pull_request`（而非仅 `pull_request_target`）。首次运行该触发时，GitHub 会要求维护者手动 **Approve** 一次，批准后机器人提交的 PR 不再需要重复批准。
+`ci.yml` must use `pull_request` (not just `pull_request_target`). The first time this trigger runs, GitHub asks a maintainer to **Approve** it once; after approval, bot-submitted PRs no longer need repeated approval.
 
-### 本机运行 pnpm 报 `node:sqlite` 错误
+### `node:sqlite` error when running pnpm locally
 
-仓库要求 Node >= 24（pnpm 11.5 依赖 `node:sqlite`）。本地至少需要 Node v22.5+，建议使用 Node 24。
+The repo requires Node >= 24 (pnpm 11.5 depends on `node:sqlite`). Locally you need at least Node v22.5+, and Node 24 is recommended.

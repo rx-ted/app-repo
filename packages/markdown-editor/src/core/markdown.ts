@@ -243,7 +243,7 @@ export function rehypeCodeData() {
 export function getPrettyCodeOptions(codeTheme: string): PrettyCodeOptions {
   return {
     theme: codeTheme as Theme,
-    keepBackground: false,
+    keepBackground: true,
     defaultLang: 'plaintext',
     filterMetaString(meta: string) {
       return meta

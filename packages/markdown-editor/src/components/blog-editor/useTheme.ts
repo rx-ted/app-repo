@@ -3,8 +3,8 @@ import type { Ref } from 'vue';
 import {
   applyEditorTheme,
   CODE_THEMES,
+  DEFAULT_PREVIEW_THEME,
   getEditorTheme,
-  PREVIEW_THEMES,
   type EditorTheme,
 } from '../../core/themes';
 
@@ -26,7 +26,7 @@ export function useTheme(opts: {
   onUpdateCodeTheme: (value: string | undefined) => void;
 }) {
   const editorThemeRef = ref<EditorTheme>(opts.props.editorTheme ?? 'light');
-  const previewThemeRef = ref<string>(opts.props.previewTheme ?? 'github-light');
+  const previewThemeRef = ref<string>(opts.props.previewTheme ?? DEFAULT_PREVIEW_THEME);
   const codeThemeRef = ref<string | undefined>(opts.props.codeTheme);
 
   watch(
@@ -57,24 +57,12 @@ export function useTheme(opts: {
   const themeModalOpen = ref(false);
   const themeDraft = reactive<{ editor: EditorTheme; preview: string; code: string | undefined }>({
     editor: 'light',
-    preview: 'github-light',
+    preview: DEFAULT_PREVIEW_THEME,
     code: undefined,
   });
   const codeThemeSearch = ref('');
 
   const editorThemeVarsStyle = computed(() => getEditorTheme(themeDraft.editor).vars);
-
-  // Picking a dark/light editor theme switches the preview sample to match.
-  watch(
-    () => themeDraft.editor,
-    (v) => {
-      const target =
-        v === 'dark'
-          ? PREVIEW_THEMES.find((t) => t.id === 'github-dark')
-          : PREVIEW_THEMES.find((t) => t.id === 'github-light');
-      if (target) themeDraft.preview = target.id;
-    },
-  );
 
   const filteredCodeThemes = computed(() => {
     const q = codeThemeSearch.value.trim().toLowerCase();

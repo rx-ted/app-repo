@@ -1,3 +1,22 @@
+---
+title: Storage Strategy
+author: rx-ted
+date: 2026-07-22
+category: architecture
+tags:
+  - storage
+  - database
+  - d1
+  - kv
+  - durable-objects
+status: published
+visibility: public
+allow_comment: true
+pinned: false
+featured_weight: 0
+lang: zh-CN
+---
+
 # Storage Strategy
 
 > 定义**整个应用的数据存储架构**，以后即使底层从 Cloudflare 换成 AWS、Redis、Postgres，也基本不用改设计。

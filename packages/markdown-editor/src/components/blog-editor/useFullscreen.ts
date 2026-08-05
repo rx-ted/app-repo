@@ -15,6 +15,7 @@ export function useFullscreen(opts: {
   const windowFullscreen = ref(false);
   const screenFullscreen = ref(false);
   const showToc = ref(false);
+  const tocMinimized = ref(false);
 
   const overlayTarget = computed<HTMLElement>(() => opts.editorGridRef.value ?? document.body);
 
@@ -49,6 +50,10 @@ export function useFullscreen(opts: {
     showToc.value = !showToc.value;
   }
 
+  function toggleTocMinimize() {
+    tocMinimized.value = !tocMinimized.value;
+  }
+
   watch(showPreview, () => {
     nextTick(opts.onPreviewLayoutChange);
   });
@@ -67,11 +72,13 @@ export function useFullscreen(opts: {
     windowFullscreen,
     screenFullscreen,
     showToc,
+    tocMinimized,
     overlayTarget,
     toggleWindowFullscreen,
     toggleScreenFullscreen,
     togglePreviewOnly,
     toggleShowPreview,
     toggleToc,
+    toggleTocMinimize,
   };
 }

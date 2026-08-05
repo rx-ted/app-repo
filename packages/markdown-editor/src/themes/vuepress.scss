@@ -1,0 +1,59 @@
+// Preview theme: VuePress
+// Mirrors the `vuepress` palette in src/core/themes.ts so the base markdown
+// chrome (which reads the --me-* variables) renders identically to the
+// programmatic API. Light mode is the default; the dark palette is applied
+// when the renderer root carries [data-me-mode='dark'].
+
+.markdown-body-root[data-me-preview-theme='vuepress'] {
+  --me-text: #2c3e50;
+  --me-text-secondary: #4e6e8e;
+  --me-text-muted: #8492a6;
+  --me-text-tertiary: #6a8bad;
+  --me-border: #eaecef;
+  --me-bg: #ffffff;
+  --me-bg-soft: #f8f8f9;
+  --me-bg-code: #f7f7f7;
+  --me-bg-highlight: rgba(62, 175, 124, 0.14);
+  --me-primary: #3eaf7c;
+  --me-link: #3eaf7c;
+  --me-success: #42b983;
+  --me-warning: #e6a23c;
+  --me-danger: #c0392b;
+  --me-info: #2973b7;
+  --me-bg-success: rgba(66, 185, 131, 0.15);
+  --me-bg-warning: rgba(230, 162, 60, 0.15);
+  --me-bg-danger: rgba(192, 57, 43, 0.12);
+  --me-bg-info: rgba(41, 115, 183, 0.12);
+  --me-error: #c0392b;
+
+  --me-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Noto Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    sans-serif;
+  --me-font-size: 16px;
+  --me-line-height: 1.7;
+  --me-content-max-width: 740px;
+  --me-content-padding: 32px 40px 56px;
+
+  &[data-me-mode='dark'] {
+    --me-text: #cfd4dc;
+    --me-text-secondary: #9aa4b2;
+    --me-text-muted: #6b7480;
+    --me-text-tertiary: #8b94a1;
+    --me-border: #3a3f45;
+    --me-bg: #1b1b1f;
+    --me-bg-soft: #242429;
+    --me-bg-code: #282c34;
+    --me-bg-highlight: rgba(99, 226, 183, 0.16);
+    --me-primary: #42b983;
+    --me-link: #63e2b7;
+    --me-success: #42b983;
+    --me-warning: #e6a23c;
+    --me-danger: #e0655a;
+    --me-info: #4d8fd6;
+    --me-bg-success: rgba(66, 185, 131, 0.16);
+    --me-bg-warning: rgba(230, 162, 60, 0.16);
+    --me-bg-danger: rgba(224, 101, 90, 0.16);
+    --me-bg-info: rgba(77, 143, 214, 0.16);
+    --me-error: #e0655a;
+  }
+}

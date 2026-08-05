@@ -1,7 +1,7 @@
 ---
-title: platform-api — API 服务器
+title: platform-api — API server
 author: rx-ted
-date: 2026-07-22
+date: 2026-08-05
 category: guide
 tags:
   - api
@@ -12,26 +12,29 @@ visibility: public
 allow_comment: true
 pinned: false
 featured_weight: 0
+lang: en
 ---
 
-# platform-api — API 服务器
+**English** | [中文](./api.zh.md)
 
-基于 Hono + Honest DI 框架的博客平台 API，服务 web-blog 前端。
+# platform-api — API server
 
-## 技术栈
+A blog platform API built on Hono + Honest DI framework, serving the web-blog frontend.
 
-- 运行时：Node.js（Bun dev / Node prod）
-- 框架：Hono 4.12 + Honest（NestJS 风格 DI）
-- 数据库：MySQL / SQLite / D1（via honest-plugins/db）
-- 缓存：Redis / KV / Local（via honest-plugins/cache）
-- 验证：Zod / OpenAPI 自动生成
-- 邮件：Resend / Brevo / SMTP（via honest-plugins/mail）
-- 对象存储：AWS S3（via honest-plugins/s3）
-- API 文档：OpenAPI + Scalar UI（via honest-plugins/api-doc）
+## Tech stack
 
-## 依赖包
+- Runtime: Node.js (Bun dev / Node prod)
+- Framework: Hono 4.12 + Honest (NestJS-style DI)
+- Database: MySQL / SQLite / D1 (via honest-plugins/db)
+- Cache: Redis / KV / Local (via honest-plugins/cache)
+- Validation: Zod / automatic OpenAPI generation
+- Email: Resend / Brevo / SMTP (via honest-plugins/mail)
+- Object storage: AWS S3 (via honest-plugins/s3)
+- API docs: OpenAPI + Scalar UI (via honest-plugins/api-doc)
 
-| 依赖 | 包名 |
+## Dependencies
+
+| Dependency | Package |
 | --- | --- |
 | packages-core | `@rx-ted/packages-core` |
 | packages-honest | `@rx-ted/packages-honest` |
@@ -41,104 +44,104 @@ featured_weight: 0
 | HonestPlugins/s3 | `@rx-ted/packages-honest-plugins-s3` |
 | HonestPlugins/api-doc | `@rx-ted/packages-honest-plugins-api-doc` |
 
-## 功能模块（21 个）
+## Feature modules (23)
 
-| 模块 | 路由前缀 | 说明 |
+| Module | Route prefix | Description |
 | --- | --- | --- |
-| `auth` | `/auth` | 登录/注册/登出/刷新/Email 验证码/会话/OAuth（4 个控制器 + 4 个服务） |
-| `post` | `/posts` | 文章 CRUD + 版本管理 + 统计 + CacheInvalidationService |
-| `comment` | `/comments` | 评论 CRUD + 点赞/举报/线程 |
-| `user` | `/user` | 用户资料/管理（UserController + AdminUserController） |
-| `blog` | `/blog` | 博客摘要/首页数据（DashboardService + AuthorService） |
-| `category` | `/categories` | 分类 CRUD |
-| `tags` | `/tags` | 标签 CRUD |
-| `search` | `/search` | 搜索端点 |
-| `notification` | `/notification` | 通知（站内 + 邮件）+ 实时推送 |
-| `role` | `/role` | 角色管理 |
-| `permission` | `/permission` | 权限管理 |
-| `permission-request` | `/permission-request` | 权限请求审批流程 |
-| `audit` | `/audit` | 审计日志 |
-| `announcement` | `/announcement` | 公告 CRUD |
-| `mail` | `/mail` | 邮件发送 + 模板 |
-| `post-stats` | `/post-stats` | 文章浏览量统计 |
-| `author-stats` | `/author-stats` | 作者统计 |
-| `friend-link` | `/friend-link` | 友情链接 |
-| `system` | `/system` | 系统初始化 + 健康检查 + 站点信息 |
-| `hello` | `/hello` | 测试端点 |
-| `geoip` | — | IP 地理定位服务 |
+| `auth` | `/auth` | Login/register/logout/refresh/email verification code/sessions/OAuth (4 controllers + 4 services) |
+| `post` | `/posts` | Post CRUD + versioning + stats + CacheInvalidationService |
+| `comment` | `/comments` | Comment CRUD + likes/reports/threads |
+| `user` | `/user` | User profiles/management (UserController + AdminUserController) |
+| `blog` | `/blog` | Blog summary/home data (DashboardService + AuthorService) |
+| `category` | `/categories` | Category CRUD |
+| `tags` | `/tags` | Tag CRUD |
+| `search` | `/search` | Search endpoint |
+| `notification` | `/notification` | Notifications (in-app + email) + real-time push |
+| `role` | `/role` | Role management |
+| `permission` | `/permission` | Permission management |
+| `admin-permission` | `/admin/permissions` | Admin permission overrides |
+| `permission-request` | `/permission-request` | Permission request approval flow |
+| `audit` | `/audit` | Audit logs |
+| `announcement` | `/announcement` | Announcement CRUD |
+| `mail` | `/mail` | Email sending + templates |
+| `post-stats` | `/post-stats` | Post view statistics |
+| `author-stats` | `/author-stats` | Author statistics |
+| `discover` | `/discoveries` | Discover page content |
+| `upload` | `/upload` | File upload |
+| `system` | `/system` | System initialization + health check + site info |
+| `hello` | `/hello` | Test endpoint |
+| `geoip` | — | IP geolocation service |
 
-完整 API 端点列表见 [api-routes.md](./api-routes.md)。
+The full list of API endpoints is in [api-routes.md](./api-routes.md).
 
-## 数据库（15+ 表）
+## Database (29 tables)
 
-| 表 | 用途 |
+| Table | Purpose |
 | --- | --- |
-| users / userAuth / userProfiles / userOauth | 用户体系 |
-| roles / userRoleMappings | 角色管理 |
-| permissions / userPermissionMappings / rolePermissionMappings | 权限管理 |
-| permissionRequests | 权限请求 |
-| postCore / postContent / postRevisions / postStats | 文章体系 |
-| postTagMappings / postCategoryMappings | 文章关联 |
-| postTags / postCategories | 标签和分类 |
-| comments / commentLikes / commentReports / postCommentThreads | 评论体系 |
-| notifications | 通知 |
-| auditLogs | 审计日志 |
-| authorStats | 作者统计 |
-| announcements | 公告 |
-| versions / moduleVersions / changelogEntries / commitRecords / releases | 版本管理 |
-| mailLogs | 邮件 |
-| userLayoutConfigs | 用户布局配置 |
-| friendLinks | 友情链接 |
+| systemMeta | System initialization metadata |
+| users / userAuth / userProfiles / userOauth | User system |
+| roles / userRoleMappings | Role management |
+| permissions / userPermissionMappings / rolePermissionMappings | Permission management |
+| permissionRequests / permissionRequestItems | Permission requests |
+| postCore / postContent / postRevisions / postStats | Post system |
+| postTagMappings / postCategoryMappings | Post associations |
+| postTags / postCategories | Tags and categories |
+| comments / commentLikes / commentReports / postCommentThreads | Comment system |
+| notifications | Notifications |
+| auditLogs | Audit logs |
+| authorStats | Author statistics |
+| announcements | Announcements |
+| discoveries | Discover page content |
 
-## 认证体系
+## Authentication system
 
-### 服务拆分
+### Service split
 
-| 服务 | 职责 |
+| Service | Responsibility |
 | --- | --- |
-| `PasswordAuthService` | 密码登录（scrypt 哈希 + timing-safe 比较）|
-| `EmailAuthService` | Email 验证码（6 位，5 分钟 TTL，60s 重发冷却）|
-| `OAuthService` | GitHub OAuth 流程 |
-| `SessionManagerService` | 会话管理（创建/列出/撤销单条/全部）|
-| `AuthContextService` | 实现 `IAuthContextService` 接口，解耦认证上下文 |
+| `PasswordAuthService` | Password login (scrypt hashing + timing-safe comparison) |
+| `EmailAuthService` | Email verification code (6 digits, 5-minute TTL, 60s resend cooldown) |
+| `OAuthService` | GitHub OAuth flow |
+| `SessionManagerService` | Session management (create/list/revoke single/all) |
+| `AuthContextService` | Implements the `IAuthContextService` interface, decoupling the auth context |
 
-### 认证流程
+### Auth flow
 
-- JWT access token（15m 过期）
-- Refresh cookie：httpOnly, secure, SameSite=Lax, path=/api/v1/auth（7d 过期）
-- Token 复用检测（被盗提示）
+- JWT access token (15m expiry)
+- Refresh cookie: httpOnly, secure, SameSite=Lax, path=/api/v1/auth (7d expiry)
+- Token reuse detection (stolen-token warning)
 
-### 控制器拆分
+### Controller split
 
-| 控制器 | 路由前缀 | 说明 |
+| Controller | Route prefix | Description |
 | --- | --- | --- |
-| `AuthController` | `/auth` | 核心认证（登录/注册/登出/刷新） |
-| `AuthEmailController` | `/auth/email` | Email 验证码 |
-| `AuthOAuthController` | `/auth/oauth` | OAuth（GitHub） |
-| `SessionsController` | `/auth/sessions` | 会话管理 |
+| `AuthController` | `/auth` | Core auth (login/register/logout/refresh) |
+| `AuthEmailController` | `/auth/email` | Email verification code |
+| `AuthOAuthController` | `/auth/oauth` | OAuth (GitHub) |
+| `SessionsController` | `/auth/sessions` | Session management |
 
-### 路由守卫
+### Route guards
 
-| 守卫 | 作用 |
+| Guard | Purpose |
 | --- | --- |
-| `AuthGuard` | JWT Bearer 验证（通过 `IAuthContextService` 接口解耦认证上下文） |
-| `RolesGuard` | 角色检查 |
-| `PermissionsGuard` | 权限码检查 |
-| `RateLimitGuard` | 速率限制 |
-| `EnvironmentGuard` | 生产环境拦截 |
-| `InitKeyGuard` | 系统初始化密钥验证 |
+| `AuthGuard` | JWT Bearer validation (decouples the auth context via the `IAuthContextService` interface) |
+| `RolesGuard` | Role checks |
+| `PermissionsGuard` | Permission code checks |
+| `RateLimitGuard` | Rate limiting |
+| `EnvironmentGuard` | Production environment blocking |
+| `InitKeyGuard` | System initialization key validation |
 
-## 插件
+## Plugins
 
-| 插件 | 包名 | 作用 |
+| Plugin | Package | Purpose |
 | --- | --- | --- |
-| ApiDocPlugin | `honest-plugins/api-doc` | OpenAPI 规范 + Scalar UI |
+| ApiDocPlugin | `honest-plugins/api-doc` | OpenAPI spec + Scalar UI |
 | DbPlugin | `honest-plugins/db` | Drizzle ORM + MySQL/SQLite/D1 |
-| CachePlugin | `honest-plugins/cache` | Redis/KV/Local 缓存 |
-| MailPlugin | `honest-plugins/mail` | Resend/Brevo/SMTP 邮件 |
-| S3Plugin | `honest-plugins/s3` | AWS S3 对象存储 |
+| CachePlugin | `honest-plugins/cache` | Redis/KV/Local caching |
+| MailPlugin | `honest-plugins/mail` | Resend/Brevo/SMTP email |
+| S3Plugin | `honest-plugins/s3` | AWS S3 object storage |
 
-## 公共工具
+## Common utilities
 
-- `common/utils/pagination.ts` — 分页工具（offset/limit 解析、响应格式化）
-- `common/guards/auth-context.interface.ts` — `IAuthContextService` 接口（解耦认证上下文依赖）
+- `common/utils/pagination.ts` — pagination utilities (offset/limit parsing, response formatting)
+- `common/guards/auth-context.interface.ts` — the `IAuthContextService` interface (decouples the auth context dependency)

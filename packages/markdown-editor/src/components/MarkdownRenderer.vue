@@ -2,7 +2,8 @@
 import { ref, watch, onMounted, nextTick, computed } from 'vue';
 import { renderMarkdown } from '../core/markdown';
 import type { SourceNode } from '../core/sourcemap';
-import { applyPreviewTheme, getPreviewTheme } from '../core/themes';
+import { DEFAULT_PREVIEW_THEME, getPreviewTheme, type EditorTheme } from '../core/themes';
+import { loadPreviewThemeCss } from '../core/themeCss';
 import { isTaskChecked, toggleTask } from '../core/tasks';
 
 import 'katex/dist/katex.min.css';
@@ -12,14 +13,18 @@ const props = withDefaults(
     content: string;
     theme?: string;
     codeTheme?: string;
+    mode?: EditorTheme;
     interactiveTasks?: boolean;
     headingInsert?: boolean;
+    id?: string;
   }>(),
   {
-    theme: 'github-light',
+    theme: DEFAULT_PREVIEW_THEME,
     codeTheme: undefined,
+    mode: 'light',
     interactiveTasks: false,
     headingInsert: false,
+    id: undefined,
   },
 );
 
@@ -41,7 +46,7 @@ const rootRef = ref<HTMLElement | null>(null);
 const sourceNodes: SourceNode[] = [];
 
 const previewTheme = computed(() => getPreviewTheme(props.theme));
-const codeTheme = computed(() => props.codeTheme ?? previewTheme.value.codeTheme);
+const codeTheme = computed(() => props.codeTheme ?? previewTheme.value.codeTheme[props.mode]);
 
 async function render() {
   try {
@@ -60,12 +65,18 @@ async function render() {
 
 onMounted(async () => {
   ready.value = true;
+  loadPreviewThemeCss(props.theme);
   render();
 });
 
-watch([() => props.content, () => props.theme, () => props.codeTheme], () => {
+watch([() => props.content, () => props.theme, () => props.codeTheme, () => props.mode], () => {
   if (ready.value) render();
 });
+
+watch(
+  () => props.theme,
+  (id) => loadPreviewThemeCss(id),
+);
 
 // ── Client-side interactions ──
 function addCodeInteractions() {
@@ -113,7 +124,7 @@ async function initMermaid() {
     const { default: mermaid } = await import('mermaid');
     mermaid.initialize({
       startOnLoad: false,
-      theme: previewTheme.value.mermaidTheme,
+      theme: previewTheme.value.mermaidTheme[props.mode],
       fontFamily:
         "'trebuchet ms', verdana, arial, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Hiragino Sans GB', sans-serif",
     });
@@ -125,7 +136,6 @@ async function initMermaid() {
 
 watch(html, async () => {
   await nextTick();
-  if (rootRef.value) applyPreviewTheme(rootRef.value, previewTheme.value);
   addCodeInteractions();
   await initMermaid();
   if (sourceNodes.length && markdownBodyRef.value) {
@@ -252,7 +262,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="rootRef" class="markdown-body-root" :data-me-preview-theme="props.theme">
+  <div ref="rootRef" class="markdown-body-root" :id="props.id || undefined" :data-me-preview-theme="props.theme" :data-me-mode="props.mode">
     <div v-if="!ready" class="markdown-loading">Loading...</div>
     <div v-else ref="markdownBodyRef" class="markdown-body" v-html="html" />
   </div>
@@ -271,10 +281,14 @@ onMounted(() => {
 }
 
 .markdown-body {
-  font-size: 17px;
-  line-height: 1.85;
+  font-family: var(--me-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  font-size: var(--me-font-size, 17px);
+  line-height: var(--me-line-height, 1.85);
   color: var(--me-text);
   word-wrap: break-word;
+  max-width: var(--me-content-max-width, 100%);
+  margin: 0 auto;
+  padding: var(--me-content-padding, 24px);
 }
 
 /* ── Headings ── */
@@ -338,7 +352,7 @@ onMounted(() => {
 }
 
 /* ── Inline code ── */
-.markdown-body :deep(code:not(figure[data-rehype-pretty-code-figure] code)) {
+.markdown-body :deep(:where(code:not(figure[data-rehype-pretty-code-figure] code))) {
   background-color: var(--me-bg-code, #f0f0f0);
   color: var(--me-text);
   font-size: 0.85em;
@@ -377,12 +391,14 @@ onMounted(() => {
 }
 
 /* ── Code figure wrapper ── */
+/* The shiki code theme owns the block background (keepBackground), so the
+   wrapper stays transparent and the <pre> inline background shows through. */
 .markdown-body :deep(figure[data-rehype-pretty-code-figure]) {
   margin: 0 0 1em;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--me-border, #e0e0e0);
-  background: var(--me-bg-code);
+  background: transparent;
 }
 
 /* ── Code blocks ── */
@@ -593,7 +609,7 @@ onMounted(() => {
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--me-border);
-  background: var(--me-bg-code);
+  background: transparent;
 }
 
 .markdown-body :deep(.code-group-bar) {
@@ -765,4 +781,20 @@ onMounted(() => {
 @media (max-width: 768px) {
   .markdown-body { font-size: 16px; }
 }
+
+@media print {
+  .markdown-body {
+    max-width: none !important;
+    padding: 0;
+  }
+  :deep(pre),
+  :deep(table),
+  :deep(blockquote),
+  :deep(details),
+  :deep(.mermaid),
+  :deep(figure[data-rehype-pretty-code-figure]) {
+    break-inside: avoid;
+  }
+}
+
 </style>

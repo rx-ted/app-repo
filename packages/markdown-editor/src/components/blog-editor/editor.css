@@ -552,6 +552,47 @@
   font-weight: 600;
 }
 
+.theme-opt-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-opt-card .theme-opt {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-opt-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.theme-opt-tag {
+  flex-shrink: 0;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: var(--me-warning, #9a6700);
+  background: var(--me-bg-warning, #fff8c5);
+}
+
+.theme-opt-source {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--me-text-muted, #8c959f);
+  text-decoration: none;
+}
+
+.theme-opt-source:hover {
+  color: var(--me-link, #0969da);
+  text-decoration: underline;
+}
+
 .theme-search {
   margin-bottom: 4px;
 }

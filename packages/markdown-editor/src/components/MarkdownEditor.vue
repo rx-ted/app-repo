@@ -171,6 +171,12 @@ async function exportPdf() {
     poll();
   });
   await new Promise((r) => setTimeout(r, 300));
+  // The overlay's renderer root carries id="export-pdf-preview"; the print
+  // stylesheet attaches every page attribute to it. Bail out if it is missing.
+  if (!document.getElementById('export-pdf-preview')) {
+    pdfOverlayVisible.value = false;
+    return;
+  }
   window.onafterprint = () => {
     window.onafterprint = null;
     pdfOverlayVisible.value = false;
@@ -459,6 +465,7 @@ defineExpose({
           <div class="preview-header">{{ t('editor.preview') }}</div>
           <div ref="previewScrollRef" class="preview-scroll">
             <MarkdownRenderer
+              id="export-pdf-preview"
               :content="currentValue"
               :theme="previewThemeRef"
               :code-theme="codeThemeRef"
@@ -560,15 +567,25 @@ defineExpose({
           <div class="theme-section">
             <label class="theme-label">{{ t('editor.toolbar.previewTheme') }}</label>
             <div class="theme-list">
-              <button
-                v-for="p in PREVIEW_THEMES"
-                :key="p.id"
-                class="theme-opt"
-                :class="{ active: themeDraft.preview === p.id }"
-                @click="themeDraft.preview = p.id"
-              >
-                {{ p.label }}
-              </button>
+              <div v-for="p in PREVIEW_THEMES" :key="p.id" class="theme-opt-card">
+                <button
+                  class="theme-opt"
+                  :class="{ active: themeDraft.preview === p.id }"
+                  @click="themeDraft.preview = p.id"
+                >
+                  <span class="theme-opt-label">{{ p.label }}</span>
+                  <span v-if="!p.darkable" class="theme-opt-tag">{{ t('editor.theme.lightOnly') }}</span>
+                </button>
+                <a
+                  v-if="p.source"
+                  class="theme-opt-source"
+                  :href="p.source.url"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  {{ p.source.author }}
+                </a>
+              </div>
             </div>
           </div>
 
@@ -617,6 +634,7 @@ defineExpose({
     <Teleport to="body">
       <div v-if="pdfOverlayVisible" class="pdf-print-overlay" :style="pdfOverlayVars">
         <MarkdownRenderer
+          id="export-pdf-preview"
           :content="currentValue"
           :theme="previewThemeRef"
           :code-theme="codeThemeRef"
@@ -632,7 +650,8 @@ defineExpose({
 <style scoped src="./blog-editor/editor.css" />
 
 <style>
-/* Print-only: hide everything on the page except the PDF export overlay, so a
+/* ── PDF export ──────────────────────────────────────────────────────────
+   Print-only: hide everything on the page except the PDF export overlay, so a
    consumer layout can never clip the document to its own scroll container. */
 @media print {
   body > *:not(.pdf-print-overlay) {
@@ -644,6 +663,60 @@ defineExpose({
     inset: auto !important;
     overflow: visible !important;
     height: auto !important;
+  }
+}
+
+/* The overlay's MarkdownRenderer root carries id="export-pdf-preview" — the
+   single node that holds every page attribute for the print output:
+   - a named @page (A4 size + margins) applied via `page`, so the content
+     paginates on a stable sheet regardless of the browser's default paper;
+   - block-level break rules so code, tables, diagrams and headings never
+     split mid-block.
+
+   Consumers can override the sheet/margins by emitting their own @page rule
+   (or a `page` name) after this stylesheet. */
+@page export-pdf {
+  size: A4;
+  margin: 16mm 14mm;
+}
+
+#export-pdf-preview {
+  page: export-pdf;
+}
+
+@media print {
+  #export-pdf-preview,
+  #export-pdf-preview * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  #export-pdf-preview {
+    position: static !important;
+    overflow: visible !important;
+    background: #ffffff;
+  }
+
+  #export-pdf-preview .markdown-body {
+    max-width: none !important;
+    padding: 0;
+  }
+
+  #export-pdf-preview pre,
+  #export-pdf-preview table,
+  #export-pdf-preview blockquote,
+  #export-pdf-preview details,
+  #export-pdf-preview figure[data-rehype-pretty-code-figure],
+  #export-pdf-preview .mermaid,
+  #export-pdf-preview .katex-display {
+    break-inside: avoid;
+  }
+
+  #export-pdf-preview h1,
+  #export-pdf-preview h2,
+  #export-pdf-preview h3,
+  #export-pdf-preview h4 {
+    break-after: avoid;
   }
 }
 </style>

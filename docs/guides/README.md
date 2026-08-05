@@ -1,33 +1,47 @@
 ---
-title: 指南
+title: Guides
 author: rx-ted
-date: 2026-07-22
+date: 2026-08-05
 category: guide
 status: published
 visibility: public
 allow_comment: true
 pinned: false
 featured_weight: 0
+lang: en
 ---
 
-# 指南
+**English** | [中文](./README.zh.md)
 
-| 指南 | 说明 |
+# Guides
+
+| Guide | Description |
 | --- | --- |
-| [getting-started](./getting-started.md) | 本地开发环境搭建 |
-| [development](./development.md) | 日常开发工作流程 |
-| [version-management](./version-management.md) | 版本管理与变更日志 |
-| [api](./api.md) | Platform API 技术栈与模块概览 |
-| [packages](./packages.md) | 共享包说明 |
-| [e2e-testing](./e2e-testing.md) | E2E 测试流程 |
-| [api-routes](./api-routes.md) | API 路由完整文档 |
-| [markdown-editor](./markdown-editor.md) | Markdown 编辑器与渲染（语法 / 管线 / SourceMap / 滚动同步） |
-| [github-actions](./github-actions.md) | GitHub Actions 工作流（CI / auto-merge / release / npm OIDC） |
+| [getting-started](./getting-started.md) | Local development environment setup |
+| [development](./development.md) | Daily development workflow |
+| [version-management](../implementations/version-management-design.md) | Version management & changelog (unimplemented design proposal) |
+| [api](./api.md) | Platform API tech stack and module overview |
+| [packages](./packages.md) | Shared package reference |
+| [e2e-testing](./e2e-testing.md) | E2E testing workflow |
+| [api-routes](./api-routes.md) | Full API route documentation |
+| [markdown-syntax](./markdown-syntax.md) | Supported Markdown syntax quick reference |
+| [github-actions](./github-actions.md) | GitHub Actions workflows (CI / auto-merge / release / npm OIDC) |
 
-## 快速链接
+### `packages/markdown-editor` usage guide
 
-| 文档 | 位置 |
+| Guide | Description |
 | --- | --- |
-| 架构概览 | [docs/architecture/README.md](../architecture/README.md) |
-| 仓库策略 | [docs/architecture/repository-strategy.md](../architecture/repository-strategy.md) |
-| 数据库 Schema | [docs/architecture/schema.md](../architecture/schema.md) |
+| [components](./components.md) | `MarkdownEditor` + `MarkdownRenderer` props/events, rendering features, core exports |
+| [custom-themes](./custom-themes.md) | Build and register custom preview themes |
+| [localization](./localization.md) | `createI18n`, overrides, `registerLocale` |
+| [markdown-editor-development](./markdown-editor-development.md) | Repository layout, scripts, build notes, testing |
+
+> The package's internals are covered in [docs/architecture/](../architecture/) (render-pipeline / theme-system / sync-engine / pdf-export).
+
+## Quick links
+
+| Documentation | Location |
+| --- | --- |
+| Architecture overview | [docs/architecture/README.md](../architecture/README.md) |
+| Repository strategy | [docs/architecture/repository-strategy.md](../architecture/repository-strategy.md) |
+| Database schema | [docs/architecture/schema.md](../architecture/schema.md) |

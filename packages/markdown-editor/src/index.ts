@@ -41,17 +41,20 @@ export { isTaskChecked, toggleTask } from './core/tasks';
 export {
   PREVIEW_THEMES,
   REQUIRED_PREVIEW_VARS,
+  REQUIRED_PREVIEW_TYPOGRAPHY,
   DEFAULT_PREVIEW_THEME,
   CODE_THEMES,
   EDITOR_THEMES,
   EDITOR_THEME_VARS,
   getPreviewTheme,
+  getPreviewPalette,
   applyPreviewTheme,
   getEditorTheme,
   applyEditorTheme,
   type PreviewThemeConfig,
   type EditorThemeConfig,
   type EditorTheme,
+  type ThemeSource,
 } from './core/themes';
 export {
   createI18n,

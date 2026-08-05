@@ -157,6 +157,14 @@ describe('markdown pipeline', () => {
     await pipeline.process(md);
     expect(sourceNodes.length).toBe(0);
   });
+
+  it('keeps the shiki background on the pre so the code theme owns the block background', async () => {
+    const { pipeline } = buildMarkdownPipeline({ codeTheme: 'github-light' });
+    const { value } = await pipeline.process('```js\nconst a = 1;\n```');
+    const pre = String(value).match(/<pre[^>]*>/)?.[0] ?? '';
+    expect(pre).toContain('background-color');
+    expect(pre).toContain('data-theme="github-light"');
+  });
 });
 
 describe('heading anchors', () => {

@@ -13,6 +13,7 @@ visibility: public
 allow_comment: true
 pinned: false
 featured_weight: 0
+lang: zh-CN
 ---
 
 # Repository Strategy
@@ -52,7 +53,7 @@ rx-ted/
 ## Private Repository（唯一开发仓库）
 
 ```
-rx-ted/app
+rx-ted/app-repo
 ```
 
 负责：
@@ -67,19 +68,20 @@ rx-ted/app
 目录结构：
 
 ```
-app/
+app-repo/
 ├── apps/
-│   ├── blog
-│   ├── blog-api
+│   ├── platform-api
+│   ├── web-blog
 │   └── ...
 │
 ├── packages/
 │   ├── core
-│   ├── database
-│   ├── cache
+│   ├── honest
+│   ├── honest-plugins
+│   ├── markdown-editor
 │   └── ...
 │
-├── tooling/
+├── config/
 ├── docs/
 ├── pnpm-workspace.yaml
 └── turbo.json
@@ -207,7 +209,7 @@ Public Repository 不参与开发。
 真正开发仍在：
 
 ```
-rx-ted/app
+rx-ted/app-repo
 ```
 
 ---
@@ -217,7 +219,7 @@ rx-ted/app
 所有开发均在：
 
 ```
-rx-ted/app
+rx-ted/app-repo
 ```
 
 完成。
@@ -634,13 +636,13 @@ Public Repo PR merged
 
 Public Repo CI 触发
 
-  └── gh pr create --repo rx-ted/app \
+  └── gh pr create --repo rx-ted/app-repo \
          --title "sync: blog#123: <original title>" \
          --body "Backport from rx-ted/blog#123 by @contributor"
 
 ↓
 
-Monorepo maintainer 在 rx-ted/app 审核并合入
+Monorepo maintainer 在 rx-ted/app-repo 审核并合入
 
 ↓
 
@@ -664,7 +666,7 @@ jobs:
     steps:
       - run: |
           gh pr create \
-            --repo rx-ted/app \
+            --repo rx-ted/app-repo \
             --base main \
             --head "backport/${{ github.event.repository.name }}-${{ github.event.number }}" \
             --title "sync(${{ github.event.repository.name }}): ${{ github.event.pull_request.title }}" \
@@ -704,7 +706,7 @@ Total（5 app 场景）：**~8-12 min**，在 GitHub Actions 6h 超时内安全�
                  Developer (仅维护一个仓库)
                      │
                      ▼
-          rx-ted/app (Private Monorepo)
+          rx-ted/app-repo (Private Monorepo)
                      │
           ┌──────────┴──────────────┐
           │                         │
@@ -731,7 +733,7 @@ Total（5 app 场景）：**~8-12 min**，在 GitHub Actions 6h 超时内安全�
           │                                │
           └─────────────┬──────────────────┘
                         ▼
-                rx-ted/app 审核合入
+                rx-ted/app-repo 审核合入
                         │
                         ▼
               下次 Release 自动同步
@@ -741,7 +743,7 @@ Total（5 app 场景）：**~8-12 min**，在 GitHub Actions 6h 超时内安全�
 
 ```
                       ┌─────────────────────────┐
-                      │    rx-ted/app (Private)  │
+                      │    rx-ted/app-repo (Private)  │
                       │    Single Source of Truth│
                       └──────────┬──────────────┘
                                  │

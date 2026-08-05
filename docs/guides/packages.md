@@ -1,7 +1,7 @@
 ---
-title: 共享包
+title: Shared packages
 author: rx-ted
-date: 2026-07-22
+date: 2026-08-05
 category: guide
 tags:
   - packages
@@ -11,77 +11,99 @@ visibility: public
 allow_comment: true
 pinned: false
 featured_weight: 0
+lang: en
 ---
 
-# 共享包
+**English** | [中文](./packages.zh.md)
 
-见 [docs/plans/2026-07-19-proposal-package-namespace.md](../plans/2026-07-19-proposal-package-namespace.md) 了解包命名和发布规范。
+# Shared packages
+
+See [docs/plans/2026-07-19-proposal-package-namespace.md](../plans/2026-07-19-proposal-package-namespace.md) for the package naming and publishing conventions.
 
 ## packages-core
 
-**目录**: `packages/core/`  
+**Directory**: `packages/core/`  
 **npm**: `@rx-ted/packages-core`  
-**用途**: 跨运行时工具（Env, Logger, Platform）
+**Purpose**: cross-runtime utilities (Env, Logger, Platform)
 
-- `Env` — 环境变量管理（loadEnv, var, set, mode）
-- `Logger` — 跨运行时日志（Node/Deno/Bun/CF Workers）
-- `Platform` — 运行时上下文（request, response, env bindings）
+- `Env` — environment variable management (loadEnv, var, set, mode)
+- `Logger` — cross-runtime logging (Node/Deno/Bun/CF Workers)
+- `Platform` — runtime context (request, response, env bindings)
 
-依赖：pino, zod（peer）
+Dependencies: pino, zod (peer)
 
-详见 [packages/core/README.md](../../packages/core/README.md)。
+See [packages/core/README.md](../../packages/core/README.md).
 
 ---
 
 ## packages-honest
 
-**目录**: `packages/honest/`  
+**Directory**: `packages/honest/`  
 **npm**: `@rx-ted/packages-honest`  
-**用途**: 基于 Hono 的 NestJS 风格 DI 框架
+**Purpose**: a NestJS-style DI framework built on Hono
 
-| 组件 | 用途 |
+| Component | Purpose |
 | --- | --- |
-| `Application` | 应用入口（create + 生命周期钩子）|
-| `Container` | DI 容器（构造器注入）|
-| `ComponentManager` | 管理 Controller/Service/Guard/Pipe/Filter |
-| `RouteManager` | 路由注册到 Hono 实例 |
-| `MetadataRepository` | 装饰器元数据存储 |
-| `PluginEngine` | 插件生命周期管理（bootstrap/destroy）|
+| `Application` | app entry point (create + lifecycle hooks) |
+| `Container` | DI container (constructor injection) |
+| `ComponentManager` | manages Controller/Service/Guard/Pipe/Filter |
+| `RouteManager` | registers routes on the Hono instance |
+| `MetadataRepository` | decorator metadata storage |
+| `PluginEngine` | plugin lifecycle management (bootstrap/destroy) |
 
-装饰器：@Controller, @Module, @Service, @Injectable, @Inject, @Get/@Post/@Put/@Patch/@Delete, @Body/@Param/@Query/@Ctx, @UseGuards, @Public, @UseFilters, @UsePipes, @UseMiddleware
+Decorators: @Controller, @Module, @Service, @Injectable, @Inject, @Get/@Post/@Put/@Patch/@Delete, @Body/@Param/@Query/@Ctx, @UseGuards, @Public, @UseFilters, @UsePipes, @UseMiddleware
 
-依赖：packages-core; peer: hono
+Dependencies: packages-core; peer: hono
 
-详见 [packages/honest/README.md](../../packages/honest/README.md)。
+See [packages/honest/README.md](../../packages/honest/README.md).
 
 ---
 
 ## packages-honest-plugins
 
-**目录**: `packages/honest-plugins/`  
-**npm**: `@rx-ted/packages-honest-plugins`（barrel）  
-**用途**: 插件集合（通过 barrel 导入）
+**Directory**: `packages/honest-plugins/`  
+**npm**: `@rx-ted/packages-honest-plugins` (barrel)  
+**Purpose**: the plugin collection (imported through the barrel)
 
-| 插件 | 子包 | 用途 |
+| Plugin | Sub-package | Purpose |
 | --- | --- | --- |
-| `db` | `@rx-ted/packages-honest-plugins-db` | 数据库（Drizzle ORM + MySQL/SQLite/D1/PostgreSQL） |
-| `cache` | `@rx-ted/packages-honest-plugins-cache` | 缓存（Redis/KV/Local） |
-| `mail` | `@rx-ted/packages-honest-plugins-mail` | 邮件（Resend/Brevo/SMTP） |
-| `s3` | `@rx-ted/packages-honest-plugins-s3` | 对象存储（AWS S3） |
-| `api-doc` | `@rx-ted/packages-honest-plugins-api-doc` | OpenAPI 文档 + Scalar UI |
+| `db` | `@rx-ted/packages-honest-plugins-db` | database (Drizzle ORM + MySQL/SQLite/D1/PostgreSQL) |
+| `cache` | `@rx-ted/packages-honest-plugins-cache` | caching (Redis/KV/Local) |
+| `mail` | `@rx-ted/packages-honest-plugins-mail` | email (Resend/Brevo/SMTP) |
+| `s3` | `@rx-ted/packages-honest-plugins-s3` | object storage (AWS S3) |
+| `api-doc` | `@rx-ted/packages-honest-plugins-api-doc` | OpenAPI docs + Scalar UI |
+| `counter` | `@rx-ted/packages-honest-plugins-counter` | counter aggregation based on Durable Objects |
 
-导入方式：
+Importing:
 
 ```ts
 import { DbService } from '@rx-ted/packages-honest-plugins/db'
 import { CacheService } from '@rx-ted/packages-honest-plugins/cache'
 ```
 
-子包为 `private: true`，仅通过 barrel 发布。
+The sub-packages are `private: true` and only published through the barrel.
 
-详见各插件 README：
+See each plugin's README:
 - [db/README.md](../../packages/honest-plugins/db/README.md)
 - [cache/README.md](../../packages/honest-plugins/cache/README.md)
 - [mail/README.md](../../packages/honest-plugins/mail/README.md)
 - [s3/README.md](../../packages/honest-plugins/s3/README.md)
 - [api-doc/README.md](../../packages/honest-plugins/api-doc/README.md)
+- [counter/README.md](../../packages/honest-plugins/counter/README.md)
+
+---
+
+## packages-markdown-editor
+
+**Directory**: `packages/markdown-editor/`  
+**npm**: `@rx-ted/packages-markdown-editor`  
+**Purpose**: a reusable Vue 3 Markdown editor + rendering pipeline (ESM distribution built with Vite)
+
+- `MarkdownEditor` — split-pane editor (edit + preview + toolbar + TOC + PDF export)
+- `MarkdownRenderer` — read-only render component sharing the same rendering pipeline as the editor preview
+- unified remark→rehype→shiki pipeline (`buildMarkdownPipeline`)
+- 6 built-in reading themes + an independent code-theme picker; themes are injected as scoped `<link>` on demand
+
+Dependencies: unified/remark/rehype/shiki/katex/mermaid, etc.; peer: vue, naive-ui, @iconify/vue
+
+See [packages/markdown-editor/README.md](../../packages/markdown-editor/README.md).

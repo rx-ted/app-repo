@@ -1,7 +1,7 @@
 ---
 title: Schema
 author: rx-ted
-date: 2026-07-22
+date: 2026-08-05
 category: architecture
 tags:
   - database
@@ -12,101 +12,104 @@ visibility: public
 allow_comment: true
 pinned: false
 featured_weight: 0
+lang: en
 ---
+
+**English** | [中文](./schema.zh.md)
 
 # Schema
 
-文章相关的数据库表结构，以及前端 front-matter 字段映射。
+Database table structures for articles, and the mapping of front-end front-matter fields.
 
-## postCore — 文章核心
+## postCore — Article core
 
-| 字段 | 类型 | 默认值 | 说明 |
+| Field | Type | Default | Description |
 | --- | --- | --- | --- |
-| `id` | bigint | auto | 主键 |
-| `userId` | char(36) | 必填 | 作者，关联 `users.id`，对应 front-matter `author` |
-| `slug` | varchar(128) | 必填 | URL 标识，唯一，对应 front-matter `slug` |
-| `title` | varchar(255) | 必填 | 标题，对应 front-matter `title` |
-| `coverImage` | varchar(1024) | null | 封面图 URL，对应 front-matter `cover_img` |
-| `isPinned` | boolean | false | 是否置顶，对应 front-matter `pinned` |
-| `featuredWeight` | integer | 0 | 推荐权重（越大越靠前），对应 front-matter `featured_weight` |
-| `status` | enum | draft | 状态：`draft` / `published` / `archived` |
-| `visibility` | enum | public | 可见性：`public` / `private` / `password` |
-| `passwordHash` | varchar(255) | null | 密码访问的哈希值 |
-| `allowComment` | boolean | true | 是否允许评论，对应 front-matter `allow_comment` |
-| `deletedAt` | timestamp | null | 软删除时间 |
-| `createdAt` | timestamp | 必填 | 创建时间，对应 front-matter `date` |
-| `updatedAt` | timestamp | 必填 | 更新时间 |
-| `publishedAt` | timestamp | null | 发布时间 |
-| `deletedBy` | char(36) | null | 删除者 |
-| `createdBy` | char(36) | null | 创建者 |
-| `updatedBy` | char(36) | null | 更新者 |
+| `id` | bigint | auto | Primary key |
+| `userId` | char(36) | required | Author, references `users.id`, maps to front-matter `author` |
+| `slug` | varchar(128) | required | URL identifier, unique, maps to front-matter `slug` |
+| `title` | varchar(255) | required | Title, maps to front-matter `title` |
+| `coverImage` | varchar(1024) | null | Cover image URL, maps to front-matter `cover_img` |
+| `isPinned` | boolean | false | Whether pinned, maps to front-matter `pinned` |
+| `featuredWeight` | integer | 0 | Featured weight (higher sorts first), maps to front-matter `featured_weight` |
+| `status` | enum | draft | Status: `draft` / `published` / `archived` |
+| `visibility` | enum | public | Visibility: `public` / `private` / `password` |
+| `passwordHash` | varchar(255) | null | Hash for password-protected access |
+| `allowComment` | boolean | true | Whether comments are allowed, maps to front-matter `allow_comment` |
+| `deletedAt` | timestamp | null | Soft-delete time |
+| `createdAt` | timestamp | required | Creation time, maps to front-matter `date` |
+| `updatedAt` | timestamp | required | Update time |
+| `publishedAt` | timestamp | null | Publish time |
+| `deletedBy` | char(36) | null | Deleter |
+| `createdBy` | char(36) | null | Creator |
+| `updatedBy` | char(36) | null | Updater |
 
-## postContent — 文章内容
+## postContent — Article content
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 | --- | --- | --- |
-| `postId` | bigint | 关联 `postCore.id`，级联删除 |
-| `contentMd` | text | Markdown 原始内容 |
-| `contentHtml` | text | 渲染后的 HTML |
+| `postId` | bigint | References `postCore.id`, cascading delete |
+| `contentMd` | text | Raw markdown content |
+| `contentHtml` | text | Rendered HTML |
 
-## postRevisions — 文章版本历史
+## postRevisions — Article revision history
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 | --- | --- | --- |
-| `id` | bigint | 主键 |
-| `postId` | bigint | 关联 `postCore.id`，级联删除 |
-| `contentMd` | text | 该版本的 Markdown |
-| `createdAt` | timestamp | 创建时间 |
-| `createdBy` | char(36) | 创建者 |
+| `id` | bigint | Primary key |
+| `postId` | bigint | References `postCore.id`, cascading delete |
+| `contentMd` | text | Markdown of this revision |
+| `createdAt` | timestamp | Creation time |
+| `createdBy` | char(36) | Creator |
 
-## postStats — 文章统计
+## postStats — Article statistics
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 | --- | --- | --- |
-| `postId` | bigint | 关联 `postCore.id`，级联删除 |
-| `views` | integer | 浏览量 |
-| `likes` | integer | 点赞数 |
+| `postId` | bigint | References `postCore.id`, cascading delete |
+| `views` | integer | View count |
+| `likes` | integer | Like count |
 
-## postCategories — 分类
+## postCategories — Categories
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 | --- | --- | --- |
-| `id` | integer | 主键 |
-| `name` | varchar | 分类名称 |
-| `slug` | varchar | URL 标识 |
-| `description` | text | 描述 |
+| `id` | integer | Primary key |
+| `name` | varchar | Category name |
+| `slug` | varchar | URL identifier |
+| `description` | text | Description |
 
-## postTags — 标签
+## postTags — Tags
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 | --- | --- | --- |
-| `id` | integer | 主键 |
-| `name` | varchar | 标签名称 |
-| `slug` | varchar | URL 标识 |
+| `id` | integer | Primary key |
+| `name` | varchar | Tag name |
+| `slug` | varchar | URL identifier |
 
-## postCategoryMappings — 文章-分类关联
+## postCategoryMappings — Post-category associations
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 | --- | --- | --- |
-| `postId` | bigint | 关联文章 |
-| `categoryId` | integer | 关联分类 |
+| `postId` | bigint | Associated post |
+| `categoryId` | integer | Associated category |
 
-每篇文章至多一个分类。
+Each post has at most one category.
 
-## postTagMappings — 文章-标签关联
+## postTagMappings — Post-tag associations
 
-| 字段 | 类型 | 说明 |
+| Field | Type | Description |
 | --- | --- | --- |
-| `postId` | bigint | 关联文章 |
-| `tagId` | integer | 关联标签 |
+| `postId` | bigint | Associated post |
+| `tagId` | integer | Associated tag |
 
-每篇文章可关联多个标签。
+Each post can have multiple tags.
 
 ## Front-matter
 
-Front-matter 是 Markdown 文件顶部的 YAML 元数据块，用 `---` 包裹，用于定义文档的标题、分类、可见性等属性。本项目的所有文档（包括本文档）均使用 front-matter。
+Front-matter is the YAML metadata block at the top of a Markdown file, wrapped in `---`, used to define the document's title, category, visibility, and other attributes. All documents in this project (including this one) use front-matter.
 
-### 格式
+### Format
 
 ```yaml
 ---
@@ -125,47 +128,47 @@ featured_weight: 0
 ---
 ```
 
-`---` 必须放在文件最顶部，前面不能有任何内容。
+`---` must be placed at the very top of the file, with nothing before it.
 
-### 字段说明
+### Field reference
 
-| 字段 | 必填 | 类型 | 默认值 | 说明 |
+| Field | Required | Type | Default | Description |
 | --- | --- | --- | --- | --- |
-| `title` | 是 | string | — | 文档标题 |
-| `author` | 否 | string | — | 作者 ID，关联 `users.id` |
-| `slug` | 否 | string | — | URL 标识，不填则自动从 title 生成 |
-| `date` | 否 | string | — | 创建日期，格式 `YYYY-MM-DD` |
-| `cover_img` | 否 | string | — | 封面图 URL |
-| `category` | 否 | string | — | 分类，单值 |
-| `tags` | 否 | string[] | — | 标签，多值 |
-| `status` | 否 | enum | `published` | `draft` / `published` / `archived` |
-| `visibility` | 否 | enum | `public` | `public` / `private` / `password` |
-| `password` | 否 | string | — | 访问密码（仅 visibility=password 时生效） |
-| `allow_comment` | 否 | boolean | `true` | 是否允许评论 |
-| `pinned` | 否 | boolean | `false` | 是否置顶 |
-| `featured_weight` | 否 | integer | `0` | 推荐权重，越大越靠前 |
+| `title` | Yes | string | — | Document title |
+| `author` | No | string | — | Author ID, references `users.id` |
+| `slug` | No | string | — | URL identifier, auto-generated from title if omitted |
+| `date` | No | string | — | Creation date, format `YYYY-MM-DD` |
+| `cover_img` | No | string | — | Cover image URL |
+| `category` | No | string | — | Category, single value |
+| `tags` | No | string[] | — | Tags, multiple values |
+| `status` | No | enum | `published` | `draft` / `published` / `archived` |
+| `visibility` | No | enum | `public` | `public` / `private` / `password` |
+| `password` | No | string | — | Access password (only effective when visibility=password) |
+| `allow_comment` | No | boolean | `true` | Whether comments are allowed |
+| `pinned` | No | boolean | `false` | Whether pinned |
+| `featured_weight` | No | integer | `0` | Featured weight, higher sorts first |
 
-### 字段映射
+### Field mapping
 
-Front-matter 字段与后端数据库的对应关系：
+The correspondence between front-matter fields and the backend database:
 
-| Front-matter | 表字段 | 说明 |
+| Front-matter | Table field | Description |
 | --- | --- | --- |
-| `title` | `postCore.title` | 文章标题 |
-| `slug` | `postCore.slug` | URL 标识 |
-| `cover_img` | `postCore.coverImage` | 封面图 |
-| `date` | `postCore.createdAt` | 创建时间 |
-| `author` | `postCore.userId` | 作者 ID |
-| `status` | `postCore.status` | 状态（draft/published/archived） |
-| `visibility` | `postCore.visibility` | 可见性（public/private/password） |
-| `password` | `postCore.passwordHash` | 访问密码（仅 visibility=password） |
-| `allow_comment` | `postCore.allowComment` | 是否允许评论 |
-| `pinned` | `postCore.isPinned` | 是否置顶 |
-| `featured_weight` | `postCore.featuredWeight` | 推荐权重 |
-| `category` | `postCategoryMappings` | 分类（单值） |
-| `tags` | `postTagMappings` | 标签（多值） |
+| `title` | `postCore.title` | Article title |
+| `slug` | `postCore.slug` | URL identifier |
+| `cover_img` | `postCore.coverImage` | Cover image |
+| `date` | `postCore.createdAt` | Creation time |
+| `author` | `postCore.userId` | Author ID |
+| `status` | `postCore.status` | Status (draft/published/archived) |
+| `visibility` | `postCore.visibility` | Visibility (public/private/password) |
+| `password` | `postCore.passwordHash` | Access password (visibility=password only) |
+| `allow_comment` | `postCore.allowComment` | Whether comments are allowed |
+| `pinned` | `postCore.isPinned` | Whether pinned |
+| `featured_weight` | `postCore.featuredWeight` | Featured weight |
+| `category` | `postCategoryMappings` | Category (single value) |
+| `tags` | `postTagMappings` | Tags (multiple values) |
 
-### 使用场景
+### Usage scenarios
 
-- **博客文章**：编辑器保存时，front-matter 字段写入 `postCore` + `postCategoryMappings` + `postTagMappings`
-- **文档页面**：本项目的 Markdown 文档也使用相同的 front-matter 格式，便于统一渲染和管理
+- **Blog posts**: when the editor saves, front-matter fields are written to `postCore` + `postCategoryMappings` + `postTagMappings`
+- **Documentation pages**: this project's Markdown docs use the same front-matter format, for unified rendering and management

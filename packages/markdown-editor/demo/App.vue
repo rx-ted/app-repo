@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { ref } from 'vue';
 import { Icon } from '@iconify/vue';
 import {
   MarkdownEditor,
@@ -10,18 +10,10 @@ import {
 
 const content = ref(SAMPLE_MARKDOWN);
 const editorTheme = ref<'light' | 'dark'>('light');
-const previewTheme = ref('github-light');
+const previewTheme = ref('github');
 const codeTheme = ref<string | undefined>(undefined);
 const locale = ref<'zh-CN' | 'en'>('zh-CN');
 const lastSave = ref('');
-
-const previewOptions = computed(() =>
-  PREVIEW_THEMES.filter((t) => t.dark === (editorTheme.value === 'dark')),
-);
-
-watch(editorTheme, (v) => {
-  previewTheme.value = v === 'dark' ? 'github-dark' : 'github-light';
-});
 
 function uploadImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -62,8 +54,8 @@ function onSave(payload: EditorSavePayload) {
     <label>
       Preview theme
       <select v-model="previewTheme">
-        <option v-for="t in previewOptions" :key="t.id" :value="t.id">
-          {{ t.label }}{{ t.dark ? ' (dark)' : '' }}
+        <option v-for="t in PREVIEW_THEMES" :key="t.id" :value="t.id">
+          {{ t.label }}
         </option>
       </select>
     </label>
@@ -111,7 +103,7 @@ A standalone preview for the **@rx-ted/packages-markdown-editor** package, decou
 
 ## Code groups
 
-::: code-group
+:::code-group
 
 \`\`\`ts title="highlight.ts"
 function greet(name: string): string {

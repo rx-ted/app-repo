@@ -1,7 +1,7 @@
 ---
-title: 开发工作流程
+title: Development workflow
 author: rx-ted
-date: 2026-07-22
+date: 2026-08-05
 category: guide
 tags:
   - workflow
@@ -11,183 +11,186 @@ visibility: public
 allow_comment: true
 pinned: false
 featured_weight: 0
+lang: en
 ---
 
-# 开发工作流程
+**English** | [中文](./development.zh.md)
 
-## 1. 首次拉取
+# Development workflow
+
+## 1. First clone
 
 ```bash
 git clone <repo-url>
 cd app
-pnpm install              # 安装依赖 + 自动安装 lefthook hooks
+pnpm install              # install dependencies + auto-install lefthook hooks
 ```
 
-## 2. 日常开发流程
+## 2. Daily development flow
 
 ```
-拉取 → 开发 → 创建 changeset → 提交 → 推送
+pull → develop → create changeset → commit → push
 ```
 
-### 2.1 拉取
+### 2.1 Pull
 
 ```bash
 git pull
-pnpm install              # lockfile 有变更时自动同步依赖
+pnpm install              # automatically syncs dependencies when the lockfile changes
 ```
 
-### 2.2 开发
+### 2.2 Develop
 
-代码风格由 Biome 自动约束，提交前 lefthook 会执行 `pnpm biome check .`。
+Code style is enforced automatically by Biome; lefthook runs `pnpm biome check .` before committing.
 
-常用命令：
+Common commands:
 
-| 命令 | 作用 |
+| Command | Purpose |
 |---|---|
-| `pnpm dev` | 启动所有应用（并行） |
-| `pnpm build` | 构建所有包 |
-| `pnpm test` | 运行测试 |
-| `pnpm typecheck` | 类型检查 |
-| `pnpm lint` | Biome 检查 |
-| `pnpm format:fix` | 自动格式化代码 |
+| `pnpm dev` | Start all apps (in parallel) |
+| `pnpm build` | Build all packages |
+| `pnpm test` | Run tests |
+| `pnpm typecheck` | Type check |
+| `pnpm lint` | Biome check |
+| `pnpm format:fix` | Auto-format code |
 
-### 2.3 创建 changeset
+### 2.3 Create a changeset
 
-修改 `packages/` 下的模块后，必须创建 changeset 记录版本变更：
+After modifying a module under `packages/`, you must create a changeset to record the version change:
 
 ```bash
 pnpm changeset
 ```
 
-按提示选择：
-- 变更类型（patch / minor / major）
-- 填写变更说明
+Follow the prompts to select:
+- Change type (patch / minor / major)
+- Fill in the change description
 
-生成的 changeset 文件会存放在 `.changeset/` 目录，随代码一起提交。
+Generated changeset files are stored in the `.changeset/` directory and committed with the code.
 
-> 如果改动不涉及版本发布（仅改 apps 或配置文件），可以用空 changeset：
+> If the change doesn't involve a release (only apps or config files), you can use an empty changeset:
 > ```bash
 > pnpm changeset add --empty
 > ```
 
-### 2.4 提交
+### 2.4 Commit
 
-遵循 **Conventional Commits** 格式：
+Follow the **Conventional Commits** format:
 
 ```
 <type>(<scope>): <description>
 ```
 
-类型包括：`feat` `fix` `refactor` `perf` `docs` `style` `test` `chore` `build` `ci` `revert`
+Types include: `feat` `fix` `refactor` `perf` `docs` `style` `test` `chore` `build` `ci` `revert`
 
-实际例子：
+Real-world examples:
 
 ```bash
-# 新功能
+# New feature
 git commit -m "feat(web-blog): 新增博客文章分页功能"
 
-# Bug 修复
+# Bug fix
 git commit -m "fix(web-blog): 修复移动端布局错位问题"
 
-# 文档更新
+# Documentation update
 git commit -m "docs: 更新项目开发文档"
 
-# 重构
+# Refactor
 git commit -m "refactor(auth): 优化 OAuth 回调流程"
 
-# 依赖维护
+# Dependency maintenance
 git commit -m "chore: 更新依赖版本"
 
-# 样式调整
+# Style adjustment
 git commit -m "style(web-blog): 调整 SCSS 命名规范"
 ```
 
-提交时会自动触发 lefthook 钩子：
-- **pre-commit**: `pnpm biome check .` — 代码规范校验
-- **commit-msg**: `pnpm changeset status` — changeset 合法性校验
+Committing automatically triggers lefthook hooks:
+- **pre-commit**: `pnpm biome check .` — code style validation
+- **commit-msg**: `pnpm changeset status` — changeset validity check
 
-### 2.5 推送
+### 2.5 Push
 
 ```bash
 git push
 ```
 
-推送后 CI 会自动运行：
-1. `pnpm changeset status --since=origin/main` — 校验 changeset
+After pushing, CI runs automatically:
+1. `pnpm changeset status --since=origin/main` — validates changesets
 2. `pnpm verify:repo` — lint + check + typecheck + build + test
 
-## 3. 发布流程
+## 3. Release flow
 
-只有 maintainer 可操作，由 CI 自动完成。
+Only maintainers can operate; this is handled automatically by CI.
 
 ```bash
 git push origin main
 ```
 
-CI（`.github/workflows/publish.yml`）自动执行：
+CI (`.github/workflows/publish.yml`) automatically executes:
 
 ```
-检测 changeset → version bump → build → npm publish
+detect changeset → version bump → build → npm publish
 ```
 
-- 非私有包（`packages/` 下）会被发布到 npm
-- 私有包（`apps/` 下）被自动跳过
-- 发布使用 OIDC + `--provenance`，无需配置 NPM_TOKEN
+- Non-private packages (under `packages/`) are published to npm
+- Private packages (under `apps/`) are skipped automatically
+- Publishing uses OIDC + `--provenance`, no NPM_TOKEN configuration needed
 
-## 4. 版本管理与 Changelog
+## 4. Version management & changelog
 
-Version Management 模块提供独立于 Changeset 的版本追踪和变更日志生成能力。
+The Version Management module provides version tracking and changelog generation independent of Changeset.
 
-### 核心原则
+### Core principles
 
-- **Commit message 驱动**：系统通过解析 `git log` 中的 conventional commit 自动计算版本 bump 和 changelog
-- **一次提交一个模块**：commit message 必须包含 scope，如 `feat(web-blog): 新增页面`
-- **三阶段流程**：Detect（预览）→ Generate（写库）→ Release（写文件+打 tag）
+- **Commit-message driven**: the system parses conventional commits from `git log` to automatically compute the version bump and changelog
+- **One module per commit**: the commit message must include a scope, e.g. `feat(web-blog): 新增页面`
+- **Three-stage flow**: Detect (preview) → Generate (write to DB) → Release (write files + tag)
 
-### 日常开发流程
+### Daily development flow
 
 ```bash
-# 1. 开发，提交时写 scope
+# 1. Develop, write the scope on commit
 git commit -m "feat(web-blog): 新增用户注册页面"
 git commit -m "fix(auth): 修复 OAuth 回调"
 git push
 
-# 2. CI 自动检测变更（预览）
+# 2. CI auto-detects changes (preview)
 curl GET /versions/detect
 
-# 3. CI 自动生成版本（写入数据库）
+# 3. CI auto-generates the version (writes to the database)
 curl POST /versions/generate
 
-# 4. 管理员发布（写 package.json + 打 tag）
+# 4. Admin releases (writes package.json + tags)
 curl PUT /versions/:id/release
 ```
 
-### 版本聚合规则
+### Version aggregation rules
 
-| 模块类型 | 是否计入 Project Version | 说明 |
+| Module type | Counts toward Project Version | Notes |
 |---------|------------------------|------|
-| `apps/*` | ✅ | 影响 project version |
-| `docs/`、根目录 | ✅ | 影响 project version |
-| `packages/*` | ❌ | 独立 bump，不影响 project version |
+| `apps/*` | ✅ | affects the project version |
+| `docs/`, root | ✅ | affects the project version |
+| `packages/*` | ❌ | bumped independently, does not affect the project version |
 
-### 详细指南
+### Detailed guide
 
-参见 [version-management.md](./version-management.md)。
+See [version-management-design.md](../implementations/version-management-design.md).
 
-## 5. 常见问题
+## 5. FAQ
 
-### 提交被 lefthook 阻止
+### Commit blocked by lefthook
 
 ```
-❌ pre-commit: biome check 报错
-→ pnpm format:fix  # 自动修复格式
-→ pnpm lint        # 检查剩余的 lint 错误
+❌ pre-commit: biome check error
+→ pnpm format:fix  # auto-fix formatting
+→ pnpm lint        # check remaining lint errors
 
-❌ commit-msg: changeset status 报错
-→ pnpm changeset add --empty  # 创建空 changeset（不涉及版本发布时）
+❌ commit-msg: changeset status error
+→ pnpm changeset add --empty  # create an empty changeset (when no release is involved)
 ```
 
-### 包依赖关系
+### Package dependency graph
 
 ```
 apps/platform-api → packages-core, packages-honest,

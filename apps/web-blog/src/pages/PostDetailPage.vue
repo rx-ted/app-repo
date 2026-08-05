@@ -18,7 +18,8 @@ const { item, loading, error } = storeToRefs(detailStore);
 
 const slug = computed(() => String(route.params.slug || ''));
 
-const previewTheme = computed(() => (themeStore.isDark ? 'github-dark' : 'github-light'));
+const previewTheme = computed(() => 'github');
+const previewMode = computed(() => (themeStore.isDark ? 'dark' : 'light'));
 
 const content = computed(() => stripFrontMatter(item.value?.content ?? ''));
 
@@ -70,7 +71,7 @@ watch(
         </div>
 
         <div v-if="item.content" class="post-content">
-          <MarkdownRenderer :content="content" :theme="previewTheme" :interactive-tasks="false" />
+          <MarkdownRenderer :content="content" :theme="previewTheme" :mode="previewMode" :interactive-tasks="false" />
         </div>
         <pre v-else class="content-plain">{{ content }}</pre>
 
