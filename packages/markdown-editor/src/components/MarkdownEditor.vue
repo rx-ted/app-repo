@@ -14,7 +14,12 @@ import {
 import { Icon } from '@iconify/vue';
 import MarkdownRenderer from './MarkdownRenderer.vue';
 import MarkdownEditorSaveDialog, { type EditorSavePayload } from './MarkdownEditorSaveDialog.vue';
-import { getPreviewTheme, PREVIEW_THEMES } from '../core/themes';
+import {
+  getPreviewTheme,
+  getEditorTheme,
+  PREVIEW_THEMES,
+  DEFAULT_PREVIEW_THEME,
+} from '../core/themes';
 import { createI18n } from '../lang';
 import type { Locale } from '../lang';
 import type { MarkdownEditorProps } from './blog-editor/props';
@@ -37,7 +42,7 @@ const props = withDefaults(defineProps<MarkdownEditorProps>(), {
   draftStorageKey: 'editor:draft',
   autoRestore: false,
   editorTheme: 'light',
-  previewTheme: 'github-light',
+  previewTheme: DEFAULT_PREVIEW_THEME,
   codeTheme: undefined,
   locale: 'zh-CN',
   messages: () => ({}),
@@ -147,8 +152,33 @@ function openHelp() {
   }
 }
 
-function exportPdf() {
+const pdfOverlayVars = computed(() => getEditorTheme(editorThemeRef.value).vars);
+
+/* ── PDF export ──
+   Print the page through a dedicated overlay appended to <body> so the
+   consumer's own layout (fixed heights, overflow:hidden) can never clip the
+   document. The overlay re-renders the preview standalone and print styles
+   hide every other body child. */
+const pdfOverlayVisible = ref(false);
+const pdfOverlayReady = ref(false);
+
+async function exportPdf() {
+  pdfOverlayVisible.value = true;
+  pdfOverlayReady.value = false;
+  await nextTick();
+  await new Promise<void>((resolve) => {
+    const poll = () => (pdfOverlayReady.value ? resolve() : requestAnimationFrame(poll));
+    poll();
+  });
+  await new Promise((r) => setTimeout(r, 300));
+  window.onafterprint = () => {
+    window.onafterprint = null;
+    pdfOverlayVisible.value = false;
+  };
   window.print();
+  setTimeout(() => {
+    if (pdfOverlayVisible.value) pdfOverlayVisible.value = false;
+  }, 30000);
 }
 
 /* ── Template bindings (flattened from composables) ── */
@@ -184,12 +214,14 @@ const {
   windowFullscreen,
   screenFullscreen,
   showToc,
+  tocMinimized,
   overlayTarget,
   toggleWindowFullscreen,
   toggleScreenFullscreen,
   togglePreviewOnly,
   toggleShowPreview,
   toggleToc,
+  toggleTocMinimize,
 } = fullscreen;
 
 const {
@@ -221,12 +253,6 @@ const { frontMatterOpen, frontMatterRaw, openFrontMatter, applyFrontMatter, remo
   frontMatter;
 
 const { requestSave, onKeydown } = save;
-
-// Preview themes offered in the picker always match the editor theme's
-// lightness, so the sample output below stays consistent (no light/dark mix).
-const filteredPreviewThemes = computed(() =>
-  PREVIEW_THEMES.filter((p) => p.dark === (themeDraft.editor === 'dark')),
-);
 
 defineExpose({
   openSave: requestSave,
@@ -436,6 +462,7 @@ defineExpose({
               :content="currentValue"
               :theme="previewThemeRef"
               :code-theme="codeThemeRef"
+              :mode="editorThemeRef"
               :interactive-tasks="true"
               :heading-insert="true"
               @ready="onReady"
@@ -443,9 +470,18 @@ defineExpose({
               @update:content="emitValue"
             />
           </div>
-          <div v-if="showToc" class="toc-float">
-            <div class="toc-float-header">{{ t('editor.toolbar.toc') }}</div>
-            <nav v-if="tocItems.length" class="toc-nav">
+          <div v-if="showToc" class="toc-float" :class="{ minimized: tocMinimized }">
+            <div class="toc-float-header">
+              <span>{{ t('editor.toolbar.toc') }}</span>
+              <button
+                class="toc-minimize-btn"
+                :title="tocMinimized ? t('editor.toolbar.tocExpand') : t('editor.toolbar.tocMinimize')"
+                @click="toggleTocMinimize"
+              >
+                <Icon :icon="tocMinimized ? 'mdi:chevron-down' : 'mdi:chevron-up'" width="14" />
+              </button>
+            </div>
+            <nav v-if="!tocMinimized && tocItems.length" class="toc-nav">
               <button
                 v-for="item in tocItems"
                 :key="item.id"
@@ -457,7 +493,7 @@ defineExpose({
                 {{ item.text }}
               </button>
             </nav>
-            <div v-else class="toc-empty">{{ t('editor.toolbar.toc') }}…</div>
+            <div v-else-if="!tocMinimized" class="toc-empty">{{ t('editor.toolbar.toc') }}…</div>
           </div>
         </div>
       </div>
@@ -525,7 +561,7 @@ defineExpose({
             <label class="theme-label">{{ t('editor.toolbar.previewTheme') }}</label>
             <div class="theme-list">
               <button
-                v-for="p in filteredPreviewThemes"
+                v-for="p in PREVIEW_THEMES"
                 :key="p.id"
                 class="theme-opt"
                 :class="{ active: themeDraft.preview === p.id }"
@@ -566,7 +602,7 @@ defineExpose({
             <span class="theme-preview-code">{{ themeDraft.code ?? t('editor.theme.auto') }}</span>
           </div>
           <div class="theme-preview-body">
-            <MarkdownRenderer :content="THEME_SAMPLE" :theme="themeDraft.preview" :code-theme="themeDraft.code" />
+            <MarkdownRenderer :content="THEME_SAMPLE" :theme="themeDraft.preview" :code-theme="themeDraft.code" :mode="themeDraft.editor" />
           </div>
         </div>
       </div>
@@ -577,8 +613,37 @@ defineExpose({
         </n-space>
       </template>
     </n-modal>
+
+    <Teleport to="body">
+      <div v-if="pdfOverlayVisible" class="pdf-print-overlay" :style="pdfOverlayVars">
+        <MarkdownRenderer
+          :content="currentValue"
+          :theme="previewThemeRef"
+          :code-theme="codeThemeRef"
+          :mode="editorThemeRef"
+          @ready="pdfOverlayReady = true"
+        />
+      </div>
+    </Teleport>
   </div>
   </n-config-provider>
 </template>
 
 <style scoped src="./blog-editor/editor.css" />
+
+<style>
+/* Print-only: hide everything on the page except the PDF export overlay, so a
+   consumer layout can never clip the document to its own scroll container. */
+@media print {
+  body > *:not(.pdf-print-overlay) {
+    display: none !important;
+  }
+
+  .pdf-print-overlay {
+    position: static !important;
+    inset: auto !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+}
+</style>
