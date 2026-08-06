@@ -9,18 +9,70 @@ import {
   type EditorSavePayload,
 } from '../src/index';
 
-const locale = ref<'zh-CN' | 'en'>('zh-CN');
+const SETTINGS_KEY = 'demo:editor:settings';
+
+interface DemoSettings {
+  locale: 'zh-CN' | 'en';
+  editorTheme: 'light' | 'dark';
+  previewTheme: string;
+  codeTheme?: string;
+  wrapCode: boolean;
+  wrapTables: boolean;
+}
+
+const DEFAULT_SETTINGS: DemoSettings = {
+  locale: 'zh-CN',
+  editorTheme: 'light',
+  previewTheme: 'github',
+  codeTheme: undefined,
+  wrapCode: false,
+  wrapTables: false,
+};
+
+function loadSettings(): DemoSettings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
+
+function saveSettings(patch: Partial<DemoSettings>) {
+  localStorage.setItem(
+    SETTINGS_KEY,
+    JSON.stringify({
+      locale: locale.value,
+      editorTheme: editorTheme.value,
+      previewTheme: previewTheme.value,
+      codeTheme: codeTheme.value,
+      wrapCode: wrapCode.value,
+      wrapTables: wrapTables.value,
+      ...patch,
+    }),
+  );
+}
+
+const saved = loadSettings();
+const locale = ref<'zh-CN' | 'en'>(saved.locale);
 const content = ref(locale.value === 'zh-CN' ? SAMPLE_ZH : SAMPLE_EN);
-const editorTheme = ref<'light' | 'dark'>('light');
-const previewTheme = ref('github');
-const codeTheme = ref<string | undefined>(undefined);
-const wrapCode = ref(false);
-const wrapTables = ref(false);
+const editorTheme = ref<'light' | 'dark'>(saved.editorTheme);
+const previewTheme = ref(saved.previewTheme);
+const codeTheme = ref<string | undefined>(saved.codeTheme);
+const wrapCode = ref(saved.wrapCode);
+const wrapTables = ref(saved.wrapTables);
 const lastSave = ref('');
 
 watch(locale, (value) => {
+  saveSettings({ locale: value });
   content.value = value === 'zh-CN' ? SAMPLE_ZH : SAMPLE_EN;
 });
+watch(editorTheme, (value) => saveSettings({ editorTheme: value }));
+watch(previewTheme, (value) => saveSettings({ previewTheme: value }));
+watch(codeTheme, (value) => saveSettings({ codeTheme: value }));
+watch(wrapCode, (value) => saveSettings({ wrapCode: value }));
+watch(wrapTables, (value) => saveSettings({ wrapTables: value }));
 
 function uploadImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
