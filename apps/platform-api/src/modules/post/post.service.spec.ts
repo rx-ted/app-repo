@@ -36,8 +36,20 @@ const mockPostRepo = {
   update: vi.fn(),
 };
 
+const mockStatsBuffer = {
+  getBufferedStats: vi.fn().mockResolvedValue({ views: 0, likes: 0, comments: 0 }),
+  recordView: vi.fn(),
+  recordLike: vi.fn(),
+  recordComment: vi.fn(),
+};
+
 function createService() {
-  return new PostService(mockPostRepo as any, mockDb as any);
+  return new PostService(
+    mockPostRepo as any,
+    mockDb as any,
+    {} as any,
+    mockStatsBuffer as any,
+  );
 }
 
 describe('PostService', () => {

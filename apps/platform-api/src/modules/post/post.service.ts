@@ -7,6 +7,8 @@ import { eq, and, gte, lt, sql, inArray } from 'drizzle-orm';
 
 import { PostMapper } from '@/modules/post/mappers/post.mapper';
 import { PostRepository } from '@/modules/post/repositories/post.repository';
+import { StatsBufferService } from '@/modules/post-stats/stats-buffer.service';
+import type { PostEntity } from '@/modules/post/entities/post.entity';
 import { parsePostMeta } from '@/lib/post-parser';
 import {
   postCore,
@@ -39,7 +41,19 @@ class PostService {
     @Inject(PostRepository) private postRepo: PostRepository,
     @Inject(DbService) private db: DbService,
     @Inject(CacheService) private cache: CacheService,
+    @Inject(StatsBufferService) private statsBuffer: StatsBufferService,
   ) {}
+
+  private async mergeBufferedStats(
+    entity: Pick<PostEntity, 'id' | 'viewCount' | 'likeCount' | 'commentCount'>,
+  ): Promise<void> {
+    const postId = Number(entity.id);
+    if (!Number.isInteger(postId) || postId <= 0) return;
+    const buffered = await this.statsBuffer.getBufferedStats(postId);
+    entity.viewCount += buffered.views;
+    entity.likeCount += buffered.likes;
+    entity.commentCount += buffered.comments;
+  }
 
   async list(
     page: number = 1,
@@ -108,6 +122,8 @@ class PostService {
       categoryNames: catNameMap.get(Number(p.id)) ?? [],
     }));
 
+    await Promise.all(enriched.map((p) => this.mergeBufferedStats(p)));
+
     return {
       list: enriched.map(PostMapper.toCardResponse),
       total: result.total,
@@ -137,6 +153,8 @@ class PostService {
       post.categories = catRows.map((r) => r.slug);
       post.categoryNames = catRows.map((r) => r.name);
     }
+
+    await this.mergeBufferedStats(post);
 
     return PostMapper.toDetailResponse(post);
   }
