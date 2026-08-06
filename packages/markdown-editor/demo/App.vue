@@ -13,6 +13,8 @@ const editorTheme = ref<'light' | 'dark'>('light');
 const previewTheme = ref('github');
 const codeTheme = ref<string | undefined>(undefined);
 const locale = ref<'zh-CN' | 'en'>('zh-CN');
+const wrapCode = ref(false);
+const wrapTables = ref(false);
 const lastSave = ref('');
 
 function uploadImage(file: File): Promise<string> {
@@ -68,6 +70,14 @@ function onSave(payload: EditorSavePayload) {
       </select>
     </label>
 
+    <label>
+      <input type="checkbox" v-model="wrapCode" /> Wrap code
+    </label>
+
+    <label>
+      <input type="checkbox" v-model="wrapTables" /> Wrap tables
+    </label>
+
     <span class="save-log">last save: {{ lastSave || '—' }}</span>
   </header>
 
@@ -84,6 +94,7 @@ function onSave(payload: EditorSavePayload) {
         save-mode="dialog"
         draft-storage-key="demo:editor:draft"
         :initial-meta="{ title: 'Demo Post' }"
+        :overflow-options="{ wrapCode, wrapTables }"
         @save="onSave"
       />
     </section>

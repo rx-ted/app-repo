@@ -87,6 +87,7 @@ PDF 导出会把文档**独立地**重新渲染，这样消费者自己的布局
 
 - **命名页面** — `page: export-pdf` + `@page export-pdf` 让输出在稳定的 A4 纸面上分页，并使用固定的页边距，与浏览器默认纸张无关。
 - **`print-color-adjust: exact`** — Chrome 的默认值是 `economy`：当“背景图形”选项关闭时，它会剥掉背景填充并把浅色文字重新映射，这会让主题化文档塌缩成“普通默认”外观。`exact` 强制把代码块填充、行内代码 chip 和主题背景带进 PDF。（已用 A/B 验证：没有它时，`printBackground: false` 的 PDF 里 mk-cute 的代码块填充和主题颜色会消失；有了它就能保留。）
+- **强制溢出换行** — 打印纸面无法滚动，因此任何比页面更宽的内容都会被静默裁剪。打印样式表在 `#export-pdf-preview` 上始终让长代码行换行，并把表格约束到页面宽度（`white-space: pre-wrap`、`table-layout: fixed`），与屏幕上的 `overflowOptions` prop 无关。
 
 消费者可以在包样式表之后发出自己的 `@page` 规则，来覆盖纸张或页边距。
 

@@ -38,6 +38,7 @@ export {
   type MarkdownRenderResult,
 } from './core/markdown';
 export { isTaskChecked, toggleTask } from './core/tasks';
+export type { MarkdownOverflowOptions } from './core/overflow';
 export {
   PREVIEW_THEMES,
   REQUIRED_PREVIEW_VARS,

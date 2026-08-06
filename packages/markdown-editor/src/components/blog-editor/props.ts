@@ -1,5 +1,6 @@
 import type { EditorSavePayload } from '../MarkdownEditorSaveDialog.vue';
 import type { EditorTheme } from '../../core/themes';
+import type { MarkdownOverflowOptions } from '../../core/overflow';
 import type { Locale, MessageSchema } from '../../lang';
 
 export interface MarkdownEditorProps {
@@ -23,4 +24,5 @@ export interface MarkdownEditorProps {
   uploadImage?: (file: File) => Promise<string>;
   saveMode?: 'file' | 'dialog';
   onBeforeSave?: (content: string) => void | Promise<void>;
+  overflowOptions?: MarkdownOverflowOptions;
 }

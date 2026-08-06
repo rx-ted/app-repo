@@ -45,6 +45,7 @@ TOC, status bar, save dialog, draft autosave and PDF export.
 | `uploadImage` | `(file: File) => Promise<string>` | — | Returns a URL / data URI for the picked image |
 | `saveMode` | `'file' \| 'dialog'` | `file` | `dialog` opens the save modal; `file` emits `saveFile` with the content |
 | `onBeforeSave` | `(content: string) => void \| Promise<void>` | — | Run before saving; `throw`/reject to abort the save |
+| `overflowOptions` | `MarkdownOverflowOptions` | `{}` | Wrap overflows: `{ wrapCode?, wrapTables? }` — see below. Forwarded to every internal renderer (preview, theme modal, PDF overlay). PDF export always wraps regardless |
 
 ### Events
 
@@ -74,6 +75,7 @@ Renders markdown to styled HTML with a sourcemap for editor↔preview sync.
 | `interactiveTasks` | `boolean` | `false` | Clicking a task checkbox emits `update:content` with the toggled source |
 | `headingInsert` | `boolean` | `false` | Clicking a heading anchor emits `insertHeading` (else copies to clipboard) |
 | `id` | `string` | — | Optional stable id on the root node (e.g. `export-pdf-preview` for print targeting) |
+| `overflowOptions` | `MarkdownOverflowOptions` | `{}` | `wrapCode` wraps long code lines instead of scrolling horizontally; `wrapTables` constrains tables to the container width (fixed layout + wrapped cells). Default `{}` keeps the current scroll/overflow behavior |
 
 ### Events
 

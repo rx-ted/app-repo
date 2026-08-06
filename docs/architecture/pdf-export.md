@@ -103,8 +103,13 @@ everything to the one node:
   "background graphics" option off, it strips background fills and remaps light
   text, which makes a themed document collapse into a "plain default" look.
   `exact` forces code-block fills, inline-code chips and theme backgrounds into
-  the PDF. (Verified by A/B: without it, the mk-cute code-block fill and theme
-  colors disappear from a `printBackground: false` PDF; with it they survive.)
+  the PDF. (Verified by A/B: without it, the `printBackground: false` PDF's
+  mk-cute code-block fill and theme colors disappear; with it they survive.)
+- **Forced overflow wrapping** — a printed sheet cannot scroll, so anything
+  wider than the page would be silently clipped. The print stylesheet always
+  wraps long code lines and fits tables to the page width (`white-space:
+  pre-wrap`, `table-layout: fixed` on `#export-pdf-preview`), regardless of the
+  on-screen `overflowOptions` prop.
 
 Consumers can override the sheet or margins by emitting their own `@page` rule
 after the package stylesheet.

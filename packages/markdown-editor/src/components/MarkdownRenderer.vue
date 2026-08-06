@@ -5,6 +5,7 @@ import type { SourceNode } from '../core/sourcemap';
 import { DEFAULT_PREVIEW_THEME, getPreviewTheme, type EditorTheme } from '../core/themes';
 import { loadPreviewThemeCss } from '../core/themeCss';
 import { isTaskChecked, toggleTask } from '../core/tasks';
+import type { MarkdownOverflowOptions } from '../core/overflow';
 
 import 'katex/dist/katex.min.css';
 
@@ -17,6 +18,7 @@ const props = withDefaults(
     interactiveTasks?: boolean;
     headingInsert?: boolean;
     id?: string;
+    overflowOptions?: MarkdownOverflowOptions;
   }>(),
   {
     theme: DEFAULT_PREVIEW_THEME,
@@ -25,6 +27,7 @@ const props = withDefaults(
     interactiveTasks: false,
     headingInsert: false,
     id: undefined,
+    overflowOptions: () => ({}),
   },
 );
 
@@ -262,7 +265,15 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="rootRef" class="markdown-body-root" :id="props.id || undefined" :data-me-preview-theme="props.theme" :data-me-mode="props.mode">
+  <div
+    ref="rootRef"
+    class="markdown-body-root"
+    :id="props.id || undefined"
+    :data-me-preview-theme="props.theme"
+    :data-me-mode="props.mode"
+    :data-wrap-code="props.overflowOptions.wrapCode || undefined"
+    :data-wrap-tables="props.overflowOptions.wrapTables || undefined"
+  >
     <div v-if="!ready" class="markdown-loading">Loading...</div>
     <div v-else ref="markdownBodyRef" class="markdown-body" v-html="html" />
   </div>
@@ -777,6 +788,33 @@ onMounted(() => {
 
 /* ── KaTeX ── */
 .markdown-body :deep(.katex) { font-size: 1.05em; }
+
+/* ── Overflow options ──
+   Opt-in wrapping so wide content fits the container instead of overflowing.
+   Disabled by default (code keeps its horizontal scroll, tables keep their
+   natural width); consumers opt in via the `overflowOptions` prop. */
+.markdown-body-root[data-wrap-code] :deep(pre[data-theme]),
+.markdown-body-root[data-wrap-code] :deep(pre[data-theme] code) {
+  overflow-x: visible;
+}
+
+.markdown-body-root[data-wrap-code] :deep(pre[data-theme] code) {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.markdown-body-root[data-wrap-tables] :deep(table:not(.front-matter-table)) {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.markdown-body-root[data-wrap-tables] :deep(table:not(.front-matter-table) th),
+.markdown-body-root[data-wrap-tables] :deep(table:not(.front-matter-table) td) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 
 @media (max-width: 768px) {
   .markdown-body { font-size: 16px; }

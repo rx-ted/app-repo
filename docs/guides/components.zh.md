@@ -44,6 +44,7 @@ lang: zh-CN
 | `uploadImage` | `(file: File) => Promise<string>` | — | 返回所选图片的 URL / data URI |
 | `saveMode` | `'file' \| 'dialog'` | `file` | `dialog` 打开保存弹窗；`file` 触发 `saveFile` 事件并携带内容 |
 | `onBeforeSave` | `(content: string) => void \| Promise<void>` | — | 在保存前执行；`throw`/reject 以中止保存 |
+| `overflowOptions` | `MarkdownOverflowOptions` | `{}` | 溢出换行设置：`{ wrapCode?, wrapTables? }`——见下文。会转发给所有内部渲染器（预览、主题弹窗、PDF 覆盖层）。PDF 导出始终强制换行，与该项无关 |
 
 ### Events
 
@@ -73,6 +74,7 @@ lang: zh-CN
 | `interactiveTasks` | `boolean` | `false` | 点击任务复选框时触发 `update:content` 并携带切换后的源码 |
 | `headingInsert` | `boolean` | `false` | 点击标题锚点时触发 `insertHeading`（否则复制到剪贴板） |
 | `id` | `string` | — | 根节点上的可选稳定 id（例如用于打印定位的 `export-pdf-preview`） |
+| `overflowOptions` | `MarkdownOverflowOptions` | `{}` | `wrapCode` 让超长代码行换行而不是横向滚动；`wrapTables` 把表格约束在容器宽度内（固定布局 + 单元格换行）。默认 `{}` 保持现有的滚动/溢出行为 |
 
 ### Events
 

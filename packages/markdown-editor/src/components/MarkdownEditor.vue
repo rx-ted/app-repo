@@ -51,6 +51,7 @@ const props = withDefaults(defineProps<MarkdownEditorProps>(), {
   uploadImage: undefined,
   saveMode: 'file',
   onBeforeSave: undefined,
+  overflowOptions: () => ({}),
 });
 
 const emit = defineEmits<{
@@ -470,6 +471,7 @@ defineExpose({
               :theme="previewThemeRef"
               :code-theme="codeThemeRef"
               :mode="editorThemeRef"
+              :overflow-options="props.overflowOptions"
               :interactive-tasks="true"
               :heading-insert="true"
               @ready="onReady"
@@ -619,7 +621,7 @@ defineExpose({
             <span class="theme-preview-code">{{ themeDraft.code ?? t('editor.theme.auto') }}</span>
           </div>
           <div class="theme-preview-body">
-            <MarkdownRenderer :content="THEME_SAMPLE" :theme="themeDraft.preview" :code-theme="themeDraft.code" :mode="themeDraft.editor" />
+            <MarkdownRenderer :content="THEME_SAMPLE" :theme="themeDraft.preview" :code-theme="themeDraft.code" :mode="themeDraft.editor" :overflow-options="props.overflowOptions" />
           </div>
         </div>
       </div>
@@ -639,6 +641,7 @@ defineExpose({
           :theme="previewThemeRef"
           :code-theme="codeThemeRef"
           :mode="editorThemeRef"
+          :overflow-options="props.overflowOptions"
           @ready="pdfOverlayReady = true"
         />
       </div>
@@ -710,6 +713,29 @@ defineExpose({
   #export-pdf-preview .mermaid,
   #export-pdf-preview .katex-display {
     break-inside: avoid;
+  }
+
+  /* A printed sheet cannot scroll, so anything wider than the page would be
+     silently clipped. Force wrapping for code and tables regardless of the
+     on-screen `overflowOptions`, so no content is ever lost in the PDF. */
+  #export-pdf-preview pre,
+  #export-pdf-preview pre code {
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-all !important;
+    overflow-x: visible !important;
+  }
+
+  #export-pdf-preview table:not(.front-matter-table) {
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+
+  #export-pdf-preview table:not(.front-matter-table) th,
+  #export-pdf-preview table:not(.front-matter-table) td {
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
   }
 
   #export-pdf-preview h1,
