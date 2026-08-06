@@ -44,12 +44,7 @@ const mockStatsBuffer = {
 };
 
 function createService() {
-  return new PostService(
-    mockPostRepo as any,
-    mockDb as any,
-    {} as any,
-    mockStatsBuffer as any,
-  );
+  return new PostService(mockPostRepo as any, mockDb as any, {} as any, mockStatsBuffer as any);
 }
 
 describe('PostService', () => {
