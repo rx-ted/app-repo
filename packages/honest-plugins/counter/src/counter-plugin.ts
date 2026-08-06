@@ -83,10 +83,9 @@ export class CounterPlugin implements IPlugin {
     const pending = new Map<string, number>();
 
     const read = (map: Map<string, number>, key: string): number => map.get(key) ?? 0;
-    const self = this;
 
     const dispatch = async (key: string, delta: number): Promise<FlushResult> => {
-      for (const [pattern, handler] of self.flushHandlers) {
+      for (const [pattern, handler] of this.flushHandlers) {
         if (key.startsWith(pattern)) {
           try {
             await handler(key, delta);
