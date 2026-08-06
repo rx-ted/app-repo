@@ -1,7 +1,7 @@
 import type { ExecutionContext } from 'hono';
 import { Hono } from 'hono';
 import { Platform } from '@rx-ted/packages-core';
-import { CounterDO } from '@rx-ted/packages-honest-plugins/counter';
+import { CounterDO } from '@rx-ted/packages-honest-plugins/counter/do';
 import { createApp } from '../src/index';
 
 export { CounterDO };

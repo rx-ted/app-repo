@@ -1,7 +1,7 @@
 import type { ILogger } from '@rx-ted/packages-core';
 import type { IPlugin, Application } from '@rx-ted/packages-honest';
 import { ComponentManager, resolvePluginLogger } from '@rx-ted/packages-honest';
-import { ENV_SYMBOL, type Env, resolveBinding } from '@rx-ted/packages-core';
+import { ENV_SYMBOL, type Env, resolveBinding, Platform } from '@rx-ted/packages-core';
 import type { CounterDriver, FlushResult } from './types';
 import { COUNTER_GLOBAL_KEY } from './constants';
 
@@ -58,15 +58,107 @@ export class CounterPlugin implements IPlugin {
     const ns = resolveBinding(doBinding, appEnv);
 
     if (!ns) {
-      throw new Error(
-        `Counter: DO binding "${doBinding}" not found. ` +
-          `Add durable_objects binding to wrangler.jsonc.`,
+      if (Platform.platform() === 'cloudflare') {
+        throw new Error(
+          `Counter: DO binding "${doBinding}" not found. ` +
+            `Add durable_objects binding to wrangler.jsonc.`,
+        );
+      }
+      this.logger.warn(
+        `Counter: DO binding "${doBinding}" not found on ${Platform.platform()}. ` +
+          `Falling back to an in-memory driver (counters will not survive restarts).`,
       );
+      this.driver = this.createMemoryDriver();
+      ComponentManager.registerPlugin(COUNTER_GLOBAL_KEY, this.driver);
+      return;
     }
 
     this.driver = this.createDriver(ns as any);
     ComponentManager.registerPlugin(COUNTER_GLOBAL_KEY, this.driver);
     this.logger.info('Counter: ready (Durable Objects)');
+  }
+
+  private createMemoryDriver(): CounterDriver {
+    const values = new Map<string, number>();
+    const pending = new Map<string, number>();
+
+    const read = (map: Map<string, number>, key: string): number => map.get(key) ?? 0;
+    const self = this;
+
+    const dispatch = async (key: string, delta: number): Promise<FlushResult> => {
+      for (const [pattern, handler] of self.flushHandlers) {
+        if (key.startsWith(pattern)) {
+          try {
+            await handler(key, delta);
+            return { flushed: Math.abs(delta), success: true };
+          } catch (err) {
+            return {
+              flushed: 0,
+              success: false,
+              error: err instanceof Error ? err.message : String(err),
+            };
+          }
+        }
+      }
+      return { flushed: Math.abs(delta), success: true };
+    };
+
+    return {
+      async increment(key: string, delta = 1): Promise<number> {
+        values.set(key, read(values, key) + delta);
+        pending.set(key, read(pending, key) + delta);
+        return read(values, key);
+      },
+
+      async decrement(key: string, delta = 1): Promise<number> {
+        values.set(key, read(values, key) - delta);
+        pending.set(key, read(pending, key) - delta);
+        return read(values, key);
+      },
+
+      async value(key: string): Promise<number> {
+        return read(values, key);
+      },
+
+      async mget(keys: string[]): Promise<number[]> {
+        return keys.map((key) => read(values, key));
+      },
+
+      async flush(key: string): Promise<FlushResult> {
+        const delta = read(pending, key);
+        pending.set(key, 0);
+        if (delta === 0) return { flushed: 0, success: true };
+        return dispatch(key, delta);
+      },
+
+      async flushAll(): Promise<FlushResult> {
+        let total = 0;
+        let success = true;
+        let error: string | undefined;
+        for (const key of [...pending.keys()]) {
+          const delta = read(pending, key);
+          if (delta === 0) continue;
+          const result = await dispatch(key, delta);
+          pending.set(key, 0);
+          total += result.flushed;
+          if (!result.success) {
+            success = false;
+            error ??= result.error;
+          }
+        }
+        return { flushed: total, success, error };
+      },
+
+      async pending(key: string): Promise<number> {
+        return read(pending, key);
+      },
+
+      async close(): Promise<void> {},
+
+      async healthCheck(): Promise<boolean> {
+        return true;
+      },
+    };
   }
 
   private createDriver(namespace: {

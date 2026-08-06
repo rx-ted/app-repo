@@ -11,6 +11,11 @@
       "vitest": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./do": {
+      "vitest": "./src/do.ts",
+      "types": "./dist/do.d.ts",
+      "default": "./dist/do.js"
     }
   },
   "sideEffects": [

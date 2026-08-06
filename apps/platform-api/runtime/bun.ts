@@ -1,6 +1,7 @@
 import { loadEnv } from '@rx-ted/packages-core';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createApp } from '../src/index';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -13,7 +14,7 @@ if (Number.isNaN(port) || port < 1 || port > 65535) {
   process.exit(1);
 }
 
-const { hono } = await import('../src/index');
+const { app, hono } = await createApp();
 
 // eslint-disable-next-line no-undef
 Bun.serve({
@@ -26,3 +27,4 @@ Bun.serve({
 });
 
 console.log(`[platform-api] server running at http://localhost:${port}`);
+app.getPluginEngine().runBootstrap();

@@ -33,6 +33,11 @@
       "vitest": "./counter/src/index.ts",
       "types": "./counter/dist/index.d.ts",
       "default": "./counter/dist/index.js"
+    },
+    "./counter/do": {
+      "vitest": "./counter/src/do.ts",
+      "types": "./counter/dist/do.d.ts",
+      "default": "./counter/dist/do.js"
     }
   },
   "dependencies": {
