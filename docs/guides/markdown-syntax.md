@@ -40,16 +40,16 @@ Syntax: `#` through `######` denote first- to sixth-level headings.
 
 Syntax: `**bold**`, `*italic*`, `~~strikethrough~~`, inline code is wrapped in backticks.
 
-| Style      | Syntax             | Result             |
-| ---------- | ------------------ | ------------------ |
-| Bold       | `**text**`         | **text**           |
-| Italic     | `*text*`           | _text_             |
-| Bold italic | `***text***`       | **_text_**         |
-| Strikethrough | `~~text~~`      | ~~text~~           |
-| Inline code | `code`            | `code`             |
-| Superscript | `<sup>text</sup>` | E = mc<sup>2</sup> |
-| Subscript  | `<sub>text</sub>`  | H<sub>2</sub>O     |
-| Underline  | `<u>text</u>`      | <u>underline</u>   |
+| Style         | Syntax            | Result             |
+| ------------- | ----------------- | ------------------ |
+| Bold          | `**text**`        | **text**           |
+| Italic        | `*text*`          | _text_             |
+| Bold italic   | `***text***`      | **_text_**         |
+| Strikethrough | `~~text~~`        | ~~text~~           |
+| Inline code   | `code`            | `code`             |
+| Superscript   | `<sup>text</sup>` | E = mc<sup>2</sup> |
+| Subscript     | `<sub>text</sub>` | H<sub>2</sub>O     |
+| Underline     | `<u>text</u>`     | <u>underline</u>   |
 
 Soft line break: two spaces at the end of a line followed by a newline.
 
@@ -264,19 +264,19 @@ fn main() {
 
 Syntax: `| column | column |`, alignment is set with `:---` left, `:---:` center, `---:` right.
 
-| Name | Price  | Stock | Notes       |
-| ---- | ------ | ----- | ----------- |
-| Apple | ¥5.0  | 100   | Fresh stock |
-| Banana | ¥3.5 | 50    | On promotion |
-| Cherry | ¥15.0 | 20   | Imported    |
-| Durian | ¥25.0 | 5    | Limited     |
+| Name   | Price | Stock | Notes        |
+| ------ | ----- | ----- | ------------ |
+| Apple  | ¥5.0  | 100   | Fresh stock  |
+| Banana | ¥3.5  | 50    | On promotion |
+| Cherry | ¥15.0 | 20    | Imported     |
+| Durian | ¥25.0 | 5     | Limited      |
 
 Right-aligned example:
 
-| Left   | Center | Right |
-| :----- | :--:   | -----: |
-| left   | center | right |
-| text   | text   | text  |
+| Left | Center | Right |
+| :--- | :----: | ----: |
+| left | center | right |
+| text |  text  |  text |
 
 ### 8. Math Formulas (KaTeX)
 
@@ -371,16 +371,16 @@ Every heading automatically gets an anchor link (`rehype-autolink-headings`); ho
 
 > **Abstract:** This article demonstrates the combined use of multiple Markdown syntax features.
 
-| Feature        | Support | Notes                                |
-| -------------- | ------- | ------------------------------------ |
-| Syntax highlighting | ✅  | rehype-pretty-code                   |
-| Line highlighting | ✅    | `{1,6,10-20}` syntax                 |
-| Diff highlighting | ✅    | `// [!code ++]` suffix or `diff` language |
-| Code groups    | ✅       | `:::code-group` explicit grouping    |
-| Line numbers   | ✅       | Added automatically                  |
-| Math formulas  | ✅       | KaTeX                                |
-| Task lists     | ✅       | GFM                                  |
-| TOC anchors    | ✅       | Generated automatically              |
+| Feature             | Support | Notes                                     |
+| ------------------- | ------- | ----------------------------------------- |
+| Syntax highlighting | ✅      | rehype-pretty-code                        |
+| Line highlighting   | ✅      | `{1,6,10-20}` syntax                      |
+| Diff highlighting   | ✅      | `// [!code ++]` suffix or `diff` language |
+| Code groups         | ✅      | `:::code-group` explicit grouping         |
+| Line numbers        | ✅      | Added automatically                       |
+| Math formulas       | ✅      | KaTeX                                     |
+| Task lists          | ✅      | GFM                                       |
+| TOC anchors         | ✅      | Generated automatically                   |
 
 :::code-group
 
