@@ -1,15 +1,17 @@
 # @rx-ted/packages-markdown-editor
 
-A reusable, Vue 3 **markdown editor + render pipeline** — a full split-pane
+[![npm version](https://img.shields.io/npm/v/@rx-ted/packages-markdown-editor)](https://www.npmjs.com/package/@rx-ted/packages-markdown-editor)
+
+A reusable **Vue 3 markdown editor + render pipeline** — a full split-pane
 editor and a render-only preview, shipped as a Vite-built ESM package with its
 own standalone demo, decoupled from the web-blog app.
 
 ---
 
-## 项目介绍
+## Introduction
 
 - **MarkdownEditor** — textarea + live preview, toolbar, floating TOC, save
-  dialog, draft autosave and PDF export.
+  dialog, draft autosave, PDF export, bilingual UI (`zh-CN` / `en`).
 - **MarkdownRenderer** — render-only preview, the same pipeline as the editor's
   preview pane, with a source map for editor↔preview sync.
 - **One pipeline, one source of truth** — markdown → HTML goes through a single
@@ -21,43 +23,58 @@ own standalone demo, decoupled from the web-blog app.
 
 ## Features
 
-- **Editing** — headings, bold/italic, links, quote, code, inline code, emoji
-  picker, mermaid, math, image upload, table picker, GFM task lists, full-screen.
+- **Editing** — headings, bold/italic/strike/underline, links, blockquote, code
+  & inline code, emoji picker, mermaid, KaTeX math, image upload, table picker,
+  GFM task lists, full-screen modes.
+- **Code highlighting** — per-language badges, line numbers, line highlighting
+  (`{1,3,5-6}`), diff highlighting (`// [!code ++]` / `--` or the `diff`
+  language), code groups with a tab bar, and single-tab code-block titles.
+- **Overflow control** — opt-in auto-wrap for wide code blocks and tables via a
+  single `overflowOptions` prop, so wide content fits instead of overflowing;
+  PDF export always wraps, so nothing is silently clipped on the print sheet.
 - **TOC** — floating, collapsible outline with scroll tracking and click-to-jump.
 - **Theming** — per-theme light/dark palettes, curated `PREVIEW_THEMES`, an
   independent shiki code-theme picker, and an API for custom themes.
-- **Save** — Ctrl/Cmd+S, title-only dialog, debounced localStorage draft with
-  restore prompt, save-on-unload, `onBeforeSave` gate.
+- **Save** — Ctrl/Cmd+S, save dialog or save-file mode, debounced localStorage
+  draft with restore prompt, save-on-unload, `onBeforeSave` gate.
 - **PDF export** — standalone overlay + a stable `#export-pdf-preview` node that
   carries all page attributes (A4, break rules, `print-color-adjust: exact`).
-- **Localization** — `zh-CN` / `en` with overrides and `registerLocale`.
+- **Localization** — built-in `zh-CN` / `en`, message overrides and
+  `registerLocale`.
 
-## Architecture
+## Preview
 
+### Editor Theme
+
+- light theme
+  ![white mode](https://picx.19981204.xyz/rest/2026/08/NsTz9Jk.png)
+- dark theme
+  ![dark mode](https://picx.19981204.xyz/rest/2026/08/UwaAKJk.png)
+
+### Preview Theme
+
+- github theme
+  ![github](https://picx.19981204.xyz/rest/2026/08/dHpAKJk.png)
+
+- vscode theme
+  ![vscode](https://picx.19981204.xyz/rest/2026/08/yh5aKJk.png)
+
+- mk-cute theme
+  ![mk-cute](https://picx.19981204.xyz/rest/2026/08/pwqAKJk.png)
+
+- smart-blue theme
+  ![smart-blue](https://picx.19981204.xyz/rest/2026/08/2wfaKJk.png)
+
+Run the standalone demo locally — it renders a bilingual markdown syntax
+reference covering headings, text styles, lists, blockquotes, links & images,
+code blocks, tables, KaTeX math, directives, raw HTML and mermaid diagrams:
+
+```sh
+cd packages/markdown-editor
+pnpm demo     # http://localhost:5179
 ```
-markdown source
-      │
-      ▼
- Render pipeline (unified remark→rehype→shiki, src/core/markdown.ts)
-      │ html + sourceNodes
-      ▼
- MarkdownRenderer.vue  ──►  Sync engine (source map ↔ scroll linking)
-      │                     Theme system (data + per-theme CSS assets)
-      └─────────────────────►  PDF export (overlay + print page attrs)
-```
 
-Four pillars, each documented in depth under `docs/architecture/`:
-
-| Pillar | Doc |
-| --- | --- |
-| Render pipeline | [docs/architecture/render-pipeline.md](../../docs/architecture/render-pipeline.md) |
-| Theme system | [docs/architecture/theme-system.md](../../docs/architecture/theme-system.md) |
-| Sync engine | [docs/architecture/sync-engine.md](../../docs/architecture/sync-engine.md) |
-| PDF export | [docs/architecture/pdf-export.md](../../docs/architecture/pdf-export.md) |
-
-## Quick Start
-
-### Install
+## Install
 
 ```sh
 pnpm add @rx-ted/packages-markdown-editor
@@ -66,16 +83,21 @@ pnpm add @rx-ted/packages-markdown-editor
 Peer dependencies (installed by the host app): `vue` ^3.5, `naive-ui` ^2.44,
 `@iconify/vue` ^5.0.
 
+## Usage
+
 ### Full editor
 
 ```vue
 <script setup lang="ts">
-import { ref } from 'vue';
-import { MarkdownEditor, type EditorSavePayload } from '@rx-ted/packages-markdown-editor';
+import { ref } from "vue";
+import {
+  MarkdownEditor,
+  type EditorSavePayload,
+} from "@rx-ted/packages-markdown-editor";
 
-const content = ref('# Hello\n\nSome **markdown**.');
+const content = ref("# Hello\n\nSome **markdown**.");
 const onSave = (payload: EditorSavePayload) => {
-  console.log('saved', payload.title, content.value);
+  console.log("saved", payload.title, content.value);
 };
 </script>
 
@@ -98,7 +120,7 @@ const onSave = (payload: EditorSavePayload) => {
 
 ```vue
 <script setup lang="ts">
-import { MarkdownRenderer } from '@rx-ted/packages-markdown-editor';
+import { MarkdownRenderer } from "@rx-ted/packages-markdown-editor";
 </script>
 
 <template>
@@ -112,10 +134,49 @@ import { MarkdownRenderer } from '@rx-ted/packages-markdown-editor';
 </template>
 ```
 
+### Wrap wide code and tables
+
+Opt in to auto-wrapping for wide code blocks and tables with one prop — it is
+forwarded to every internal renderer (preview pane, theme modal, PDF overlay):
+
+```vue
+<template>
+  <MarkdownEditor
+    v-model="content"
+    :overflow-options="{ wrapCode: true, wrapTables: true }"
+  />
+</template>
+```
+
 > Full component API (props / events / rendered features / core exports):
 > [docs/guides/components.md](../../docs/guides/components.md).
 
-## Development
+## Documentation
+
+### Architecture — how it works
+
+| Doc                                                                                | What it covers                                                                     |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [docs/architecture/README.md](../../docs/architecture/README.md)                   | Overview + design decisions                                                        |
+| [docs/architecture/render-pipeline.md](../../docs/architecture/render-pipeline.md) | Unified remark→rehype→shiki pipeline, code-group plugins, KaTeX, mermaid           |
+| [docs/architecture/theme-system.md](../../docs/architecture/theme-system.md)       | Theme config shape, per-theme CSS assets, scoped `<link>` loading, contrast rules  |
+| [docs/architecture/sync-engine.md](../../docs/architecture/sync-engine.md)         | Source map, scroll linking, TOC, interactive tasks                                 |
+| [docs/architecture/pdf-export.md](../../docs/architecture/pdf-export.md)           | Print overlay, `@page`/break rules, `print-color-adjust`, forced overflow wrapping |
+
+### Guides — how to use it
+
+| Doc                                                                                            | What it covers                                          |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| [docs/guides/README.md](../../docs/guides/README.md)                                           | Guides index                                            |
+| [docs/guides/components.md](../../docs/guides/components.md)                                   | Component props/events, rendered features, core exports |
+| [docs/guides/custom-themes.md](../../docs/guides/custom-themes.md)                             | Build and register a custom preview theme               |
+| [docs/guides/localization.md](../../docs/guides/localization.md)                               | `createI18n`, overrides, `registerLocale`               |
+| [docs/guides/markdown-editor-development.md](../../docs/guides/markdown-editor-development.md) | Repo layout, scripts, build, testing                    |
+
+## Contribute
+
+Contributions are welcome. This package lives in the monorepo at
+`packages/markdown-editor`; its docs, demo and tests are co-located.
 
 ```sh
 pnpm demo          # standalone demo (http://localhost:5179)
@@ -124,28 +185,18 @@ pnpm typecheck     # vue-tsc --noEmit
 pnpm build         # vite build + vue-tsc + postbuild
 ```
 
-Repo layout, build caveats (generated `src/themes/__gen/`, `dist/themes/*`),
-consumer aliases and testing conventions:
-[docs/guides/markdown-editor-development.md](../../docs/guides/markdown-editor-development.md).
+Guidelines:
 
-## Documentation
+- **Scope commits** — use Conventional Commits with the package scope, e.g.
+  `feat(packages/markdown-editor): ...`, `fix(packages/markdown-editor): ...`.
+- **Keep docs bilingual** — when a change affects behaviour or the public API,
+  update both the English and `.zh.md` docs.
+- **Run the checks** — `pnpm typecheck`, `pnpm test` and biome must pass before
+  merging; the pre-commit hook runs them for you.
+- **Update the demo** — the standalone demo doubles as a feature showcase, so
+  new features should appear there too.
+- **Add a changeset** — for package releases, include a changeset under
+  `.changeset/` describing the user-facing change.
 
-### Architecture — how it works
-
-| Doc | What it covers |
-| --- | --- |
-| [docs/architecture/README.md](../../docs/architecture/README.md) | Overview + design decisions |
-| [docs/architecture/render-pipeline.md](../../docs/architecture/render-pipeline.md) | Unified remark→rehype→shiki pipeline, code-group plugins, KaTeX, mermaid |
-| [docs/architecture/theme-system.md](../../docs/architecture/theme-system.md) | Theme config shape, per-theme CSS assets, scoped `<link>` loading, contrast rules |
-| [docs/architecture/sync-engine.md](../../docs/architecture/sync-engine.md) | Source map, scroll linking, TOC, interactive tasks |
-| [docs/architecture/pdf-export.md](../../docs/architecture/pdf-export.md) | Print overlay, `@page`/break rules, `print-color-adjust` |
-
-### Guides — how to use it
-
-| Doc | What it covers |
-| --- | --- |
-| [docs/guides/README.md](../../docs/guides/README.md) | Guides index |
-| [docs/guides/components.md](../../docs/guides/components.md) | Component props/events, rendered features, core exports |
-| [docs/guides/custom-themes.md](../../docs/guides/custom-themes.md) | Build and register a custom preview theme |
-| [docs/guides/localization.md](../../docs/guides/localization.md) | `createI18n`, overrides, `registerLocale` |
-| [docs/guides/markdown-editor-development.md](../../docs/guides/markdown-editor-development.md) | Repo layout, scripts, build, testing |
+Report issues and open pull requests on
+[github.com/rx-ted/app-repo](https://github.com/rx-ted/app-repo).
