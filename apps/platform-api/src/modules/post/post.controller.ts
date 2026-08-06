@@ -58,13 +58,14 @@ class PostController {
     @Query('tag') tag?: string,
     @Query('category') category?: string,
     @Query('author') author?: string,
+    @Query('lang') lang?: 'en' | 'zh-CN',
   ) {
     return this.postService.list(
       page ? Math.max(1, Number(page)) : 1,
       pageSize
         ? Math.max(1, Math.min(DEFAULTS.MAX_PAGE_SIZE, Number(pageSize)))
         : DEFAULTS.PAGE_SIZE,
-      { keyword, tag, category, author },
+      { keyword, tag, category, author, lang },
     );
   }
 

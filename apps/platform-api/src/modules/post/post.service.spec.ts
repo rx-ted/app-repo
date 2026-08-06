@@ -148,6 +148,8 @@ describe('PostService', () => {
       expect(mockPostRepo.create).toHaveBeenCalledWith({
         title: 'Hello World',
         slug: 'hello-world',
+        lang: 'en',
+        translationSlug: null,
         contentMd: 'a'.repeat(2500),
         authorId: 'author-1',
         authorName: 'Author',

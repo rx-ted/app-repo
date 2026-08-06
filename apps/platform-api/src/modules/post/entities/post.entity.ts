@@ -141,6 +141,8 @@ export const PostCategoryMappingsSchema = z.object({
 export interface PostEntity {
   id: string;
   slug: string;
+  lang: 'en' | 'zh-CN';
+  translationSlug: string | null;
   title: string;
   contentMd: string;
   contentHtml: string | null;
@@ -171,6 +173,7 @@ export interface PostEntity {
 export interface PostListEntity {
   id: string;
   slug: string;
+  lang: 'en' | 'zh-CN';
   title: string;
   coverImage: string | null;
   status: string;
@@ -190,6 +193,7 @@ export interface PostListEntity {
 export const PostListEntitySchema = z.object({
   id: z.string(),
   slug: z.string(),
+  lang: z.enum(['en', 'zh-CN']),
   title: z.string(),
   coverImage: z.string().nullable(),
   status: z.string(),
@@ -207,6 +211,8 @@ export const PostListEntitySchema = z.object({
 export const PostEntitySchema = z.object({
   id: z.string(),
   slug: z.string(),
+  lang: z.enum(['en', 'zh-CN']),
+  translationSlug: z.string().nullable(),
   title: z.string(),
   contentMd: z.string(),
   contentHtml: z.string().nullable(),

@@ -1,4 +1,4 @@
-import { and, eq, count, desc, like, sql, not, inArray } from 'drizzle-orm';
+import { and, eq, count, desc, asc, like, notLike, sql, not, inArray } from 'drizzle-orm';
 import { Inject, Service } from '@rx-ted/packages-honest';
 import { DbService } from '@rx-ted/packages-honest-plugins/db';
 import { computeOffset } from '@/common/utils/pagination';
@@ -16,6 +16,19 @@ import type { PostEntity, PostListEntity } from '@/modules/post/entities/post.en
 import { CacheService, cacheable } from '@rx-ted/packages-honest-plugins/cache';
 import { CacheInvalidationService } from '@/modules/post/services/cache-invalidation.service';
 
+function deriveLang(slug: string): 'en' | 'zh-CN' {
+  return slug.endsWith('.zh') ? 'zh-CN' : 'en';
+}
+
+function extractTranslationSlug(slug: string, contentMd: string): string | null {
+  const isZh = deriveLang(slug) === 'zh-CN';
+  for (const match of contentMd.matchAll(/\]\(\/posts\/([\w.-]+?)\)/g)) {
+    const link = match[1];
+    if (link.endsWith('.zh') !== isZh) return link;
+  }
+  return null;
+}
+
 function mapToPostListEntity(
   p: typeof postCore.$inferSelect,
   content: typeof postContent.$inferSelect | null,
@@ -25,6 +38,7 @@ function mapToPostListEntity(
   return {
     id: String(p.id),
     slug: p.slug,
+    lang: deriveLang(p.slug),
     title: p.title,
     coverImage: p.coverImage ?? null,
     status: p.status ?? 'draft',
@@ -51,6 +65,8 @@ function mapToPostEntity(
   return {
     id: String(p.id),
     slug: p.slug,
+    lang: deriveLang(p.slug),
+    translationSlug: extractTranslationSlug(p.slug, content?.contentMd ?? ''),
     title: p.title,
     contentMd: content?.contentMd ?? '',
     contentHtml: content?.contentHtml ?? null,
@@ -95,12 +111,19 @@ class PostRepository {
       tag?: string;
       category?: string;
       author?: string;
+      lang?: 'en' | 'zh-CN';
       excludeSlugs?: string[];
     },
   ): Promise<{ list: PostListEntity[]; total: number }> {
-    const cacheKey = `post:list:${page}:${pageSize}:${options?.keyword ?? ''}:${options?.tag ?? ''}:${options?.category ?? ''}:${options?.author ?? ''}`;
+    const cacheKey = `post:list:${page}:${pageSize}:${options?.keyword ?? ''}:${options?.tag ?? ''}:${options?.category ?? ''}:${options?.author ?? ''}:${options?.lang ?? ''}`;
     return cacheable(this.cache, cacheKey, 60, async () => {
       const conditions: ReturnType<typeof eq>[] = [eq(postCore.status, 'published')];
+
+      if (options?.lang) {
+        conditions.push(
+          options.lang === 'zh-CN' ? like(postCore.slug, '%.zh') : notLike(postCore.slug, '%.zh'),
+        );
+      }
 
       if (options?.keyword) {
         conditions.push(like(postCore.title, `%${options.keyword}%`));
@@ -156,19 +179,36 @@ class PostRepository {
     const current = await this.findBySlug(slug);
     if (!current) return { prev: null, next: null };
     const currentId = Number(current.id);
+    const currentDate = new Date(current.createdAt).toISOString();
+    const sameLang =
+      deriveLang(current.slug) === 'zh-CN'
+        ? like(postCore.slug, '%.zh')
+        : notLike(postCore.slug, '%.zh');
 
     const [prevRow] = await this.db
       .select({ slug: postCore.slug, title: postCore.title })
       .from(postCore)
-      .where(and(eq(postCore.status, 'published'), sql`${postCore.id} < ${currentId}`))
-      .orderBy(desc(postCore.id))
+      .where(
+        and(
+          eq(postCore.status, 'published'),
+          sameLang,
+          sql`(${postCore.createdAt} > ${currentDate} OR (${postCore.createdAt} = ${currentDate} AND ${postCore.id} > ${currentId}))`,
+        ),
+      )
+      .orderBy(asc(postCore.createdAt), asc(postCore.id))
       .limit(1);
 
     const [nextRow] = await this.db
       .select({ slug: postCore.slug, title: postCore.title })
       .from(postCore)
-      .where(and(eq(postCore.status, 'published'), sql`${postCore.id} > ${currentId}`))
-      .orderBy(postCore.id)
+      .where(
+        and(
+          eq(postCore.status, 'published'),
+          sameLang,
+          sql`(${postCore.createdAt} < ${currentDate} OR (${postCore.createdAt} = ${currentDate} AND ${postCore.id} < ${currentId}))`,
+        ),
+      )
+      .orderBy(desc(postCore.createdAt), desc(postCore.id))
       .limit(1);
 
     return {

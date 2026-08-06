@@ -5027,6 +5027,18 @@
             "schema": {
               "type": "object"
             }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "zh-CN"
+              ]
+            }
           }
         ],
         "responses": {
@@ -5047,6 +5059,13 @@
                           },
                           "slug": {
                             "type": "string"
+                          },
+                          "lang": {
+                            "type": "string",
+                            "enum": [
+                              "en",
+                              "zh-CN"
+                            ]
                           },
                           "title": {
                             "type": "string"
@@ -5094,6 +5113,7 @@
                         "required": [
                           "id",
                           "slug",
+                          "lang",
                           "title",
                           "coverImage",
                           "status",
@@ -5354,6 +5374,16 @@
                     "slug": {
                       "type": "string"
                     },
+                    "lang": {
+                      "type": "string",
+                      "enum": [
+                        "en",
+                        "zh-CN"
+                      ]
+                    },
+                    "translationSlug": {
+                      "type": "object"
+                    },
                     "title": {
                       "type": "string"
                     },
@@ -5431,6 +5461,8 @@
                   "required": [
                     "id",
                     "slug",
+                    "lang",
+                    "translationSlug",
                     "title",
                     "contentMd",
                     "contentHtml",

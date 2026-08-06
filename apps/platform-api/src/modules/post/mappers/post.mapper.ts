@@ -5,6 +5,7 @@ export class PostMapper {
     return {
       id: entity.id,
       slug: entity.slug,
+      lang: entity.lang,
       title: entity.title,
       cover_image: entity.coverImage ?? null,
       status: entity.status,
@@ -26,6 +27,8 @@ export class PostMapper {
     return {
       id: entity.id,
       slug: entity.slug,
+      lang: entity.lang,
+      translation_slug: entity.translationSlug,
       title: entity.title,
       content_md: entity.contentMd,
       content_html: entity.contentHtml ?? null,

@@ -49,6 +49,7 @@ class PostService {
       tag?: string;
       category?: string;
       author?: string;
+      lang?: 'en' | 'zh-CN';
       excludeSlugs?: string[];
     },
   ) {
@@ -210,6 +211,8 @@ class PostService {
     const created = await this.postRepo.create({
       title: resolvedTitle,
       slug,
+      lang: slug.endsWith('.zh') ? 'zh-CN' : 'en',
+      translationSlug: null,
       contentMd: input.contentMd,
       authorId: input.authorId,
       authorName: input.authorName,
