@@ -41,7 +41,7 @@
   },
   "peerDependencies": {
     "@rx-ted/packages-honest": "workspace:^",
-    "hono": "^4.12.18"
+    "hono": "^4.12.34"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",
