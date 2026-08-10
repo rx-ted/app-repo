@@ -1,6 +1,6 @@
 {
   "name": "@rx-ted/packages-honest-plugins",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "private": false,
   "type": "module",
   "description": "HonestJS plugins — db, cache, mail, s3, api-doc, counter",

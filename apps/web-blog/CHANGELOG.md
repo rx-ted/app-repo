@@ -1,5 +1,15 @@
 # @rx-ted/web-blog
 
+## 1.0.6
+
+### Patch Changes
+
+- Updated dependencies [49d8e23]
+- Updated dependencies [36d62f0]
+- Updated dependencies [df5f333]
+- Updated dependencies [d70dfae]
+  - @rx-ted/packages-markdown-editor@0.1.0
+
 ## 1.0.5
 
 ### Patch Changes
