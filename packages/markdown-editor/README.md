@@ -65,9 +65,19 @@ own standalone demo, decoupled from the web-blog app.
 - smart-blue theme
   ![smart-blue](https://picx.19981204.xyz/rest/2026/08/2wfaKJk.png)
 
-Run the standalone demo locally — it renders a bilingual markdown syntax
-reference covering headings, text styles, lists, blockquotes, links & images,
-code blocks, tables, KaTeX math, directives, raw HTML and mermaid diagrams:
+Run the standalone demo — it renders a bilingual markdown syntax reference
+covering headings, text styles, lists, blockquotes, links & images, code
+blocks, tables, KaTeX math, directives, raw HTML and mermaid diagrams. The
+prebuilt demo ships inside the npm package, so from any project that has it
+installed, serve the bundled folder:
+
+```sh
+npx serve node_modules/@rx-ted/packages-markdown-editor/dist/demo
+# http://localhost:3000
+```
+
+In this monorepo, run it from the package directory instead for live
+reloading against the source:
 
 ```sh
 cd packages/markdown-editor
@@ -149,29 +159,29 @@ forwarded to every internal renderer (preview pane, theme modal, PDF overlay):
 ```
 
 > Full component API (props / events / rendered features / core exports):
-> [docs/guides/components.md](../../docs/guides/components.md).
+> [docs/guides/components.md](https://github.com/rx-ted/app-repo/blob/main/docs/guides/components.md).
 
 ## Documentation
 
 ### Architecture — how it works
 
-| Doc                                                                                | What it covers                                                                     |
-| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| [docs/architecture/README.md](../../docs/architecture/README.md)                   | Overview + design decisions                                                        |
-| [docs/architecture/render-pipeline.md](../../docs/architecture/render-pipeline.md) | Unified remark→rehype→shiki pipeline, code-group plugins, KaTeX, mermaid           |
-| [docs/architecture/theme-system.md](../../docs/architecture/theme-system.md)       | Theme config shape, per-theme CSS assets, scoped `<link>` loading, contrast rules  |
-| [docs/architecture/sync-engine.md](../../docs/architecture/sync-engine.md)         | Source map, scroll linking, TOC, interactive tasks                                 |
-| [docs/architecture/pdf-export.md](../../docs/architecture/pdf-export.md)           | Print overlay, `@page`/break rules, `print-color-adjust`, forced overflow wrapping |
+| Doc                                                                                  | What it covers                                                                     |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| [architecture/README.md](https://github.com/rx-ted/app-repo/blob/main/docs/architecture/README.md) | Overview + design decisions                                                        |
+| [architecture/render-pipeline.md](https://github.com/rx-ted/app-repo/blob/main/docs/architecture/render-pipeline.md) | Unified remark→rehype→shiki pipeline, code-group plugins, KaTeX, mermaid           |
+| [architecture/theme-system.md](https://github.com/rx-ted/app-repo/blob/main/docs/architecture/theme-system.md) | Theme config shape, per-theme CSS assets, scoped `<link>` loading, contrast rules  |
+| [architecture/sync-engine.md](https://github.com/rx-ted/app-repo/blob/main/docs/architecture/sync-engine.md) | Source map, scroll linking, TOC, interactive tasks                                 |
+| [architecture/pdf-export.md](https://github.com/rx-ted/app-repo/blob/main/docs/architecture/pdf-export.md) | Print overlay, `@page`/break rules, `print-color-adjust`, forced overflow wrapping |
 
 ### Guides — how to use it
 
-| Doc                                                                                            | What it covers                                          |
-| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| [docs/guides/README.md](../../docs/guides/README.md)                                           | Guides index                                            |
-| [docs/guides/components.md](../../docs/guides/components.md)                                   | Component props/events, rendered features, core exports |
-| [docs/guides/custom-themes.md](../../docs/guides/custom-themes.md)                             | Build and register a custom preview theme               |
-| [docs/guides/localization.md](../../docs/guides/localization.md)                               | `createI18n`, overrides, `registerLocale`               |
-| [docs/guides/markdown-editor-development.md](../../docs/guides/markdown-editor-development.md) | Repo layout, scripts, build, testing                    |
+| Doc                                                                                          | What it covers                                          |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| [guides/README.md](https://github.com/rx-ted/app-repo/blob/main/docs/guides/README.md)       | Guides index                                            |
+| [guides/components.md](https://github.com/rx-ted/app-repo/blob/main/docs/guides/components.md) | Component props/events, rendered features, core exports |
+| [guides/custom-themes.md](https://github.com/rx-ted/app-repo/blob/main/docs/guides/custom-themes.md) | Build and register a custom preview theme               |
+| [guides/localization.md](https://github.com/rx-ted/app-repo/blob/main/docs/guides/localization.md) | `createI18n`, overrides, `registerLocale`               |
+| [guides/markdown-editor-development.md](https://github.com/rx-ted/app-repo/blob/main/docs/guides/markdown-editor-development.md) | Repo layout, scripts, build, testing                    |
 
 ## Contribute
 
