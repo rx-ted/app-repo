@@ -44,14 +44,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Enable auto-merge on Version PR
-        if: steps.changesets.outputs.pullRequestNumber != ''
-        uses: peter-evans/enable-pull-request-automerge@v3
-        with:
-          pull-request-number: ${{ steps.changesets.outputs.pullRequestNumber }}
-          merge-method: squash
-
-      # Runs only on version PR merge: tag bumped packages + create GitHub Release + publish
+      # The version PR is merged manually by a maintainer. A human merge is what
+      # re-triggers this workflow's push event — merges done with GITHUB_TOKEN
+      # are suppressed by GitHub and would skip the publish steps below.
+      # Runs on version PR merge: tag bumped packages + create GitHub Release + publish
       - name: Build
         if: steps.changesets.outputs.pullRequestNumber == ''
         run: pnpm build

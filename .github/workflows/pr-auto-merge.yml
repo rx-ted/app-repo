@@ -1,5 +1,7 @@
-# PR Auto Merge — enables auto-merge for every PR
-# Once all required CI checks pass, GitHub automatically merges with squash
+# PR Auto Merge — enables auto-merge for every PR except the changesets
+# "Version Packages" PR. That one is merged manually by a maintainer: an
+# auto-merge done with GITHUB_TOKEN would be attributed to the bot and GitHub
+# suppresses the resulting push event, so release.yml would never run.
 name: PR Auto Merge
 
 on:
@@ -13,6 +15,7 @@ permissions:
 jobs:
   enable-auto-merge:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login != 'github-actions[bot]'
     steps:
       - uses: peter-evans/enable-pull-request-automerge@v3
         with:
