@@ -91,14 +91,18 @@ CREATE TABLE `comments` (
 	FOREIGN KEY (`post_id`) REFERENCES `postCore`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `friendLinks` (
+CREATE TABLE `discoveries` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`name` text NOT NULL,
 	`url` text NOT NULL,
 	`logo` text,
 	`description` text,
+	`category` text DEFAULT 'other',
+	`status` text DEFAULT 'active',
+	`email` text,
 	`sort_order` integer DEFAULT 0,
-	`is_active` integer DEFAULT true,
+	`fail_count` integer DEFAULT 0,
+	`last_checked_at` integer,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL
 );
@@ -215,6 +219,7 @@ CREATE TABLE `postCore` (
 	`cover_image` text,
 	`is_pinned` integer DEFAULT false,
 	`featured_weight` integer DEFAULT 0,
+	`reading_time` integer DEFAULT 1,
 	`status` text DEFAULT 'draft',
 	`visibility` text DEFAULT 'public',
 	`password_hash` text,

@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1783734791183,
-      "tag": "0000_sturdy_nightshade",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1721484000000,
-      "tag": "0001_friend_link_fields",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1721484000000,
-      "tag": "0002_discover_rename",
+      "when": 1786341310006,
+      "tag": "0000_jazzy_gideon",
       "breakpoints": true
     }
   ]
