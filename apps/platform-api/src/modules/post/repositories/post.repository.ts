@@ -1,4 +1,18 @@
-import { and, eq, count, desc, asc, like, notLike, sql, not, inArray } from 'drizzle-orm';
+import {
+  and,
+  eq,
+  count,
+  desc,
+  asc,
+  like,
+  notLike,
+  sql,
+  not,
+  inArray,
+  gt,
+  lt,
+  or,
+} from 'drizzle-orm';
 import { Inject, Service } from '@rx-ted/packages-honest';
 import { DbService } from '@rx-ted/packages-honest-plugins/db';
 import { computeOffset } from '@/common/utils/pagination';
@@ -179,7 +193,7 @@ class PostRepository {
     const current = await this.findBySlug(slug);
     if (!current) return { prev: null, next: null };
     const currentId = Number(current.id);
-    const currentDate = new Date(current.createdAt).toISOString();
+    const currentDate = new Date(current.createdAt);
     const sameLang =
       deriveLang(current.slug) === 'zh-CN'
         ? like(postCore.slug, '%.zh')
@@ -192,10 +206,13 @@ class PostRepository {
         and(
           eq(postCore.status, 'published'),
           sameLang,
-          sql`(${postCore.createdAt} > ${currentDate} OR (${postCore.createdAt} = ${currentDate} AND ${postCore.id} > ${currentId}))`,
+          or(
+            lt(postCore.createdAt, currentDate),
+            and(eq(postCore.createdAt, currentDate), lt(postCore.id, currentId)),
+          ),
         ),
       )
-      .orderBy(asc(postCore.createdAt), asc(postCore.id))
+      .orderBy(desc(postCore.createdAt), desc(postCore.id))
       .limit(1);
 
     const [nextRow] = await this.db
@@ -205,10 +222,13 @@ class PostRepository {
         and(
           eq(postCore.status, 'published'),
           sameLang,
-          sql`(${postCore.createdAt} < ${currentDate} OR (${postCore.createdAt} = ${currentDate} AND ${postCore.id} < ${currentId}))`,
+          or(
+            gt(postCore.createdAt, currentDate),
+            and(eq(postCore.createdAt, currentDate), gt(postCore.id, currentId)),
+          ),
         ),
       )
-      .orderBy(desc(postCore.createdAt), desc(postCore.id))
+      .orderBy(asc(postCore.createdAt), asc(postCore.id))
       .limit(1);
 
     return {
