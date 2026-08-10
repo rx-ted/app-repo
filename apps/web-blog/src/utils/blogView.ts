@@ -13,6 +13,7 @@ export function mapPostCardVOToArticle(post: BlogPostCardVO): App.BlogArticle {
     id: String(post.id),
     title: post.title,
     slug: post.slug,
+    lang: post.lang,
     author: post.author_name ?? post.author_username ?? 'Unknown',
     authorUsername: post.author_username ?? undefined,
     tags: post.tags ?? [],
@@ -51,5 +52,7 @@ export function mapPostDetailVOToArticle(post: BlogPostDetailVO): App.BlogArticl
     contentHtml: post.content_html ?? undefined,
     createdAt: post.created_at,
     readingTime: Number(post.reading_time ?? estimateReadingTime(content ?? undefined)),
+    lang: post.lang,
+    translationSlug: post.translation_slug ?? null,
   };
 }

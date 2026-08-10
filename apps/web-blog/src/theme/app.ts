@@ -102,6 +102,8 @@ export namespace App {
     id: string; // unique ID (DB / GitHub sha)
     title: string;
     slug: string; // route-friendly identifier
+    lang?: Locale; // article language (derived from slug, e.g. '.zh' suffix)
+    translationSlug?: string | null; // counterpart article slug in the other language
     content?: string; // raw markdown
     contentHtml?: string; // rendered HTML for detail view
     author: string;

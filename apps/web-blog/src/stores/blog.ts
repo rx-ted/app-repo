@@ -6,6 +6,7 @@ import type { BlogHomeVO, BlogPostPageVO, TrendingTagItem } from '@/types/blog';
 import type { App } from '@/theme/app';
 import { mapPostCardVOToArticle } from '@/utils/blogView';
 import { useStorage } from '@/composables/useStorage';
+import { useI18n } from '@/composables/useI18n';
 import { STORAGE_KEYS } from '@/constants/storage';
 import { API, ERRORS, NUMBERS } from '@/constants';
 
@@ -76,7 +77,10 @@ export const useBlogStore = defineStore('blog', () => {
     loading.value = true;
     error.value = '';
     try {
-      const response = await http.get<ApiResponse<BlogHomeVO>>(API.BLOG_SUMMARY);
+      const { locale } = useI18n();
+      const response = await http.get<ApiResponse<BlogHomeVO>>(API.BLOG_SUMMARY, {
+        query: { lang: locale.value },
+      });
       hero.value = response.data.hero;
       featured.value = response.data.featured;
       latest.value = response.data.latest;

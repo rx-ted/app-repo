@@ -1,6 +1,9 @@
+export type PostLang = 'en' | 'zh-CN';
+
 export interface BlogPostCardVO {
   id: number;
   slug: string;
+  lang?: PostLang;
   title: string;
   excerpt?: string;
   cover_image?: string | null;
@@ -49,6 +52,8 @@ export interface BlogHomeVO {
 export interface BlogPostDetailVO {
   id: number;
   slug: string;
+  lang?: PostLang;
+  translation_slug?: string | null;
   title: string;
   content_md?: string;
   content_html?: string | null;

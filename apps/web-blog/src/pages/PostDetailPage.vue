@@ -9,14 +9,23 @@ import SeoHead from '@/components/seo/SeoHead.vue';
 import { http } from '@/http';
 import { API } from '@/constants/api';
 import { useThemeStore } from '@/stores/theme';
+import { useI18n } from '@/composables/useI18n';
 
 const route = useRoute();
 const router = useRouter();
 const detailStore = usePostDetailStore();
 const themeStore = useThemeStore();
+const { locale } = useI18n();
 const { item, loading, error } = storeToRefs(detailStore);
 
 const slug = computed(() => String(route.params.slug || ''));
+
+watch(locale, (nextLocale) => {
+  const article = item.value;
+  if (!article?.lang || !article.translationSlug) return;
+  if (article.lang === nextLocale || article.translationSlug === slug.value) return;
+  router.push(`/posts/${article.translationSlug}`);
+});
 
 const previewTheme = computed(() => 'github');
 const previewMode = computed(() => (themeStore.isDark ? 'dark' : 'light'));

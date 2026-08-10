@@ -32,6 +32,16 @@ vi.mock('@/composables/useStorage', () => ({
   }),
 }));
 
+vi.mock('@/composables/useI18n', () => ({
+  useI18n: () => ({
+    locale: { value: 'zh-CN' },
+    locales: { value: [] },
+    setLocale: vi.fn(),
+    t: (key: string) => key,
+    text: (value: unknown) => String(value ?? ''),
+  }),
+}));
+
 const mockPostCard = {
   id: 1,
   slug: 'test-post',
@@ -84,7 +94,9 @@ describe('blog store', () => {
 
     await store.fetchHome();
 
-    expect(httpMock.get).toHaveBeenCalledWith(API.BLOG_SUMMARY);
+    expect(httpMock.get).toHaveBeenCalledWith(API.BLOG_SUMMARY, {
+      query: { lang: 'zh-CN' },
+    });
     expect(store.hero).toEqual(mockHomeResponse.data.hero);
     expect(store.featured).toEqual(mockHomeResponse.data.featured);
     expect(store.latest).toEqual(mockHomeResponse.data.latest);
