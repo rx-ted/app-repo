@@ -8,7 +8,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "架构概览",
@@ -19,29 +22,38 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "PDF Export",
     "slug": "architecture-pdf-export",
-    "doc_hash": "0308606b4b955352d3dd6dff5635ab2d2ec92f6abd4f67951669eb3b9f9af1df",
-    "content_md": "---\ntitle: PDF Export\nauthor: rx-ted\ndate: 2026-08-05\ncategory: architecture\ntags:\n  - pdf\n  - print\n  - markdown\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: en\nslug: architecture-pdf-export\ndoc_hash: 0308606b4b955352d3dd6dff5635ab2d2ec92f6abd4f67951669eb3b9f9af1df\n---\n**English** | [中文](/posts/architecture-pdf-export.zh)\n\n# PDF export\n\nPDF export re-renders the document **standalone** so the consumer's layout can\nnever clip or paginate it incorrectly, then prints through a stable\n`#export-pdf-preview` node that carries every page attribute.\n\n## The overlay\n\n```html\n<Teleport to=\"body\">\n  <div v-if=\"pdfOverlayVisible\" class=\"pdf-print-overlay\" :style=\"pdfOverlayVars\">\n    <MarkdownRenderer\n      id=\"export-pdf-preview\"\n      :content=\"currentValue\"\n      :theme=\"previewThemeRef\"\n      :code-theme=\"codeThemeRef\"\n      :mode=\"editorThemeRef\"\n      @ready=\"pdfOverlayReady = true\"\n    />\n  </div>\n</Teleport>\n```\n\n- A **fresh `MarkdownRenderer`** is mounted (same theme / code theme / mode as\n  the on-screen preview), so what you print is exactly what you see — including\n  the loaded theme stylesheet.\n- `.pdf-print-overlay` is a fixed, full-viewport, white container on screen;\n  in print it becomes `static` with visible overflow.\n\n## The print flow\n\n`exportPdf()` (in `MarkdownEditor.vue`):\n\n1. Show the overlay and reset `pdfOverlayReady`.\n2. `await nextTick()`, then poll with `requestAnimationFrame` until the\n   renderer emits `ready` (markdown rendering is async — shiki, mermaid, …).\n3. Settle `300ms` for fonts/layout.\n4. Verify `#export-pdf-preview` exists (mirrors the upstream\n   `md-editor-extension` `ExportPDF` guard, whose `EDITOR_ID` is\n   `'export-pdf-preview'`).\n5. `window.print()`; hide the overlay on `afterprint`, with a 30s fallback\n   timer in case `afterprint` never fires (headless / cancelled dialog).\n\n## Page attributes on `#export-pdf-preview`\n\nThe print stylesheet (global `<style>` in `MarkdownEditor.vue`) attaches\neverything to the one node:\n\n```css\n@page export-pdf {\n  size: A4;\n  margin: 16mm 14mm;\n}\n\n#export-pdf-preview {\n  page: export-pdf;\n}\n\n@media print {\n  #export-pdf-preview, #export-pdf-preview * {\n    print-color-adjust: exact;        /* keep theme backgrounds */\n    -webkit-print-color-adjust: exact;\n  }\n  #export-pdf-preview pre,\n  #export-pdf-preview table,\n  #export-pdf-preview blockquote,\n  #export-pdf-preview details,\n  #export-pdf-preview figure[data-rehype-pretty-code-figure],\n  #export-pdf-preview .mermaid,\n  #export-pdf-preview .katex-display {\n    break-inside: avoid;              /* no mid-block page splits */\n  }\n  #export-pdf-preview h1, #export-pdf-preview h2,\n  #export-pdf-preview h3, #export-pdf-preview h4 {\n    break-after: avoid;               /* no orphaned headings */\n  }\n}\n```\n\n- **Named page** — `page: export-pdf` + `@page export-pdf` makes the output\n  paginate on a stable A4 sheet with fixed margins, regardless of the browser's\n  default paper.\n- **`print-color-adjust: exact`** — Chrome's default is `economy`: with the\n  \"background graphics\" option off, it strips background fills and remaps light\n  text, which makes a themed document collapse into a \"plain default\" look.\n  `exact` forces code-block fills, inline-code chips and theme backgrounds into\n  the PDF. (Verified by A/B: without it, the mk-cute code-block fill and theme\n  colors disappear from a `printBackground: false` PDF; with it they survive.)\n\nConsumers can override the sheet or margins by emitting their own `@page` rule\nafter the package stylesheet.\n\n## Why the id lives on both previews\n\n`MarkdownRenderer` accepts an `id` prop. Both the editor's on-screen preview\nand the export overlay render with `id=\"export-pdf-preview\"`, so you can grab\nthe node on the normal page *and* during export. During the brief export window\ntwo same-id nodes exist (main preview + overlay); the print CSS hides the main\npreview (`body > *:not(.pdf-print-overlay)`), so it is harmless.\n\n## Direct printing without the overlay\n\nFor consumers that print the editor page without the export button, the scoped\n`editor.css` print fallback neutralizes the flex height chain (bounded boxes\nwith `overflow: hidden` otherwise clip the document to the grid height — the\n\"only prints N pages\" bug). The overlay path is the recommended one.\n",
+    "doc_hash": "de787b33102cd131c21ee4b0be224a53826fa9e3068a284a43adbf3c3093851b",
+    "content_md": "---\ntitle: PDF Export\nauthor: rx-ted\ndate: 2026-08-05\ncategory: architecture\ntags:\n  - pdf\n  - print\n  - markdown\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: en\nslug: architecture-pdf-export\ndoc_hash: de787b33102cd131c21ee4b0be224a53826fa9e3068a284a43adbf3c3093851b\n---\n**English** | [中文](/posts/architecture-pdf-export.zh)\n\n# PDF export\n\nPDF export re-renders the document **standalone** so the consumer's layout can\nnever clip or paginate it incorrectly, then prints through a stable\n`#export-pdf-preview` node that carries every page attribute.\n\n## The overlay\n\n```html\n<Teleport to=\"body\">\n  <div v-if=\"pdfOverlayVisible\" class=\"pdf-print-overlay\" :style=\"pdfOverlayVars\">\n    <MarkdownRenderer\n      id=\"export-pdf-preview\"\n      :content=\"currentValue\"\n      :theme=\"previewThemeRef\"\n      :code-theme=\"codeThemeRef\"\n      :mode=\"editorThemeRef\"\n      @ready=\"pdfOverlayReady = true\"\n    />\n  </div>\n</Teleport>\n```\n\n- A **fresh `MarkdownRenderer`** is mounted (same theme / code theme / mode as\n  the on-screen preview), so what you print is exactly what you see — including\n  the loaded theme stylesheet.\n- `.pdf-print-overlay` is a fixed, full-viewport, white container on screen;\n  in print it becomes `static` with visible overflow.\n\n## The print flow\n\n`exportPdf()` (in `MarkdownEditor.vue`):\n\n1. Show the overlay and reset `pdfOverlayReady`.\n2. `await nextTick()`, then poll with `requestAnimationFrame` until the\n   renderer emits `ready` (markdown rendering is async — shiki, mermaid, …).\n3. Settle `300ms` for fonts/layout.\n4. Verify `#export-pdf-preview` exists (mirrors the upstream\n   `md-editor-extension` `ExportPDF` guard, whose `EDITOR_ID` is\n   `'export-pdf-preview'`).\n5. `window.print()`; hide the overlay on `afterprint`, with a 30s fallback\n   timer in case `afterprint` never fires (headless / cancelled dialog).\n\n## Page attributes on `#export-pdf-preview`\n\nThe print stylesheet (global `<style>` in `MarkdownEditor.vue`) attaches\neverything to the one node:\n\n```css\n@page export-pdf {\n  size: A4;\n  margin: 16mm 14mm;\n}\n\n#export-pdf-preview {\n  page: export-pdf;\n}\n\n@media print {\n  #export-pdf-preview, #export-pdf-preview * {\n    print-color-adjust: exact;        /* keep theme backgrounds */\n    -webkit-print-color-adjust: exact;\n  }\n  #export-pdf-preview pre,\n  #export-pdf-preview table,\n  #export-pdf-preview blockquote,\n  #export-pdf-preview details,\n  #export-pdf-preview figure[data-rehype-pretty-code-figure],\n  #export-pdf-preview .mermaid,\n  #export-pdf-preview .katex-display {\n    break-inside: avoid;              /* no mid-block page splits */\n  }\n  #export-pdf-preview h1, #export-pdf-preview h2,\n  #export-pdf-preview h3, #export-pdf-preview h4 {\n    break-after: avoid;               /* no orphaned headings */\n  }\n}\n```\n\n- **Named page** — `page: export-pdf` + `@page export-pdf` makes the output\n  paginate on a stable A4 sheet with fixed margins, regardless of the browser's\n  default paper.\n- **`print-color-adjust: exact`** — Chrome's default is `economy`: with the\n  \"background graphics\" option off, it strips background fills and remaps light\n  text, which makes a themed document collapse into a \"plain default\" look.\n  `exact` forces code-block fills, inline-code chips and theme backgrounds into\n  the PDF. (Verified by A/B: without it, the `printBackground: false` PDF's\n  mk-cute code-block fill and theme colors disappear; with it they survive.)\n- **Forced overflow wrapping** — a printed sheet cannot scroll, so anything\n  wider than the page would be silently clipped. The print stylesheet always\n  wraps long code lines and fits tables to the page width (`white-space:\n  pre-wrap`, `table-layout: fixed` on `#export-pdf-preview`), regardless of the\n  on-screen `overflowOptions` prop.\n\nConsumers can override the sheet or margins by emitting their own `@page` rule\nafter the package stylesheet.\n\n## Why the id lives on both previews\n\n`MarkdownRenderer` accepts an `id` prop. Both the editor's on-screen preview\nand the export overlay render with `id=\"export-pdf-preview\"`, so you can grab\nthe node on the normal page *and* during export. During the brief export window\ntwo same-id nodes exist (main preview + overlay); the print CSS hides the main\npreview (`body > *:not(.pdf-print-overlay)`), so it is harmless.\n\n## Direct printing without the overlay\n\nFor consumers that print the editor page without the export button, the scoped\n`editor.css` print fallback neutralizes the flex height chain (bounded boxes\nwith `overflow: hidden` otherwise clip the document to the grid height — the\n\"only prints N pages\" bug). The overlay path is the recommended one.\n",
     "status": "published",
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "PDF 导出",
     "slug": "architecture-pdf-export.zh",
-    "doc_hash": "6b23e9c818a5ddc92f43dfb9bddcf0e8e8efb9e5e6589f2bc5e390d54042bae1",
-    "content_md": "---\ntitle: PDF 导出\nauthor: rx-ted\ndate: 2026-08-05\ncategory: architecture\ntags:\n  - pdf\n  - print\n  - markdown\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: zh-CN\nslug: architecture-pdf-export.zh\ndoc_hash: 6b23e9c818a5ddc92f43dfb9bddcf0e8e8efb9e5e6589f2bc5e390d54042bae1\n---\n[English](/posts/architecture-pdf-export) | **中文**\n\n# PDF 导出\n\nPDF 导出会把文档**独立地**重新渲染，这样消费者自己的布局永远不会错误地裁剪或分页它，然后通过一个稳定的、携带所有页面属性的 `#export-pdf-preview` 节点打印。\n\n## 覆盖层\n\n```html\n<Teleport to=\"body\">\n  <div v-if=\"pdfOverlayVisible\" class=\"pdf-print-overlay\" :style=\"pdfOverlayVars\">\n    <MarkdownRenderer\n      id=\"export-pdf-preview\"\n      :content=\"currentValue\"\n      :theme=\"previewThemeRef\"\n      :code-theme=\"codeThemeRef\"\n      :mode=\"editorThemeRef\"\n      @ready=\"pdfOverlayReady = true\"\n    />\n  </div>\n</Teleport>\n```\n\n- 会挂载一个**全新的 `MarkdownRenderer`**（与屏幕上的预览使用相同的 theme / code theme / mode），因此打印出来的就是你看到的——包括已加载的主题样式表。\n- `.pdf-print-overlay` 在屏幕上是固定的、占满整个视口的白色容器；打印时它会变成 `static` 并允许内容溢出可见。\n\n## 打印流程\n\n`exportPdf()`（位于 `MarkdownEditor.vue`）：\n\n1. 显示覆盖层并重置 `pdfOverlayReady`。\n2. `await nextTick()`，然后用 `requestAnimationFrame` 轮询，直到渲染器发出 `ready`（markdown 渲染是异步的——shiki、mermaid、……）。\n3. 等待 `300ms` 让字体 / 布局稳定。\n4. 校验 `#export-pdf-preview` 存在（对应上游 `md-editor-extension` 的 `ExportPDF` 守卫，其 `EDITOR_ID` 为 `'export-pdf-preview'`）。\n5. `window.print()`；在 `afterprint` 时隐藏覆盖层，并带一个 30 秒的兜底定时器，以防 `afterprint` 永不触发（无头 / 取消对话框的场景）。\n\n## `#export-pdf-preview` 上的页面属性\n\n打印样式表（`MarkdownEditor.vue` 中的全局 `<style>`）把所有东西都挂到这一个节点上：\n\n```css\n@page export-pdf {\n  size: A4;\n  margin: 16mm 14mm;\n}\n\n#export-pdf-preview {\n  page: export-pdf;\n}\n\n@media print {\n  #export-pdf-preview, #export-pdf-preview * {\n    print-color-adjust: exact;        /* 保留主题背景 */\n    -webkit-print-color-adjust: exact;\n  }\n  #export-pdf-preview pre,\n  #export-pdf-preview table,\n  #export-pdf-preview blockquote,\n  #export-pdf-preview details,\n  #export-pdf-preview figure[data-rehype-pretty-code-figure],\n  #export-pdf-preview .mermaid,\n  #export-pdf-preview .katex-display {\n    break-inside: avoid;              /* 避免在块中间分页 */\n  }\n  #export-pdf-preview h1, #export-pdf-preview h2,\n  #export-pdf-preview h3, #export-pdf-preview h4 {\n    break-after: avoid;               /* 避免孤立的标题 */\n  }\n}\n```\n\n- **命名页面** — `page: export-pdf` + `@page export-pdf` 让输出在稳定的 A4 纸面上分页，并使用固定的页边距，与浏览器默认纸张无关。\n- **`print-color-adjust: exact`** — Chrome 的默认值是 `economy`：当“背景图形”选项关闭时，它会剥掉背景填充并把浅色文字重新映射，这会让主题化文档塌缩成“普通默认”外观。`exact` 强制把代码块填充、行内代码 chip 和主题背景带进 PDF。（已用 A/B 验证：没有它时，`printBackground: false` 的 PDF 里 mk-cute 的代码块填充和主题颜色会消失；有了它就能保留。）\n\n消费者可以在包样式表之后发出自己的 `@page` 规则，来覆盖纸张或页边距。\n\n## 为什么两个预览都使用这个 id\n\n`MarkdownRenderer` 接受 `id` prop。编辑器的屏幕预览和导出覆盖层都以 `id=\"export-pdf-preview\"` 渲染，因此你可以同时在普通页面和导出期间拿到这个节点。在短暂的导出窗口里会有两个同 id 节点（主预览 + 覆盖层）；打印 CSS 会隐藏主预览（`body > *:not(.pdf-print-overlay)`），所以没有副作用。\n\n## 不经覆盖层的直接打印\n\n对于不使用导出按钮、直接打印编辑器页面的消费者，作用域化的 `editor.css` 打印兜底会中和 flex 高度链（否则带 `overflow: hidden` 的有界盒子会把文档裁剪到网格高度——也就是“只打印 N 页”的 bug）。覆盖层路径是推荐方式。\n",
+    "doc_hash": "079b51b2cb59f075a703adbf15fa1ca030257aacb1380d20b67048cd4546fe78",
+    "content_md": "---\ntitle: PDF 导出\nauthor: rx-ted\ndate: 2026-08-05\ncategory: architecture\ntags:\n  - pdf\n  - print\n  - markdown\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: zh-CN\nslug: architecture-pdf-export.zh\ndoc_hash: 079b51b2cb59f075a703adbf15fa1ca030257aacb1380d20b67048cd4546fe78\n---\n[English](/posts/architecture-pdf-export) | **中文**\n\n# PDF 导出\n\nPDF 导出会把文档**独立地**重新渲染，这样消费者自己的布局永远不会错误地裁剪或分页它，然后通过一个稳定的、携带所有页面属性的 `#export-pdf-preview` 节点打印。\n\n## 覆盖层\n\n```html\n<Teleport to=\"body\">\n  <div v-if=\"pdfOverlayVisible\" class=\"pdf-print-overlay\" :style=\"pdfOverlayVars\">\n    <MarkdownRenderer\n      id=\"export-pdf-preview\"\n      :content=\"currentValue\"\n      :theme=\"previewThemeRef\"\n      :code-theme=\"codeThemeRef\"\n      :mode=\"editorThemeRef\"\n      @ready=\"pdfOverlayReady = true\"\n    />\n  </div>\n</Teleport>\n```\n\n- 会挂载一个**全新的 `MarkdownRenderer`**（与屏幕上的预览使用相同的 theme / code theme / mode），因此打印出来的就是你看到的——包括已加载的主题样式表。\n- `.pdf-print-overlay` 在屏幕上是固定的、占满整个视口的白色容器；打印时它会变成 `static` 并允许内容溢出可见。\n\n## 打印流程\n\n`exportPdf()`（位于 `MarkdownEditor.vue`）：\n\n1. 显示覆盖层并重置 `pdfOverlayReady`。\n2. `await nextTick()`，然后用 `requestAnimationFrame` 轮询，直到渲染器发出 `ready`（markdown 渲染是异步的——shiki、mermaid、……）。\n3. 等待 `300ms` 让字体 / 布局稳定。\n4. 校验 `#export-pdf-preview` 存在（对应上游 `md-editor-extension` 的 `ExportPDF` 守卫，其 `EDITOR_ID` 为 `'export-pdf-preview'`）。\n5. `window.print()`；在 `afterprint` 时隐藏覆盖层，并带一个 30 秒的兜底定时器，以防 `afterprint` 永不触发（无头 / 取消对话框的场景）。\n\n## `#export-pdf-preview` 上的页面属性\n\n打印样式表（`MarkdownEditor.vue` 中的全局 `<style>`）把所有东西都挂到这一个节点上：\n\n```css\n@page export-pdf {\n  size: A4;\n  margin: 16mm 14mm;\n}\n\n#export-pdf-preview {\n  page: export-pdf;\n}\n\n@media print {\n  #export-pdf-preview, #export-pdf-preview * {\n    print-color-adjust: exact;        /* 保留主题背景 */\n    -webkit-print-color-adjust: exact;\n  }\n  #export-pdf-preview pre,\n  #export-pdf-preview table,\n  #export-pdf-preview blockquote,\n  #export-pdf-preview details,\n  #export-pdf-preview figure[data-rehype-pretty-code-figure],\n  #export-pdf-preview .mermaid,\n  #export-pdf-preview .katex-display {\n    break-inside: avoid;              /* 避免在块中间分页 */\n  }\n  #export-pdf-preview h1, #export-pdf-preview h2,\n  #export-pdf-preview h3, #export-pdf-preview h4 {\n    break-after: avoid;               /* 避免孤立的标题 */\n  }\n}\n```\n\n- **命名页面** — `page: export-pdf` + `@page export-pdf` 让输出在稳定的 A4 纸面上分页，并使用固定的页边距，与浏览器默认纸张无关。\n- **`print-color-adjust: exact`** — Chrome 的默认值是 `economy`：当“背景图形”选项关闭时，它会剥掉背景填充并把浅色文字重新映射，这会让主题化文档塌缩成“普通默认”外观。`exact` 强制把代码块填充、行内代码 chip 和主题背景带进 PDF。（已用 A/B 验证：没有它时，`printBackground: false` 的 PDF 里 mk-cute 的代码块填充和主题颜色会消失；有了它就能保留。）\n- **强制溢出换行** — 打印纸面无法滚动，因此任何比页面更宽的内容都会被静默裁剪。打印样式表在 `#export-pdf-preview` 上始终让长代码行换行，并把表格约束到页面宽度（`white-space: pre-wrap`、`table-layout: fixed`），与屏幕上的 `overflowOptions` prop 无关。\n\n消费者可以在包样式表之后发出自己的 `@page` 规则，来覆盖纸张或页边距。\n\n## 为什么两个预览都使用这个 id\n\n`MarkdownRenderer` 接受 `id` prop。编辑器的屏幕预览和导出覆盖层都以 `id=\"export-pdf-preview\"` 渲染，因此你可以同时在普通页面和导出期间拿到这个节点。在短暂的导出窗口里会有两个同 id 节点（主预览 + 覆盖层）；打印 CSS 会隐藏主预览（`body > *:not(.pdf-print-overlay)`），所以没有副作用。\n\n## 不经覆盖层的直接打印\n\n对于不使用导出按钮、直接打印编辑器页面的消费者，作用域化的 `editor.css` 打印兜底会中和 flex 高度链（否则带 `overflow: hidden` 的有界盒子会把文档裁剪到网格高度——也就是“只打印 N 页”的 bug）。覆盖层路径是推荐方式。\n",
     "status": "published",
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Render Pipeline",
@@ -52,7 +64,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "渲染管线",
@@ -63,7 +78,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Repository Strategy",
@@ -74,7 +92,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Schema",
@@ -85,7 +106,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Schema",
@@ -96,7 +120,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Storage Strategy",
@@ -107,7 +134,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Sync Engine",
@@ -118,7 +148,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "同步引擎",
@@ -129,7 +162,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Theme System",
@@ -140,7 +176,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "主题系统",
@@ -151,29 +190,38 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Guides",
     "slug": "guides",
-    "doc_hash": "f8eaf434923948d64a71a69ba28d6fd0716794f5f4a8ff6a43a0ac50b8207653",
-    "content_md": "---\ntitle: Guides\nauthor: rx-ted\ndate: 2026-08-05\ncategory: guide\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: en\nslug: guides\ndoc_hash: f8eaf434923948d64a71a69ba28d6fd0716794f5f4a8ff6a43a0ac50b8207653\n---\n**English** | [中文](/posts/guides-README.zh)\n\n# Guides\n\n| Guide | Description |\n| --- | --- |\n| [getting-started](/posts/guides-getting-started) | Local development environment setup |\n| [development](/posts/guides-development) | Daily development workflow |\n| [version-management](../implementations/version-management-design.md) | Version management & changelog (unimplemented design proposal) |\n| [api](/posts/guides-api) | Platform API tech stack and module overview |\n| [packages](/posts/guides-packages) | Shared package reference |\n| [e2e-testing](/posts/guides-e2e-testing) | E2E testing workflow |\n| [api-routes](/posts/guides-api-routes) | Full API route documentation |\n| [markdown-syntax](/posts/guides-markdown-syntax) | Supported Markdown syntax quick reference |\n| [github-actions](/posts/guides-github-actions) | GitHub Actions workflows (CI / auto-merge / release / npm OIDC) |\n\n### `packages/markdown-editor` usage guide\n\n| Guide | Description |\n| --- | --- |\n| [components](/posts/guides-components) | `MarkdownEditor` + `MarkdownRenderer` props/events, rendering features, core exports |\n| [custom-themes](/posts/guides-custom-themes) | Build and register custom preview themes |\n| [localization](/posts/guides-localization) | `createI18n`, overrides, `registerLocale` |\n| [markdown-editor-development](/posts/guides-markdown-editor-development) | Repository layout, scripts, build notes, testing |\n\n> The package's internals are covered in [docs/architecture/](../architecture/) (render-pipeline / theme-system / sync-engine / pdf-export).\n\n## Quick links\n\n| Documentation | Location |\n| --- | --- |\n| Architecture overview | [docs/architecture/README.md](/posts/architecture) |\n| Repository strategy | [docs/architecture/repository-strategy.md](/posts/architecture-repository-strategy) |\n| Database schema | [docs/architecture/schema.md](/posts/architecture-schema) |\n",
+    "doc_hash": "ad6fc656efc0c612386c2de5dc6b71b04cfa3f5ff0882104b32b3cb7bd19ffb6",
+    "content_md": "---\ntitle: Guides\nauthor: rx-ted\ndate: 2026-08-05\ncategory: guide\nstatus: published\nvisibility: public\nallow_comment: true\npinned: true\nfeatured_weight: 0\nlang: en\nslug: guides\ndoc_hash: ad6fc656efc0c612386c2de5dc6b71b04cfa3f5ff0882104b32b3cb7bd19ffb6\n---\n**English** | [中文](/posts/guides-README.zh)\n\n# Guides\n\n| Guide | Description |\n| --- | --- |\n| [getting-started](/posts/guides-getting-started) | Local development environment setup |\n| [development](/posts/guides-development) | Daily development workflow |\n| [version-management](../implementations/version-management-design.md) | Version management & changelog (unimplemented design proposal) |\n| [api](/posts/guides-api) | Platform API tech stack and module overview |\n| [packages](/posts/guides-packages) | Shared package reference |\n| [e2e-testing](/posts/guides-e2e-testing) | E2E testing workflow |\n| [api-routes](/posts/guides-api-routes) | Full API route documentation |\n| [markdown-syntax](/posts/guides-markdown-syntax) | Supported Markdown syntax quick reference |\n| [front-matter](/posts/guides-front-matter) | Front matter fields reference for posts |\n| [github-actions](/posts/guides-github-actions) | GitHub Actions workflows (CI / auto-merge / release / npm OIDC) |\n\n### `packages/markdown-editor` usage guide\n\n| Guide | Description |\n| --- | --- |\n| [components](/posts/guides-components) | `MarkdownEditor` + `MarkdownRenderer` props/events, rendering features, core exports |\n| [custom-themes](/posts/guides-custom-themes) | Build and register custom preview themes |\n| [localization](/posts/guides-localization) | `createI18n`, overrides, `registerLocale` |\n| [markdown-editor-development](/posts/guides-markdown-editor-development) | Repository layout, scripts, build notes, testing |\n\n> The package's internals are covered in [docs/architecture/](../architecture/) (render-pipeline / theme-system / sync-engine / pdf-export).\n\n## Quick links\n\n| Documentation | Location |\n| --- | --- |\n| Architecture overview | [docs/architecture/README.md](/posts/architecture) |\n| Repository strategy | [docs/architecture/repository-strategy.md](/posts/architecture-repository-strategy) |\n| Database schema | [docs/architecture/schema.md](/posts/architecture-schema) |\n",
     "status": "published",
     "visibility": "public",
     "allow_comment": true,
-    "is_pinned": false,
-    "featured_weight": 0
+    "is_pinned": true,
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "指南",
     "slug": "guides-README.zh",
-    "doc_hash": "5206c5ccb0cb7f1ba6f7f4d1c56e898cd54aaad66797e0743d6f72a35aa682f2",
-    "content_md": "---\ntitle: 指南\nauthor: rx-ted\ndate: 2026-07-22\ncategory: guide\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: zh-CN\nslug: guides-README.zh\ndoc_hash: 5206c5ccb0cb7f1ba6f7f4d1c56e898cd54aaad66797e0743d6f72a35aa682f2\n---\n[English](/posts/guides) | **中文**\n\n# 指南\n\n| 指南 | 说明 |\n| --- | --- |\n| [getting-started](/posts/guides-getting-started.zh) | 本地开发环境搭建 |\n| [development](/posts/guides-development.zh) | 日常开发工作流程 |\n| [version-management](../implementations/version-management-design.md) | 版本管理与变更日志（未实现的方案设计） |\n| [api](/posts/guides-api.zh) | Platform API 技术栈与模块概览 |\n| [packages](/posts/guides-packages.zh) | 共享包说明 |\n| [e2e-testing](/posts/guides-e2e-testing.zh) | E2E 测试流程 |\n| [api-routes](/posts/guides-api-routes) | API 路由完整文档 |\n| [markdown-syntax](/posts/guides-markdown-syntax.zh) | Markdown 语法速查 |\n| [github-actions](/posts/guides-github-actions.zh) | GitHub Actions 工作流（CI / auto-merge / release / npm OIDC） |\n\n### `packages/markdown-editor` 使用指南\n\n| 指南 | 说明 |\n| --- | --- |\n| [components](/posts/guides-components.zh) | `MarkdownEditor` + `MarkdownRenderer` props/events、渲染特性、核心导出 |\n| [custom-themes](/posts/guides-custom-themes.zh) | 构建并注册自定义预览主题 |\n| [localization](/posts/guides-localization.zh) | `createI18n`、覆写、`registerLocale` |\n| [markdown-editor-development](/posts/guides-markdown-editor-development.zh) | 仓库布局、脚本、构建注意事项、测试 |\n\n> 该包内部原理见 [docs/architecture/](../architecture/)（render-pipeline / theme-system / sync-engine / pdf-export）。\n\n## 快速链接\n\n| 文档 | 位置 |\n| --- | --- |\n| 架构概览 | [docs/architecture/README.md](/posts/architecture-README.zh) |\n| 仓库策略 | [docs/architecture/repository-strategy.md](/posts/architecture-repository-strategy) |\n| 数据库 Schema | [docs/architecture/schema.md](/posts/architecture-schema.zh) |\n",
+    "doc_hash": "9e22c7258f86f10076c29e518bef8c4cb830a9b37e575bdb3a230d6992a78ceb",
+    "content_md": "---\ntitle: 指南\nauthor: rx-ted\ndate: 2026-07-22\ncategory: guide\nstatus: published\nvisibility: public\nallow_comment: true\npinned: true\nfeatured_weight: 0\nlang: zh-CN\nslug: guides-README.zh\ndoc_hash: 9e22c7258f86f10076c29e518bef8c4cb830a9b37e575bdb3a230d6992a78ceb\n---\n[English](/posts/guides) | **中文**\n\n# 指南\n\n| 指南                                                                  | 说明                                                          |\n| --------------------------------------------------------------------- | ------------------------------------------------------------- |\n| [getting-started](/posts/guides-getting-started.zh)                            | 本地开发环境搭建                                              |\n| [development](/posts/guides-development.zh)                                    | 日常开发工作流程                                              |\n| [version-management](../implementations/version-management-design.md) | 版本管理与变更日志（未实现的方案设计）                        |\n| [api](/posts/guides-api.zh)                                                    | Platform API 技术栈与模块概览                                 |\n| [packages](/posts/guides-packages.zh)                                          | 共享包说明                                                    |\n| [e2e-testing](/posts/guides-e2e-testing.zh)                                    | E2E 测试流程                                                  |\n| [api-routes](/posts/guides-api-routes)                                         | API 路由完整文档                                              |\n| [markdown-syntax](/posts/guides-markdown-syntax.zh)                            | Markdown 语法速查                                             |\n| [front-matter](/posts/guides-front-matter.zh)                                  | 文章 Front Matter 字段参考                                    |\n| [github-actions](/posts/guides-github-actions.zh)                              | GitHub Actions 工作流（CI / auto-merge / release / npm OIDC） |\n\n### `packages/markdown-editor` 使用指南\n\n| 指南                                                               | 说明                                                                   |\n| ------------------------------------------------------------------ | ---------------------------------------------------------------------- |\n| [components](/posts/guides-components.zh)                                   | `MarkdownEditor` + `MarkdownRenderer` props/events、渲染特性、核心导出 |\n| [custom-themes](/posts/guides-custom-themes.zh)                             | 构建并注册自定义预览主题                                               |\n| [localization](/posts/guides-localization.zh)                               | `createI18n`、覆写、`registerLocale`                                   |\n| [markdown-editor-development](/posts/guides-markdown-editor-development.zh) | 仓库布局、脚本、构建注意事项、测试                                     |\n\n> 该包内部原理见 [docs/architecture/](../architecture/)（render-pipeline / theme-system / sync-engine / pdf-export）。\n\n## 快速链接\n\n| 文档          | 位置                                                                               |\n| ------------- | ---------------------------------------------------------------------------------- |\n| 架构概览      | [docs/architecture/README.md](/posts/architecture-README.zh)                        |\n| 仓库策略      | [docs/architecture/repository-strategy.md](/posts/architecture-repository-strategy) |\n| 数据库 Schema | [docs/architecture/schema.md](/posts/architecture-schema.zh)                        |\n",
     "status": "published",
     "visibility": "public",
     "allow_comment": true,
-    "is_pinned": false,
-    "featured_weight": 0
+    "is_pinned": true,
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Platform API 路由文档",
@@ -184,7 +232,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "platform-api — API server",
@@ -195,7 +246,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "platform-api — API 服务器",
@@ -206,29 +260,38 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Component API",
     "slug": "guides-components",
-    "doc_hash": "682ad23f92e5d876254d3692f1281a9cf51f32326667ebf5afd992d6318ebb5e",
-    "content_md": "---\ntitle: Component API\nauthor: rx-ted\ndate: 2026-08-05\ncategory: guide\ntags:\n  - components\n  - markdown\n  - vue\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: en\nslug: guides-components\ndoc_hash: 682ad23f92e5d876254d3692f1281a9cf51f32326667ebf5afd992d6318ebb5e\n---\n**English** | [中文](/posts/guides-components.zh)\n\n# Components & core exports\n\n## `MarkdownEditor`\n\nThe full editor: textarea + rendered preview in a split pane, toolbar, floating\nTOC, status bar, save dialog, draft autosave and PDF export.\n\n### Props\n\n| Prop | Type | Default | Description |\n| --- | --- | --- | --- |\n| `modelValue` | `string` | — (required) | The markdown content (`v-model`) |\n| `loading` | `boolean` | `false` | Set `false → true` after a successful save to clear the draft |\n| `isEdit` | `boolean` | `false` | Edit mode; skips draft restore on mount |\n| `tagOptions` / `categoryOptions` | `{ label, value }[]` | — | Deprecated compat; the title-only dialog no longer uses them |\n| `initialMeta` | `Partial<EditorSavePayload>` | — | Pre-fills the save dialog (title, cover, status, …) |\n| `helpHref` | `string` | — | Opens a help page from the toolbar |\n| `draftStorageKey` | `string` | `editor:draft` | localStorage key for the debounced draft autosave |\n| `autoRestore` | `boolean` | `false` | Restore the draft without prompting |\n| `editorTheme` | `'light' \\| 'dark'` | `light` | Editor chrome mode |\n| `previewTheme` | `string` | `github` | One of `PREVIEW_THEMES[].id` |\n| `codeTheme` | `string` | theme default | Shiki code theme id (see `CODE_THEMES`) |\n| `locale` | `'zh-CN' \\| 'en'` | `zh-CN` | UI language |\n| `messages` | `Partial<MessageSchema>` | `{}` | Message overrides |\n| `createdAt` / `updatedAt` | `string \\| number \\| null` | — | Shown in the status bar |\n| `uploadImage` | `(file: File) => Promise<string>` | — | Returns a URL / data URI for the picked image |\n| `saveMode` | `'file' \\| 'dialog'` | `file` | `dialog` opens the save modal; `file` emits `saveFile` with the content |\n| `onBeforeSave` | `(content: string) => void \\| Promise<void>` | — | Run before saving; `throw`/reject to abort the save |\n\n### Events\n\n| Event | Payload | Description |\n| --- | --- | --- |\n| `update:modelValue` | `string` | Content changed |\n| `save` | `EditorSavePayload` | Save dialog confirmed |\n| `saveFile` | `string` | Content saved in `file` mode |\n| `cancel` | — | User cancelled the dialog |\n| `update:editorTheme` | `'light' \\| 'dark'` | Editor theme changed |\n| `update:previewTheme` | `string` | Preview theme changed |\n| `update:codeTheme` | `string \\| undefined` | Code theme changed |\n| `update:locale` | `'zh-CN' \\| 'en'` | Locale changed |\n\n## `MarkdownRenderer`\n\nRenders markdown to styled HTML with a sourcemap for editor↔preview sync.\n\n### Props\n\n| Prop | Type | Default | Description |\n| --- | --- | --- | --- |\n| `content` | `string` | — (required) | Markdown source |\n| `theme` | `string` | `github` | Preview theme id |\n| `codeTheme` | `string` | theme default | Shiki code theme id |\n| `mode` | `'light' \\| 'dark'` | `light` | Palette mode |\n| `interactiveTasks` | `boolean` | `false` | Clicking a task checkbox emits `update:content` with the toggled source |\n| `headingInsert` | `boolean` | `false` | Clicking a heading anchor emits `insertHeading` (else copies to clipboard) |\n| `id` | `string` | — | Optional stable id on the root node (e.g. `export-pdf-preview` for print targeting) |\n\n### Events\n\n- `ready` — `{ nodes: SourceNode[], rootEl: HTMLElement }` after the first render (feeds the scroll-sync engine).\n- `insertHeading` — `string` marker from a heading anchor click.\n- `update:content` — `string` when an interactive task is toggled.\n\n### Rendered features\n\nCode blocks (highlighted with `rehype-pretty-code`, language badge, line numbers\ntoggle, copy button, fold on long blocks), `::: code-group` tabs with `title=`\nlabels, `{2-3}` line highlighting, `[!code ++/--]` diff marks, inline math\n(KaTeX) and block math, `mermaid` diagrams, GFM tables/task lists,\n`==highlight==` marks, front-matter metadata tables, and `details` blocks.\n\n## Core exports\n\nBeyond the components, `src/index.ts` exports the render pipeline and helpers:\n\n- `renderMarkdown(md, opts)` / `buildMarkdownPipeline(opts)` — `MarkdownRenderResult { html, nodes }`.\n- Source map: `MarkdownIndex`, `DomIndex`, `SyncEngine`, `remarkSourceMap`, `SourceNode`.\n- `stripFrontMatter(md)`, `headingId(text)`, `isTaskChecked(md, offset)`, `toggleTask(md, offset, next)`.\n- `PREVIEW_THEMES`, `CODE_THEMES`, `getPreviewTheme`, `applyPreviewTheme`, `getEditorTheme`, `applyEditorTheme`, `ThemeSource`.\n- `createI18n`, `registerLocale` (see [localization](/posts/guides-localization)).\n",
+    "doc_hash": "cc909c4ef71239fbdafaf8e7fabfa8d1acb00b741cc89cfc14996f2f1142471c",
+    "content_md": "---\ntitle: Component API\nauthor: rx-ted\ndate: 2026-08-05\ncategory: guide\ntags:\n  - components\n  - markdown\n  - vue\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: en\nslug: guides-components\ndoc_hash: cc909c4ef71239fbdafaf8e7fabfa8d1acb00b741cc89cfc14996f2f1142471c\n---\n**English** | [中文](/posts/guides-components.zh)\n\n# Components & core exports\n\n## `MarkdownEditor`\n\nThe full editor: textarea + rendered preview in a split pane, toolbar, floating\nTOC, status bar, save dialog, draft autosave and PDF export.\n\n### Props\n\n| Prop | Type | Default | Description |\n| --- | --- | --- | --- |\n| `modelValue` | `string` | — (required) | The markdown content (`v-model`) |\n| `loading` | `boolean` | `false` | Set `false → true` after a successful save to clear the draft |\n| `isEdit` | `boolean` | `false` | Edit mode; skips draft restore on mount |\n| `tagOptions` / `categoryOptions` | `{ label, value }[]` | — | Deprecated compat; the title-only dialog no longer uses them |\n| `initialMeta` | `Partial<EditorSavePayload>` | — | Pre-fills the save dialog (title, cover, status, …) |\n| `helpHref` | `string` | — | Opens a help page from the toolbar |\n| `draftStorageKey` | `string` | `editor:draft` | localStorage key for the debounced draft autosave |\n| `autoRestore` | `boolean` | `false` | Restore the draft without prompting |\n| `editorTheme` | `'light' \\| 'dark'` | `light` | Editor chrome mode |\n| `previewTheme` | `string` | `github` | One of `PREVIEW_THEMES[].id` |\n| `codeTheme` | `string` | theme default | Shiki code theme id (see `CODE_THEMES`) |\n| `locale` | `'zh-CN' \\| 'en'` | `zh-CN` | UI language |\n| `messages` | `Partial<MessageSchema>` | `{}` | Message overrides |\n| `createdAt` / `updatedAt` | `string \\| number \\| null` | — | Shown in the status bar |\n| `uploadImage` | `(file: File) => Promise<string>` | — | Returns a URL / data URI for the picked image |\n| `saveMode` | `'file' \\| 'dialog'` | `file` | `dialog` opens the save modal; `file` emits `saveFile` with the content |\n| `onBeforeSave` | `(content: string) => void \\| Promise<void>` | — | Run before saving; `throw`/reject to abort the save |\n| `overflowOptions` | `MarkdownOverflowOptions` | `{}` | Wrap overflows: `{ wrapCode?, wrapTables? }` — see below. Forwarded to every internal renderer (preview, theme modal, PDF overlay). PDF export always wraps regardless |\n\n### Events\n\n| Event | Payload | Description |\n| --- | --- | --- |\n| `update:modelValue` | `string` | Content changed |\n| `save` | `EditorSavePayload` | Save dialog confirmed |\n| `saveFile` | `string` | Content saved in `file` mode |\n| `cancel` | — | User cancelled the dialog |\n| `update:editorTheme` | `'light' \\| 'dark'` | Editor theme changed |\n| `update:previewTheme` | `string` | Preview theme changed |\n| `update:codeTheme` | `string \\| undefined` | Code theme changed |\n| `update:locale` | `'zh-CN' \\| 'en'` | Locale changed |\n\n## `MarkdownRenderer`\n\nRenders markdown to styled HTML with a sourcemap for editor↔preview sync.\n\n### Props\n\n| Prop | Type | Default | Description |\n| --- | --- | --- | --- |\n| `content` | `string` | — (required) | Markdown source |\n| `theme` | `string` | `github` | Preview theme id |\n| `codeTheme` | `string` | theme default | Shiki code theme id |\n| `mode` | `'light' \\| 'dark'` | `light` | Palette mode |\n| `interactiveTasks` | `boolean` | `false` | Clicking a task checkbox emits `update:content` with the toggled source |\n| `headingInsert` | `boolean` | `false` | Clicking a heading anchor emits `insertHeading` (else copies to clipboard) |\n| `id` | `string` | — | Optional stable id on the root node (e.g. `export-pdf-preview` for print targeting) |\n| `overflowOptions` | `MarkdownOverflowOptions` | `{}` | `wrapCode` wraps long code lines instead of scrolling horizontally; `wrapTables` constrains tables to the container width (fixed layout + wrapped cells). Default `{}` keeps the current scroll/overflow behavior |\n\n### Events\n\n- `ready` — `{ nodes: SourceNode[], rootEl: HTMLElement }` after the first render (feeds the scroll-sync engine).\n- `insertHeading` — `string` marker from a heading anchor click.\n- `update:content` — `string` when an interactive task is toggled.\n\n### Rendered features\n\nCode blocks (highlighted with `rehype-pretty-code`, language badge, line numbers\ntoggle, copy button, fold on long blocks), `::: code-group` tabs with `title=`\nlabels, `{2-3}` line highlighting, `[!code ++/--]` diff marks, inline math\n(KaTeX) and block math, `mermaid` diagrams, GFM tables/task lists,\n`==highlight==` marks, front-matter metadata tables, and `details` blocks.\n\n## Core exports\n\nBeyond the components, `src/index.ts` exports the render pipeline and helpers:\n\n- `renderMarkdown(md, opts)` / `buildMarkdownPipeline(opts)` — `MarkdownRenderResult { html, nodes }`.\n- Source map: `MarkdownIndex`, `DomIndex`, `SyncEngine`, `remarkSourceMap`, `SourceNode`.\n- `stripFrontMatter(md)`, `headingId(text)`, `isTaskChecked(md, offset)`, `toggleTask(md, offset, next)`.\n- `PREVIEW_THEMES`, `CODE_THEMES`, `getPreviewTheme`, `applyPreviewTheme`, `getEditorTheme`, `applyEditorTheme`, `ThemeSource`.\n- `createI18n`, `registerLocale` (see [localization](/posts/guides-localization)).\n",
     "status": "published",
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "组件 API",
     "slug": "guides-components.zh",
-    "doc_hash": "780c745956f60ff37fc62e0b107e719145c0ec850a7c1eed2bf3bc91f1ede960",
-    "content_md": "---\ntitle: 组件 API\nauthor: rx-ted\ndate: 2026-08-05\ncategory: guide\ntags:\n  - components\n  - markdown\n  - vue\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: zh-CN\nslug: guides-components.zh\ndoc_hash: 780c745956f60ff37fc62e0b107e719145c0ec850a7c1eed2bf3bc91f1ede960\n---\n[English](/posts/guides-components) | **中文**\n\n# 组件 API\n\n## `MarkdownEditor`\n\n完整的编辑器：textarea 与渲染预览的左右分栏、工具栏、浮动目录（TOC）、状态栏、保存对话框、草稿自动保存以及 PDF 导出。\n\n### Props\n\n| Prop | 类型 | 默认值 | 说明 |\n| --- | --- | --- | --- |\n| `modelValue` | `string` | —（必填） | Markdown 内容（`v-model`） |\n| `loading` | `boolean` | `false` | 保存成功后将其从 `false → true`，以清除草稿 |\n| `isEdit` | `boolean` | `false` | 编辑模式；挂载时跳过草稿恢复 |\n| `tagOptions` / `categoryOptions` | `{ label, value }[]` | — | 已废弃的兼容项；仅标题对话框已不再使用它们 |\n| `initialMeta` | `Partial<EditorSavePayload>` | — | 预填保存对话框（标题、封面、状态……） |\n| `helpHref` | `string` | — | 从工具栏打开帮助页面 |\n| `draftStorageKey` | `string` | `editor:draft` | 防抖草稿自动保存使用的 localStorage 键 |\n| `autoRestore` | `boolean` | `false` | 不提示直接恢复草稿 |\n| `editorTheme` | `'light' \\| 'dark'` | `light` | 编辑器外壳模式 |\n| `previewTheme` | `string` | `github` | `PREVIEW_THEMES[].id` 之一 |\n| `codeTheme` | `string` | 主题默认值 | Shiki 代码主题 id（参见 `CODE_THEMES`） |\n| `locale` | `'zh-CN' \\| 'en'` | `zh-CN` | 界面语言 |\n| `messages` | `Partial<MessageSchema>` | `{}` | 文案覆写 |\n| `createdAt` / `updatedAt` | `string \\| number \\| null` | — | 显示在状态栏中 |\n| `uploadImage` | `(file: File) => Promise<string>` | — | 返回所选图片的 URL / data URI |\n| `saveMode` | `'file' \\| 'dialog'` | `file` | `dialog` 打开保存弹窗；`file` 触发 `saveFile` 事件并携带内容 |\n| `onBeforeSave` | `(content: string) => void \\| Promise<void>` | — | 在保存前执行；`throw`/reject 以中止保存 |\n\n### Events\n\n| Event | 载荷 | 说明 |\n| --- | --- | --- |\n| `update:modelValue` | `string` | 内容发生变化 |\n| `save` | `EditorSavePayload` | 保存对话框已确认 |\n| `saveFile` | `string` | 内容以 `file` 模式保存 |\n| `cancel` | — | 用户取消了对话框 |\n| `update:editorTheme` | `'light' \\| 'dark'` | 编辑器主题已更改 |\n| `update:previewTheme` | `string` | 预览主题已更改 |\n| `update:codeTheme` | `string \\| undefined` | 代码主题已更改 |\n| `update:locale` | `'zh-CN' \\| 'en'` | 语言环境已更改 |\n\n## `MarkdownRenderer`\n\n将 Markdown 渲染为带样式的 HTML，并通过 sourcemap 实现编辑器↔预览同步。\n\n### Props\n\n| Prop | 类型 | 默认值 | 说明 |\n| --- | --- | --- | --- |\n| `content` | `string` | —（必填） | Markdown 源码 |\n| `theme` | `string` | `github` | 预览主题 id |\n| `codeTheme` | `string` | 主题默认值 | Shiki 代码主题 id |\n| `mode` | `'light' \\| 'dark'` | `light` | 配色模式 |\n| `interactiveTasks` | `boolean` | `false` | 点击任务复选框时触发 `update:content` 并携带切换后的源码 |\n| `headingInsert` | `boolean` | `false` | 点击标题锚点时触发 `insertHeading`（否则复制到剪贴板） |\n| `id` | `string` | — | 根节点上的可选稳定 id（例如用于打印定位的 `export-pdf-preview`） |\n\n### Events\n\n- `ready` — 首次渲染后触发 `{ nodes: SourceNode[], rootEl: HTMLElement }`（为滚动同步引擎提供数据）。\n- `insertHeading` — 点击标题锚点产生的 `string` 标记。\n- `update:content` — 交互式任务被切换时触发，携带 `string`。\n\n### 渲染特性\n\n代码块（使用 `rehype-pretty-code` 高亮、语言徽标、行号开关、复制按钮、长代码块折叠）、带 `title=` 标签的 `::: code-group` 标签页、`{2-3}` 行高亮、`[!code ++/--]` 差异标记、行内数学公式（KaTeX）与块级数学公式、`mermaid` 图表、GFM 表格/任务列表、`==highlight==` 标记、front-matter 元数据表格以及 `details` 块。\n\n## 核心导出\n\n除组件外，`src/index.ts` 还导出了渲染管线与辅助工具：\n\n- `renderMarkdown(md, opts)` / `buildMarkdownPipeline(opts)` — `MarkdownRenderResult { html, nodes }`。\n- 源码映射：`MarkdownIndex`、`DomIndex`、`SyncEngine`、`remarkSourceMap`、`SourceNode`。\n- `stripFrontMatter(md)`、`headingId(text)`、`isTaskChecked(md, offset)`、`toggleTask(md, offset, next)`。\n- `PREVIEW_THEMES`、`CODE_THEMES`、`getPreviewTheme`、`applyPreviewTheme`、`getEditorTheme`、`applyEditorTheme`、`ThemeSource`。\n- `createI18n`、`registerLocale`（参见 [本地化](/posts/guides-localization.zh)）。\n",
+    "doc_hash": "c246ad716b709d85f00e8572be24a7cdf54c82180025252306c127794be7191e",
+    "content_md": "---\ntitle: 组件 API\nauthor: rx-ted\ndate: 2026-08-05\ncategory: guide\ntags:\n  - components\n  - markdown\n  - vue\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: zh-CN\nslug: guides-components.zh\ndoc_hash: c246ad716b709d85f00e8572be24a7cdf54c82180025252306c127794be7191e\n---\n[English](/posts/guides-components) | **中文**\n\n# 组件 API\n\n## `MarkdownEditor`\n\n完整的编辑器：textarea 与渲染预览的左右分栏、工具栏、浮动目录（TOC）、状态栏、保存对话框、草稿自动保存以及 PDF 导出。\n\n### Props\n\n| Prop | 类型 | 默认值 | 说明 |\n| --- | --- | --- | --- |\n| `modelValue` | `string` | —（必填） | Markdown 内容（`v-model`） |\n| `loading` | `boolean` | `false` | 保存成功后将其从 `false → true`，以清除草稿 |\n| `isEdit` | `boolean` | `false` | 编辑模式；挂载时跳过草稿恢复 |\n| `tagOptions` / `categoryOptions` | `{ label, value }[]` | — | 已废弃的兼容项；仅标题对话框已不再使用它们 |\n| `initialMeta` | `Partial<EditorSavePayload>` | — | 预填保存对话框（标题、封面、状态……） |\n| `helpHref` | `string` | — | 从工具栏打开帮助页面 |\n| `draftStorageKey` | `string` | `editor:draft` | 防抖草稿自动保存使用的 localStorage 键 |\n| `autoRestore` | `boolean` | `false` | 不提示直接恢复草稿 |\n| `editorTheme` | `'light' \\| 'dark'` | `light` | 编辑器外壳模式 |\n| `previewTheme` | `string` | `github` | `PREVIEW_THEMES[].id` 之一 |\n| `codeTheme` | `string` | 主题默认值 | Shiki 代码主题 id（参见 `CODE_THEMES`） |\n| `locale` | `'zh-CN' \\| 'en'` | `zh-CN` | 界面语言 |\n| `messages` | `Partial<MessageSchema>` | `{}` | 文案覆写 |\n| `createdAt` / `updatedAt` | `string \\| number \\| null` | — | 显示在状态栏中 |\n| `uploadImage` | `(file: File) => Promise<string>` | — | 返回所选图片的 URL / data URI |\n| `saveMode` | `'file' \\| 'dialog'` | `file` | `dialog` 打开保存弹窗；`file` 触发 `saveFile` 事件并携带内容 |\n| `onBeforeSave` | `(content: string) => void \\| Promise<void>` | — | 在保存前执行；`throw`/reject 以中止保存 |\n| `overflowOptions` | `MarkdownOverflowOptions` | `{}` | 溢出换行设置：`{ wrapCode?, wrapTables? }`——见下文。会转发给所有内部渲染器（预览、主题弹窗、PDF 覆盖层）。PDF 导出始终强制换行，与该项无关 |\n\n### Events\n\n| Event | 载荷 | 说明 |\n| --- | --- | --- |\n| `update:modelValue` | `string` | 内容发生变化 |\n| `save` | `EditorSavePayload` | 保存对话框已确认 |\n| `saveFile` | `string` | 内容以 `file` 模式保存 |\n| `cancel` | — | 用户取消了对话框 |\n| `update:editorTheme` | `'light' \\| 'dark'` | 编辑器主题已更改 |\n| `update:previewTheme` | `string` | 预览主题已更改 |\n| `update:codeTheme` | `string \\| undefined` | 代码主题已更改 |\n| `update:locale` | `'zh-CN' \\| 'en'` | 语言环境已更改 |\n\n## `MarkdownRenderer`\n\n将 Markdown 渲染为带样式的 HTML，并通过 sourcemap 实现编辑器↔预览同步。\n\n### Props\n\n| Prop | 类型 | 默认值 | 说明 |\n| --- | --- | --- | --- |\n| `content` | `string` | —（必填） | Markdown 源码 |\n| `theme` | `string` | `github` | 预览主题 id |\n| `codeTheme` | `string` | 主题默认值 | Shiki 代码主题 id |\n| `mode` | `'light' \\| 'dark'` | `light` | 配色模式 |\n| `interactiveTasks` | `boolean` | `false` | 点击任务复选框时触发 `update:content` 并携带切换后的源码 |\n| `headingInsert` | `boolean` | `false` | 点击标题锚点时触发 `insertHeading`（否则复制到剪贴板） |\n| `id` | `string` | — | 根节点上的可选稳定 id（例如用于打印定位的 `export-pdf-preview`） |\n| `overflowOptions` | `MarkdownOverflowOptions` | `{}` | `wrapCode` 让超长代码行换行而不是横向滚动；`wrapTables` 把表格约束在容器宽度内（固定布局 + 单元格换行）。默认 `{}` 保持现有的滚动/溢出行为 |\n\n### Events\n\n- `ready` — 首次渲染后触发 `{ nodes: SourceNode[], rootEl: HTMLElement }`（为滚动同步引擎提供数据）。\n- `insertHeading` — 点击标题锚点产生的 `string` 标记。\n- `update:content` — 交互式任务被切换时触发，携带 `string`。\n\n### 渲染特性\n\n代码块（使用 `rehype-pretty-code` 高亮、语言徽标、行号开关、复制按钮、长代码块折叠）、带 `title=` 标签的 `::: code-group` 标签页、`{2-3}` 行高亮、`[!code ++/--]` 差异标记、行内数学公式（KaTeX）与块级数学公式、`mermaid` 图表、GFM 表格/任务列表、`==highlight==` 标记、front-matter 元数据表格以及 `details` 块。\n\n## 核心导出\n\n除组件外，`src/index.ts` 还导出了渲染管线与辅助工具：\n\n- `renderMarkdown(md, opts)` / `buildMarkdownPipeline(opts)` — `MarkdownRenderResult { html, nodes }`。\n- 源码映射：`MarkdownIndex`、`DomIndex`、`SyncEngine`、`remarkSourceMap`、`SourceNode`。\n- `stripFrontMatter(md)`、`headingId(text)`、`isTaskChecked(md, offset)`、`toggleTask(md, offset, next)`。\n- `PREVIEW_THEMES`、`CODE_THEMES`、`getPreviewTheme`、`applyPreviewTheme`、`getEditorTheme`、`applyEditorTheme`、`ThemeSource`。\n- `createI18n`、`registerLocale`（参见 [本地化](/posts/guides-localization.zh)）。\n",
     "status": "published",
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Custom Themes",
@@ -239,7 +302,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "自定义主题",
@@ -250,7 +316,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Development workflow",
@@ -261,7 +330,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "开发工作流程",
@@ -272,7 +344,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "E2E testing workflow",
@@ -283,7 +358,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "E2E 测试流程规范",
@@ -294,7 +372,38 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
+  },
+  {
+    "title": "Front Matter",
+    "slug": "guides-front-matter",
+    "doc_hash": "ddb66681f23bf12639a4ddd8faf49e4361792f7fe45a88ac1603da09a897b02d",
+    "content_md": "---\ntitle: Front Matter\nauthor: rx-ted\ndate: 2026-08-10\ncategory: guide\nstatus: published\nvisibility: public\nallow_comment: true\npinned: true\nfeatured_weight: 0\nlang: en\ncover: https://picx.19981204.xyz/rest/2026/08/m5K4vJk.png\nslug: guides-front-matter\ndoc_hash: ddb66681f23bf12639a4ddd8faf49e4361792f7fe45a88ac1603da09a897b02d\n---\n**English** | [中文](/posts/guides-front-matter.zh)\n\n# Front Matter\n\nEvery post is a Markdown file whose leading YAML block carries the post\nmetadata. The block is parsed with `gray-matter` in\n`apps/platform-api/src/lib/post-parser.ts` (interface `PostMeta`).\n\n```markdown\n---\ntitle: My Post\ndate: 2026-08-10\ncategory: architecture\ntags: [vue, hono]\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: en\nslug: my-post\ndoc_hash: <optional idempotency key>\n---\n# Content starts here\n```\n\n## Field reference\n\n| Field | Type | Default | Notes |\n| --- | --- | --- | --- |\n| `title` | string | — | Post title. The only field read by the API's create/update when the title isn't passed as a form field (`post.service.ts`). |\n| `slug` | string | derived from `title` | URL path. If absent it is auto-generated from the title (fallback: `post-<hash>` for non-ASCII). Duplicate slugs get a `-<timestamp>` suffix. |\n| `date` | string (ISO) | now | Publish date. Sets `publishedAt` / `createdAt` during docs import. |\n| `category` | string (slug) | — | Category slug, resolved to a `post_category_mappings` row on import. |\n| `tags` | string[] | `[]` | Tag slugs/names, resolved to `post_tag_mappings` on import. |\n| `status` | `draft` \\| `published` \\| `archived` | `published` (seed) / `draft` (editor template) | Controls visibility in the blog listing. |\n| `visibility` | `public` \\| `private` \\| `password` | `public` | Access control on the post. |\n| `allow_comment` | boolean | `true` | Whether comments are enabled. |\n| `pinned` | boolean | `false` | Pin to the home-page hero / featured listing. The docs importer reads the equivalent `is_pinned` field from the doc record. |\n| `featured_weight` | number | `0` | Higher values rank the post earlier in featured lists. |\n| `lang` | `en` \\| `zh-CN` | derived from `slug` | Falls back to `zh-CN` when the slug ends with `.zh`, otherwise `en`. |\n| `author` | string | — | Informational; used by seed docs, not stored on the post. |\n| `cover` | string (URL) | — | Editor template only. Not consumed by the API's `create` — pass `coverImage` as a form field instead. |\n| `doc_hash` | string | — | Idempotency key for docs import: unchanged docs are skipped on re-seed (`system-init.service.ts`). Keep it in the front matter so imports stay idempotent. |\n\n## Language & translation\n\n`lang` is derived from the slug convention: a slug ending in `.zh` is\n`zh-CN`, everything else is `en`. The editor links translations via a\n`translation_slug` column; when the site locale changes, the reader is\nredirected to the matching translated post.\n\n## Example (bilingual pair)\n\n```markdown\n---\ntitle: Architecture Overview\nauthor: rx-ted\ndate: 2026-08-05\ncategory: architecture\ntags: [architecture, hono]\nstatus: published\nvisibility: public\nallow_comment: true\npinned: true\nfeatured_weight: 5\nlang: en\nslug: architecture\ndoc_hash: 547b801f842e936b1ca02b4c97bfe807e03b8ee2f5dfd47ed5f71fb4289a00ad\n---\n```\n\n```markdown\n---\ntitle: 架构概览\nauthor: rx-ted\ndate: 2026-08-05\ncategory: architecture\ntags: [architecture, hono]\nstatus: published\nvisibility: public\nallow_comment: true\npinned: true\nfeatured_weight: 5\nlang: zh-CN\nslug: architecture.zh\n---\n```\n",
+    "status": "published",
+    "visibility": "public",
+    "allow_comment": true,
+    "is_pinned": true,
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": "https://picx.19981204.xyz/rest/2026/08/m5K4vJk.png",
+    "author": "rx-ted"
+  },
+  {
+    "title": "Front Matter",
+    "slug": "guides-front-matter.zh",
+    "doc_hash": "2a6b1163dfae5ced3f30d662232de3390a1886e1b3ab8feb02615b7ef5000950",
+    "content_md": "---\ntitle: Front Matter\nauthor: rx-ted\ndate: 2026-08-10\ncategory: guide\nstatus: published\nvisibility: public\nallow_comment: true\npinned: true\nfeatured_weight: 0\nlang: zh-CN\ncover: https://picx.19981204.xyz/rest/2026/08/m5K4vJk.png\nslug: guides-front-matter.zh\ndoc_hash: 2a6b1163dfae5ced3f30d662232de3390a1886e1b3ab8feb02615b7ef5000950\n---\n[English](/posts/guides-front-matter) | **中文**\n\n# Front Matter\n\n每篇文章都是 Markdown 文件，开头的 YAML 块携带文章元数据。该块由\n`apps/platform-api/src/lib/post-parser.ts`（接口 `PostMeta`）用 `gray-matter` 解析。\n\n```markdown\n---\ntitle: 我的文章\ndate: 2026-08-10\ncategory: architecture\ntags: [vue, hono]\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: zh-CN\nslug: my-post\ndoc_hash: <可选的幂等键>\n---\n# 正文从这里开始\n```\n\n## 字段参考\n\n| 字段 | 类型 | 默认值 | 说明 |\n| --- | --- | --- | --- |\n| `title` | string | — | 文章标题。API 创建/更新时若未通过表单字段传入标题，唯一会从 front-matter 读取的字段（`post.service.ts`）。 |\n| `slug` | string | 由 `title` 生成 | URL 路径。缺省时根据标题自动生成（非 ASCII 标题回退为 `post-<hash>`）。重复 slug 会追加 `-<时间戳>` 后缀。 |\n| `date` | string（ISO） | 当前时间 | 发布日期。导入 docs 时写入 `publishedAt` / `createdAt`。 |\n| `category` | string（slug） | — | 分类 slug，导入时解析为 `post_category_mappings` 记录。 |\n| `tags` | string[] | `[]` | 标签 slug/名称，导入时解析为 `post_tag_mappings`。 |\n| `status` | `draft` \\| `published` \\| `archived` | `published`（seed）/ `draft`（编辑器模板） | 控制文章在列表中的可见性。 |\n| `visibility` | `public` \\| `private` \\| `password` | `public` | 文章访问控制。 |\n| `allow_comment` | boolean | `true` | 是否允许评论。 |\n| `pinned` | boolean | `false` | 置顶到首页 hero / 精选列表。docs 导入器从 doc 记录读取对应的 `is_pinned` 字段。 |\n| `featured_weight` | number | `0` | 数值越大，在精选列表中越靠前。 |\n| `lang` | `en` \\| `zh-CN` | 由 `slug` 推导 | 默认：slug 以 `.zh` 结尾时为 `zh-CN`，否则为 `en`。 |\n| `author` | string | — | 仅作展示用途；seed 文档使用，不存储到文章上。 |\n| `cover` | string（URL） | — | 仅编辑器模板使用。API 的 `create` 不消费该字段——请改用表单字段 `coverImage`。 |\n| `doc_hash` | string | — | docs 导入的幂等键：重新 seed 时未变化的文档会被跳过（`system-init.service.ts`）。请保留在 front-matter 中，保证导入可幂等。 |\n\n## 语言与翻译\n\n`lang` 由 slug 约定推导：slug 以 `.zh` 结尾即为 `zh-CN`，其余为 `en`。编辑器通过\n`translation_slug` 列关联翻译版本；站点语言切换时，读者会被重定向到对应的翻译文章。\n\n## 示例（双语对）\n\n```markdown\n---\ntitle: Architecture Overview\nauthor: rx-ted\ndate: 2026-08-05\ncategory: architecture\ntags: [architecture, hono]\nstatus: published\nvisibility: public\nallow_comment: true\npinned: true\nfeatured_weight: 5\nlang: en\nslug: architecture\ndoc_hash: 547b801f842e936b1ca02b4c97bfe807e03b8ee2f5dfd47ed5f71fb4289a00ad\n---\n```\n\n```markdown\n---\ntitle: 架构概览\nauthor: rx-ted\ndate: 2026-08-05\ncategory: architecture\ntags: [architecture, hono]\nstatus: published\nvisibility: public\nallow_comment: true\npinned: true\nfeatured_weight: 5\nlang: zh-CN\nslug: architecture.zh\n---\n```\n",
+    "status": "published",
+    "visibility": "public",
+    "allow_comment": true,
+    "is_pinned": true,
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": "https://picx.19981204.xyz/rest/2026/08/m5K4vJk.png",
+    "author": "rx-ted"
   },
   {
     "title": "Local development guide",
@@ -305,7 +414,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "本地开发运行指南",
@@ -316,7 +428,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "GitHub Actions workflows",
@@ -327,7 +442,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "GitHub Actions 工作流说明",
@@ -338,7 +456,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Localization",
@@ -349,7 +470,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "本地化",
@@ -360,7 +484,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Development Guide",
@@ -371,7 +498,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "开发指南",
@@ -382,29 +512,38 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "Markdown Syntax Reference",
     "slug": "guides-markdown-syntax",
-    "doc_hash": "00c9c71fdd2ce285b795e6e1074787d53c609cf6f5688f1c6a8421e1f45e1751",
-    "content_md": "---\ntitle: Markdown Syntax Reference\nauthor: rx-ted\ndate: 2026-08-05\ncategory: guide\ntags:\n  - markdown\n  - syntax\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: en\nslug: guides-markdown-syntax\ndoc_hash: 00c9c71fdd2ce285b795e6e1074787d53c609cf6f5688f1c6a8421e1f45e1751\n---\n**English** | [中文](/posts/guides-markdown-syntax.zh)\n\n# Markdown Syntax Reference\n\nA quick reference for the Markdown syntax rendered and supported by `@rx-ted/packages-markdown-editor`. This document is organized by section; each section first introduces the **syntax**, then shows the **rendered result**.\n\n### 1. Headings\n\nSyntax: `#` through `######` denote first- to sixth-level headings.\n\n## Heading 1\n\n### Heading 2\n\n#### Heading 3\n\n##### Heading 4\n\n###### Heading 5\n\n###### Heading 6\n\n### 2. Text Styles\n\nSyntax: `**bold**`, `*italic*`, `~~strikethrough~~`, inline code is wrapped in backticks.\n\n| Style      | Syntax             | Result             |\n| ---------- | ------------------ | ------------------ |\n| Bold       | `**text**`         | **text**           |\n| Italic     | `*text*`           | _text_             |\n| Bold italic | `***text***`       | **_text_**         |\n| Strikethrough | `~~text~~`      | ~~text~~           |\n| Inline code | `code`            | `code`             |\n| Superscript | `<sup>text</sup>` | E = mc<sup>2</sup> |\n| Subscript  | `<sub>text</sub>`  | H<sub>2</sub>O     |\n| Underline  | `<u>text</u>`      | <u>underline</u>   |\n\nSoft line break: two spaces at the end of a line followed by a newline.\n\n### 3. Lists\n\n#### Unordered List\n\n- Apple\n- Banana\n  - Cherry (indented sub-item)\n  - Black cherry\n\n#### Ordered List\n\n1. First step\n2. Second step\n3. Third step\n\n#### Task List\n\n- [x] Completed task\n- [ ] Incomplete task\n- [ ] Another incomplete task\n\n### 4. Blockquotes\n\nSyntax: `>` at the start of a line.\n\n> This is a blockquote.\n>\n> > Nested blockquote.\n>\n> Blockquotes can contain **formatting** and `code`.\n\n### 5. Links and Images\n\n[Regular link](https://example.com)\n\n[Link with title](https://example.com \"Example Site\")\n\nAutolink: <https://example.com>\n\n![Alt text](https://picsum.photos/seed/picsum/800/400)\n\n### 6. Code Blocks\n\n#### 6.1 Basic Highlighting\n\nSyntax: three backticks plus the language name. A language badge and line numbers are shown automatically; hovering over the top-right corner reveals copy, line number toggle, and collapse buttons.\n\n```javascript\nfunction fibonacci(n) {\n  if (n <= 1) return n;\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconsole.log(fibonacci(10)); // 55\n```\n\n```tsx\nimport { useState } from \"react\";\n\ninterface Props {\n  name: string;\n  age?: number;\n}\n\nfunction Greeting({ name, age }: Props) {\n  const [count, setCount] = useState(0);\n  return (\n    <div>\n      <h1>Hello, {name}!</h1>\n      {age && <p>Age: {age}</p>}\n      <p>Count: {count}</p>\n      <button onClick={() => setCount((c) => c + 1)}>+</button>\n    </div>\n  );\n}\n```\n\n```css\n.container {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));\n  gap: 1.5rem;\n  padding: 2rem;\n  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n}\n\n.card {\n  border-radius: 12px;\n  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n  transition: transform 0.2s ease;\n}\n\n.card:hover {\n  transform: translateY(-4px);\n}\n```\n\n#### 6.2 Line Highlighting\n\nSyntax: `{line numbers}` after the code block, supporting single lines, comma-separated lists, and ranges, e.g. `{1,6,10-20}`.\n\n```javascript {1,3,5-6}\nfunction greet(name) {\n  const msg = `Hello, ${name}`;\n  const loud = msg.toUpperCase();\n  const words = loud.split(\" \");\n  const parts = words.slice(0, 2);\n  return parts.join(\"!\");\n}\n\nconsole.log(greet(\"world\"));\n```\n\n#### 6.3 Diff Highlighting\n\nSyntax 1 (recommended): add `// [!code ++]` / `// [!code --]` comment markers at the end of a line. The markers are stripped, the code stays valid, and `+`/`-` are shown between the line number and the code.\n\n```javascript\nconst count = 1; // [!code --]\nconst count = 2; // [!code ++]\nconst enabled = true;\n```\n\n`#` (shell/python) and `<!-- -->` (HTML) comment styles are also supported:\n\n```bash\necho \"old\" # [!code --]\necho \"new\" # [!code ++]\n```\n\nSyntax 2: the `diff` language, with `+`/`-` prefixed lines; the prefixes are also moved next to the line numbers:\n\n```diff\n- const count = 1;\n+ const count = 2;\n  const enabled = true;\n```\n\n#### 6.4 Code Groups\n\nSyntax: `:::code-group` container; internal code blocks are labeled with `[tab name]`, and a switchable tab bar appears at the top.\n\n:::code-group\n\n```javascript [javascript]\nimport express from \"express\";\n\nconst app = express();\n\napp.get(\"/api/users\", async (req, res) => {\n  const users = await db.users.findAll();\n  res.json(users);\n});\n\napp.listen(3000, () => {\n  console.log(\"Server running on port 3000\");\n});\n```\n\n```python [python]\nfrom flask import Flask, jsonify\n\napp = Flask(__name__)\n\n@app.route('/api/users')\ndef get_users():\n    users = User.query.all()\n    return jsonify([u.to_dict() for u in users])\n```\n\n```go [go]\npackage main\n\nimport (\n\t\"encoding/json\"\n\t\"net/http\"\n)\n\ntype User struct {\n\tID   int    `json:\"id\"`\n\tName string `json:\"name\"`\n}\n\nfunc usersHandler(w http.ResponseWriter, r *http.Request) {\n\tusers := []User{{1, \"Alice\"}, {2, \"Bob\"}}\n\tjson.NewEncoder(w).Encode(users)\n}\n\nfunc main() {\n\thttp.HandleFunc(\"/api/users\", usersHandler)\n\thttp.ListenAndServe(\":8080\", nil)\n}\n```\n\n:::\n\n#### 6.5 Single-Tab Code Block (showing a title)\n\nSyntax: when `[tab name]` is not placed inside `:::code-group`, it is displayed as the code block title.\n\n```rust [Rust example]\nfn main() {\n    let msg = \"Hello, World!\";\n    println!(\"{}\", msg);\n}\n```\n\n### 7. Tables\n\nSyntax: `| column | column |`, alignment is set with `:---` left, `:---:` center, `---:` right.\n\n| Name | Price  | Stock | Notes       |\n| ---- | ------ | ----- | ----------- |\n| Apple | ¥5.0  | 100   | Fresh stock |\n| Banana | ¥3.5 | 50    | On promotion |\n| Cherry | ¥15.0 | 20   | Imported    |\n| Durian | ¥25.0 | 5    | Limited     |\n\nRight-aligned example:\n\n| Left   | Center | Right |\n| :----- | :--:   | -----: |\n| left   | center | right |\n| text   | text   | text  |\n\n### 8. Math Formulas (KaTeX)\n\nInline formula: $E = mc^2$\n\nInline formula: $\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}$\n\nBlock-level formula:\n\n$$\n\\int_{-\\infty}^{\\infty} e^{-x^2} \\, dx = \\sqrt{\\pi}\n$$\n\n$$\n\\begin{bmatrix}\n1 & 0 & 0 \\\\\n0 & 1 & 0 \\\\\n0 & 0 & 1\n\\end{bmatrix}\n$$\n\n### 9. Special Containers (directives)\n\nSyntax: `:::` fence + container name.\n\n:::tip\nThis is a tip.\n:::\n\n:::warning\nThis is a warning.\n:::\n\n:::danger\nThis is a danger message.\n:::\n\n:::info\nThis is an info container.\n:::\n\n#### Collapsible Details\n\nSyntax: HTML `<details>` + `<summary>`.\n\n<details>\n<summary>Click to expand</summary>\n\nThis is markdown inside collapsible content, but it requires rehype-raw to work.\n\n</details>\n\n> Note: `remark-directive@4` does not support nested closing of `:::` containers (consecutive `:::` closing fences). For nesting, use HTML `<details>` combined with inner directives.\n\n<details class=\"directive directive-details\">\n<summary>Click to view details</summary>\n\nThis is the collapsible content.\n\n:::warning\nThere is a warning inside too.\n:::\n\n</details>\n\n### 10. Raw HTML\n\nSyntax: write HTML directly, rendered via rehype-raw.\n\n<p style=\"color: var(--app-primary);\">This is a paragraph rendered as HTML.</p>\n\n### 11. Mermaid Diagrams\n\nSyntax: a ```mermaid code block.\n\n```mermaid\ngraph TD\n  A[Start] --> B{Validate}\n  B -->|Pass| C[Process]\n  B -->|Fail| D[Error]\n  C --> E[Done]\n  D --> E\n```\n\n### 12. Automatic Heading Anchors\n\nEvery heading automatically gets an anchor link (`rehype-autolink-headings`); hover to see the link icon.\n\n### 13. Combined Example\n\n#### Article Layout Example\n\n> **Abstract:** This article demonstrates the combined use of multiple Markdown syntax features.\n\n| Feature        | Support | Notes                                |\n| -------------- | ------- | ------------------------------------ |\n| Syntax highlighting | ✅  | rehype-pretty-code                   |\n| Line highlighting | ✅    | `{1,6,10-20}` syntax                 |\n| Diff highlighting | ✅    | `// [!code ++]` suffix or `diff` language |\n| Code groups    | ✅       | `:::code-group` explicit grouping    |\n| Line numbers   | ✅       | Added automatically                  |\n| Math formulas  | ✅       | KaTeX                                |\n| Task lists     | ✅       | GFM                                  |\n| TOC anchors    | ✅       | Generated automatically              |\n\n:::code-group\n\n```bash [pnpm]\npnpm add hono\n```\n\n```bash [npm]\nnpm install hono\n```\n\n```bash [yarn]\nyarn add hono\n```\n\n```bash [bun]\nbun add hono\n```\n\n:::\n\nMath combined with code:\n\n$$\nF(n) = \\begin{cases}\n0 & n = 0 \\\\\n1 & n = 1 \\\\\nF(n-1) + F(n-2) & n > 1\n\\end{cases}\n$$\n\n```javascript\nfunction fib(n) {\n  if (n < 2) return n;\n  let a = 0,\n    b = 1;\n  for (let i = 2; i <= n; i++) {\n    [a, b] = [b, a + b];\n  }\n  return b;\n}\n\n// 输出前 20 项\nconsole.log(Array.from({ length: 20 }, (_, i) => fib(i)));\n// → [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181]\n```\n\n---\n",
+    "doc_hash": "ab1876b5b99746196bbd07d4c2fda4ecffd3dde5f257f177711c6c62cbe30033",
+    "content_md": "---\ntitle: Markdown Syntax Reference\nauthor: rx-ted\ndate: 2026-08-05\ncategory: guide\ntags:\n  - markdown\n  - syntax\nstatus: published\nvisibility: public\nallow_comment: true\npinned: true\nfeatured_weight: 0\nlang: en\ncover: https://picx.19981204.xyz/rest/2026/08/qCU4vJk.png\nslug: guides-markdown-syntax\ndoc_hash: ab1876b5b99746196bbd07d4c2fda4ecffd3dde5f257f177711c6c62cbe30033\n---\n**English** | [中文](/posts/guides-markdown-syntax.zh)\n\n# Markdown Syntax Reference\n\nA quick reference for the Markdown syntax rendered and supported by `@rx-ted/packages-markdown-editor`. This document is organized by section; each section first introduces the **syntax**, then shows the **rendered result**.\n\n### 1. Headings\n\nSyntax: `#` through `######` denote first- to sixth-level headings.\n\n## Heading 1\n\n### Heading 2\n\n#### Heading 3\n\n##### Heading 4\n\n###### Heading 5\n\n###### Heading 6\n\n### 2. Text Styles\n\nSyntax: `**bold**`, `*italic*`, `~~strikethrough~~`, inline code is wrapped in backticks.\n\n| Style         | Syntax            | Result             |\n| ------------- | ----------------- | ------------------ |\n| Bold          | `**text**`        | **text**           |\n| Italic        | `*text*`          | _text_             |\n| Bold italic   | `***text***`      | **_text_**         |\n| Strikethrough | `~~text~~`        | ~~text~~           |\n| Inline code   | `code`            | `code`             |\n| Superscript   | `<sup>text</sup>` | E = mc<sup>2</sup> |\n| Subscript     | `<sub>text</sub>` | H<sub>2</sub>O     |\n| Underline     | `<u>text</u>`     | <u>underline</u>   |\n\nSoft line break: two spaces at the end of a line followed by a newline.\n\n### 3. Lists\n\n#### Unordered List\n\n- Apple\n- Banana\n  - Cherry (indented sub-item)\n  - Black cherry\n\n#### Ordered List\n\n1. First step\n2. Second step\n3. Third step\n\n#### Task List\n\n- [x] Completed task\n- [ ] Incomplete task\n- [ ] Another incomplete task\n\n### 4. Blockquotes\n\nSyntax: `>` at the start of a line.\n\n> This is a blockquote.\n>\n> > Nested blockquote.\n>\n> Blockquotes can contain **formatting** and `code`.\n\n### 5. Links and Images\n\n[Regular link](https://example.com)\n\n[Link with title](https://example.com \"Example Site\")\n\nAutolink: <https://example.com>\n\n![Alt text](https://picsum.photos/seed/picsum/800/400)\n\n### 6. Code Blocks\n\n#### 6.1 Basic Highlighting\n\nSyntax: three backticks plus the language name. A language badge and line numbers are shown automatically; hovering over the top-right corner reveals copy, line number toggle, and collapse buttons.\n\n```javascript\nfunction fibonacci(n) {\n  if (n <= 1) return n;\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconsole.log(fibonacci(10)); // 55\n```\n\n```tsx\nimport { useState } from \"react\";\n\ninterface Props {\n  name: string;\n  age?: number;\n}\n\nfunction Greeting({ name, age }: Props) {\n  const [count, setCount] = useState(0);\n  return (\n    <div>\n      <h1>Hello, {name}!</h1>\n      {age && <p>Age: {age}</p>}\n      <p>Count: {count}</p>\n      <button onClick={() => setCount((c) => c + 1)}>+</button>\n    </div>\n  );\n}\n```\n\n```css\n.container {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));\n  gap: 1.5rem;\n  padding: 2rem;\n  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n}\n\n.card {\n  border-radius: 12px;\n  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n  transition: transform 0.2s ease;\n}\n\n.card:hover {\n  transform: translateY(-4px);\n}\n```\n\n#### 6.2 Line Highlighting\n\nSyntax: `{line numbers}` after the code block, supporting single lines, comma-separated lists, and ranges, e.g. `{1,6,10-20}`.\n\n```javascript {1,3,5-6}\nfunction greet(name) {\n  const msg = `Hello, ${name}`;\n  const loud = msg.toUpperCase();\n  const words = loud.split(\" \");\n  const parts = words.slice(0, 2);\n  return parts.join(\"!\");\n}\n\nconsole.log(greet(\"world\"));\n```\n\n#### 6.3 Diff Highlighting\n\nSyntax 1 (recommended): add `// [!code ++]` / `// [!code --]` comment markers at the end of a line. The markers are stripped, the code stays valid, and `+`/`-` are shown between the line number and the code.\n\n```javascript\nconst count = 1; // [!code --]\nconst count = 2; // [!code ++]\nconst enabled = true;\n```\n\n`#` (shell/python) and `<!-- -->` (HTML) comment styles are also supported:\n\n```bash\necho \"old\" # [!code --]\necho \"new\" # [!code ++]\n```\n\nSyntax 2: the `diff` language, with `+`/`-` prefixed lines; the prefixes are also moved next to the line numbers:\n\n```diff\n- const count = 1;\n+ const count = 2;\n  const enabled = true;\n```\n\n#### 6.4 Code Groups\n\nSyntax: `:::code-group` container; internal code blocks are labeled with `[tab name]`, and a switchable tab bar appears at the top.\n\n:::code-group\n\n```javascript [javascript]\nimport express from \"express\";\n\nconst app = express();\n\napp.get(\"/api/users\", async (req, res) => {\n  const users = await db.users.findAll();\n  res.json(users);\n});\n\napp.listen(3000, () => {\n  console.log(\"Server running on port 3000\");\n});\n```\n\n```python [python]\nfrom flask import Flask, jsonify\n\napp = Flask(__name__)\n\n@app.route('/api/users')\ndef get_users():\n    users = User.query.all()\n    return jsonify([u.to_dict() for u in users])\n```\n\n```go [go]\npackage main\n\nimport (\n\t\"encoding/json\"\n\t\"net/http\"\n)\n\ntype User struct {\n\tID   int    `json:\"id\"`\n\tName string `json:\"name\"`\n}\n\nfunc usersHandler(w http.ResponseWriter, r *http.Request) {\n\tusers := []User{{1, \"Alice\"}, {2, \"Bob\"}}\n\tjson.NewEncoder(w).Encode(users)\n}\n\nfunc main() {\n\thttp.HandleFunc(\"/api/users\", usersHandler)\n\thttp.ListenAndServe(\":8080\", nil)\n}\n```\n\n:::\n\n#### 6.5 Single-Tab Code Block (showing a title)\n\nSyntax: when `[tab name]` is not placed inside `:::code-group`, it is displayed as the code block title.\n\n```rust [Rust example]\nfn main() {\n    let msg = \"Hello, World!\";\n    println!(\"{}\", msg);\n}\n```\n\n### 7. Tables\n\nSyntax: `| column | column |`, alignment is set with `:---` left, `:---:` center, `---:` right.\n\n| Name   | Price | Stock | Notes        |\n| ------ | ----- | ----- | ------------ |\n| Apple  | ¥5.0  | 100   | Fresh stock  |\n| Banana | ¥3.5  | 50    | On promotion |\n| Cherry | ¥15.0 | 20    | Imported     |\n| Durian | ¥25.0 | 5     | Limited      |\n\nRight-aligned example:\n\n| Left | Center | Right |\n| :--- | :----: | ----: |\n| left | center | right |\n| text |  text  |  text |\n\n### 8. Math Formulas (KaTeX)\n\nInline formula: $E = mc^2$\n\nInline formula: $\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}$\n\nBlock-level formula:\n\n$$\n\\int_{-\\infty}^{\\infty} e^{-x^2} \\, dx = \\sqrt{\\pi}\n$$\n\n$$\n\\begin{bmatrix}\n1 & 0 & 0 \\\\\n0 & 1 & 0 \\\\\n0 & 0 & 1\n\\end{bmatrix}\n$$\n\n### 9. Special Containers (directives)\n\nSyntax: `:::` fence + container name.\n\n:::tip\nThis is a tip.\n:::\n\n:::warning\nThis is a warning.\n:::\n\n:::danger\nThis is a danger message.\n:::\n\n:::info\nThis is an info container.\n:::\n\n#### Collapsible Details\n\nSyntax: HTML `<details>` + `<summary>`.\n\n<details>\n<summary>Click to expand</summary>\n\nThis is markdown inside collapsible content, but it requires rehype-raw to work.\n\n</details>\n\n> Note: `remark-directive@4` does not support nested closing of `:::` containers (consecutive `:::` closing fences). For nesting, use HTML `<details>` combined with inner directives.\n\n<details class=\"directive directive-details\">\n<summary>Click to view details</summary>\n\nThis is the collapsible content.\n\n:::warning\nThere is a warning inside too.\n:::\n\n</details>\n\n### 10. Raw HTML\n\nSyntax: write HTML directly, rendered via rehype-raw.\n\n<p style=\"color: var(--app-primary);\">This is a paragraph rendered as HTML.</p>\n\n### 11. Mermaid Diagrams\n\nSyntax: a ```mermaid code block.\n\n```mermaid\ngraph TD\n  A[Start] --> B{Validate}\n  B -->|Pass| C[Process]\n  B -->|Fail| D[Error]\n  C --> E[Done]\n  D --> E\n```\n\n### 12. Automatic Heading Anchors\n\nEvery heading automatically gets an anchor link (`rehype-autolink-headings`); hover to see the link icon.\n\n### 13. Combined Example\n\n#### Article Layout Example\n\n> **Abstract:** This article demonstrates the combined use of multiple Markdown syntax features.\n\n| Feature             | Support | Notes                                     |\n| ------------------- | ------- | ----------------------------------------- |\n| Syntax highlighting | ✅      | rehype-pretty-code                        |\n| Line highlighting   | ✅      | `{1,6,10-20}` syntax                      |\n| Diff highlighting   | ✅      | `// [!code ++]` suffix or `diff` language |\n| Code groups         | ✅      | `:::code-group` explicit grouping         |\n| Line numbers        | ✅      | Added automatically                       |\n| Math formulas       | ✅      | KaTeX                                     |\n| Task lists          | ✅      | GFM                                       |\n| TOC anchors         | ✅      | Generated automatically                   |\n\n:::code-group\n\n```bash [pnpm]\npnpm add hono\n```\n\n```bash [npm]\nnpm install hono\n```\n\n```bash [yarn]\nyarn add hono\n```\n\n```bash [bun]\nbun add hono\n```\n\n:::\n\nMath combined with code:\n\n$$\nF(n) = \\begin{cases}\n0 & n = 0 \\\\\n1 & n = 1 \\\\\nF(n-1) + F(n-2) & n > 1\n\\end{cases}\n$$\n\n```javascript\nfunction fib(n) {\n  if (n < 2) return n;\n  let a = 0,\n    b = 1;\n  for (let i = 2; i <= n; i++) {\n    [a, b] = [b, a + b];\n  }\n  return b;\n}\n\n// 输出前 20 项\nconsole.log(Array.from({ length: 20 }, (_, i) => fib(i)));\n// → [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181]\n```\n\n---\n",
     "status": "published",
     "visibility": "public",
     "allow_comment": true,
-    "is_pinned": false,
-    "featured_weight": 0
+    "is_pinned": true,
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": "https://picx.19981204.xyz/rest/2026/08/qCU4vJk.png",
+    "author": "rx-ted"
   },
   {
     "title": "Markdown 语法参考",
     "slug": "guides-markdown-syntax.zh",
     "doc_hash": "a98a8b7911e8bfdae3a972d377741f296e0363adfb2a890474b0256da75a68e8",
-    "content_md": "---\ntitle: Markdown 语法参考\nauthor: rx-ted\ndate: 2026-08-05\ncategory: guide\ntags:\n  - markdown\n  - syntax\nstatus: published\nvisibility: public\nallow_comment: true\npinned: false\nfeatured_weight: 0\nlang: zh-CN\nslug: guides-markdown-syntax.zh\ndoc_hash: a98a8b7911e8bfdae3a972d377741f296e0363adfb2a890474b0256da75a68e8\n---\n[English](/posts/guides-markdown-syntax) | **中文**\n\n# Markdown 语法参考\n\n由 `@rx-ted/packages-markdown-editor` 渲染支持的 Markdown 语法速查，按章节组织，每节先介绍**语法**，再给出**演示效果**。\n\n### 1. 标题\n\n语法：`#` 到 `######` 表示一至六级标题。\n\n## 标题 1\n\n### 标题 2\n\n#### 标题 3\n\n##### 标题 4\n\n###### 标题 5\n\n###### 标题 6\n\n### 2. 文字样式\n\n语法：`**加粗**`、`*斜体*`、`~~删除线~~`，行内代码用反引号包裹。\n\n| 样式     | 语法              | 效果               |\n| -------- | ----------------- | ------------------ |\n| 加粗     | `**文字**`        | **文字**           |\n| 斜体     | `*文字*`          | _文字_             |\n| 加粗斜体 | `***文字***`      | **_文字_**         |\n| 删除线   | `~~文字~~`        | ~~文字~~           |\n| 行内代码 | `code`            | `code`             |\n| 上标     | `<sup>文字</sup>` | E = mc<sup>2</sup> |\n| 下标     | `<sub>文字</sub>` | H<sub>2</sub>O     |\n| 下划线   | `<u>文字</u>`     | <u>下划线</u>      |\n\n软换行：行尾两个空格加回车。\n\n### 3. 列表\n\n#### 无序列表\n\n- 苹果\n- 香蕉\n  - 车厘子（缩进子项）\n  - 黑樱桃\n\n#### 有序列表\n\n1. 第一步\n2. 第二步\n3. 第三步\n\n#### 任务列表\n\n- [x] 已完成任务\n- [ ] 未完成任务\n- [ ] 另一个未完成任务\n\n### 4. 引用\n\n语法：行首 `>`。\n\n> 这是一段引用。\n>\n> > 嵌套引用。\n>\n> 引用可以包含 **格式** 和 `代码`。\n\n### 5. 链接与图片\n\n[普通链接](https://example.com)\n\n[带标题的链接](https://example.com \"示例网站\")\n\n自动链接：<https://example.com>\n\n![Alt 文本](https://picsum.photos/seed/picsum/800/400)\n\n### 6. 代码块\n\n#### 6.1 基础高亮\n\n语法：三个反引号加语言名。自动显示语言徽标与行号，悬停右上角有复制、行号开关、折叠按钮。\n\n```javascript\nfunction fibonacci(n) {\n  if (n <= 1) return n;\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconsole.log(fibonacci(10)); // 55\n```\n\n```tsx\nimport { useState } from \"react\";\n\ninterface Props {\n  name: string;\n  age?: number;\n}\n\nfunction Greeting({ name, age }: Props) {\n  const [count, setCount] = useState(0);\n  return (\n    <div>\n      <h1>Hello, {name}!</h1>\n      {age && <p>Age: {age}</p>}\n      <p>Count: {count}</p>\n      <button onClick={() => setCount((c) => c + 1)}>+</button>\n    </div>\n  );\n}\n```\n\n```css\n.container {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));\n  gap: 1.5rem;\n  padding: 2rem;\n  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n}\n\n.card {\n  border-radius: 12px;\n  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n  transition: transform 0.2s ease;\n}\n\n.card:hover {\n  transform: translateY(-4px);\n}\n```\n\n#### 6.2 行高亮\n\n语法：代码块后加 `{行号}`，支持单个、逗号分隔和范围，如 `{1,6,10-20}`。\n\n```javascript {1,3,5-6}\nfunction greet(name) {\n  const msg = `Hello, ${name}`;\n  const loud = msg.toUpperCase();\n  const words = loud.split(\" \");\n  const parts = words.slice(0, 2);\n  return parts.join(\"!\");\n}\n\nconsole.log(greet(\"world\"));\n```\n\n#### 6.3 Diff 高亮\n\n语法一（推荐）：行尾加 `// [!code ++]` / `// [!code --]` 注释标记。标记会被剥离，代码保持合法，行号与代码之间显示 `+`/`-`。\n\n```javascript\nconst count = 1; // [!code --]\nconst count = 2; // [!code ++]\nconst enabled = true;\n```\n\n也支持 `#`（shell/python）与 `<!-- -->`（HTML）注释风格：\n\n```bash\necho \"old\" # [!code --]\necho \"new\" # [!code ++]\n```\n\n语法二：`diff` 语言，`+`/`-` 前缀行，前缀同样会移到行号旁：\n\n```diff\n- const count = 1;\n+ const count = 2;\n  const enabled = true;\n```\n\n#### 6.4 代码分组\n\n语法：`:::code-group` 容器，内部代码块用 `[标签名]` 标注，顶部出现可切换的标签栏。\n\n:::code-group\n\n```javascript [javascript]\nimport express from \"express\";\n\nconst app = express();\n\napp.get(\"/api/users\", async (req, res) => {\n  const users = await db.users.findAll();\n  res.json(users);\n});\n\napp.listen(3000, () => {\n  console.log(\"Server running on port 3000\");\n});\n```\n\n```python [python]\nfrom flask import Flask, jsonify\n\napp = Flask(__name__)\n\n@app.route('/api/users')\ndef get_users():\n    users = User.query.all()\n    return jsonify([u.to_dict() for u in users])\n```\n\n```go [go]\npackage main\n\nimport (\n\t\"encoding/json\"\n\t\"net/http\"\n)\n\ntype User struct {\n\tID   int    `json:\"id\"`\n\tName string `json:\"name\"`\n}\n\nfunc usersHandler(w http.ResponseWriter, r *http.Request) {\n\tusers := []User{{1, \"Alice\"}, {2, \"Bob\"}}\n\tjson.NewEncoder(w).Encode(users)\n}\n\nfunc main() {\n\thttp.HandleFunc(\"/api/users\", usersHandler)\n\thttp.ListenAndServe(\":8080\", nil)\n}\n```\n\n:::\n\n#### 6.5 单标签代码块（显示标题）\n\n语法：`[标签名]` 不放进 `:::code-group` 时，显示为代码块标题。\n\n```rust [Rust 示例]\nfn main() {\n    let msg = \"Hello, World!\";\n    println!(\"{}\", msg);\n}\n```\n\n### 7. 表格\n\n语法：`| 列 | 列 |`，对齐方式 `:---` 左对齐、`:---:` 居中、`---:` 右对齐。\n\n| 名称 | 价格  | 库存 | 备注     |\n| ---- | ----- | ---- | -------- |\n| 苹果 | ¥5.0  | 100  | 新鲜到货 |\n| 香蕉 | ¥3.5  | 50   | 促销中   |\n| 樱桃 | ¥15.0 | 20   | 进口     |\n| 榴莲 | ¥25.0 | 5    | 限量     |\n\n右对齐示例：\n\n| 左对齐 | 居中 | 右对齐 |\n| :----- | :--: | -----: |\n| 左     |  中  |     右 |\n| 文本   | 文本 |   文本 |\n\n### 8. 数学公式（KaTeX）\n\n行内公式：$E = mc^2$\n\n行内公式：$\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}$\n\n块级公式：\n\n$$\n\\int_{-\\infty}^{\\infty} e^{-x^2} \\, dx = \\sqrt{\\pi}\n$$\n\n$$\n\\begin{bmatrix}\n1 & 0 & 0 \\\\\n0 & 1 & 0 \\\\\n0 & 0 & 1\n\\end{bmatrix}\n$$\n\n### 9. 特殊容器（directives）\n\n语法：`:::` 围栏 + 容器名。\n\n:::tip\n这是一条提示信息。\n:::\n\n:::warning\n这是一条警告信息。\n:::\n\n:::danger\n这是一条危险信息。\n:::\n\n:::info\n这是一条信息容器。\n:::\n\n#### 折叠详情\n\n语法：HTML `<details>` + `<summary>`。\n\n<details>\n<summary>点击展开</summary>\n\n这是折叠内容中的 markdown，但是需要 rehype-raw 配合使用。\n\n</details>\n\n> 注意：`remark-directive@4` 不支持 `:::` 嵌套闭合（连续 `:::` 闭合栅栏）。嵌套应使用 HTML `<details>` + 内部指令方式。\n\n<details class=\"directive directive-details\">\n<summary>点击查看详情</summary>\n\n这是折叠内容。\n\n:::warning\n内部还有警告。\n:::\n\n</details>\n\n### 10. HTML 原始内容\n\n语法：直接书写 HTML，经 rehype-raw 渲染。\n\n<p style=\"color: var(--app-primary);\">这是 HTML 渲染的段落。</p>\n\n### 11. Mermaid 图表\n\n语法：```mermaid 代码块。\n\n```mermaid\ngraph TD\n  A[开始] --> B{验证}\n  B -->|通过| C[处理]\n  B -->|失败| D[报错]\n  C --> E[完成]\n  D --> E\n```\n\n### 12. 自动标题锚点\n\n每个标题都会自动生成锚点链接（`rehype-autolink-headings`），鼠标悬停可以看到链接图标。\n\n### 13. 综合示例\n\n#### 文章布局示例\n\n> **摘要：** 本文展示了多种 Markdown 语法特性的组合使用。\n\n| 特性      | 支持情况 | 备注                               |\n| --------- | -------- | ---------------------------------- |\n| 语法高亮  | ✅       | rehype-pretty-code                 |\n| 行高亮    | ✅       | `{1,6,10-20}` 语法                 |\n| Diff 高亮 | ✅       | `// [!code ++]` 尾标或 `diff` 语言 |\n| 代码分组  | ✅       | `:::code-group` 显式分组           |\n| 行号      | ✅       | 自动添加                           |\n| 数学公式  | ✅       | KaTeX                              |\n| 任务列表  | ✅       | GFM                                |\n| 目录锚点  | ✅       | 自动生成                           |\n\n:::code-group\n\n```bash [pnpm]\npnpm add hono\n```\n\n```bash [npm]\nnpm install hono\n```\n\n```bash [yarn]\nyarn add hono\n```\n\n```bash [bun]\nbun add hono\n```\n\n:::\n\n数学与代码结合：\n\n$$\nF(n) = \\begin{cases}\n0 & n = 0 \\\\\n1 & n = 1 \\\\\nF(n-1) + F(n-2) & n > 1\n\\end{cases}\n$$\n\n```javascript\nfunction fib(n) {\n  if (n < 2) return n;\n  let a = 0,\n    b = 1;\n  for (let i = 2; i <= n; i++) {\n    [a, b] = [b, a + b];\n  }\n  return b;\n}\n\n// 输出前 20 项\nconsole.log(Array.from({ length: 20 }, (_, i) => fib(i)));\n// → [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181]\n```\n\n---\n",
+    "content_md": "---\ntitle: Markdown 语法参考\nauthor: rx-ted\ndate: 2026-08-05\ncategory: guide\ntags:\n  - markdown\n  - syntax\nstatus: published\nvisibility: public\nallow_comment: true\npinned: true\nfeatured_weight: 0\nlang: zh-CN\ncover: https://picx.19981204.xyz/rest/2026/08/qCU4vJk.png\nslug: guides-markdown-syntax.zh\ndoc_hash: a98a8b7911e8bfdae3a972d377741f296e0363adfb2a890474b0256da75a68e8\n---\n[English](/posts/guides-markdown-syntax) | **中文**\n\n# Markdown 语法参考\n\n由 `@rx-ted/packages-markdown-editor` 渲染支持的 Markdown 语法速查，按章节组织，每节先介绍**语法**，再给出**演示效果**。\n\n### 1. 标题\n\n语法：`#` 到 `######` 表示一至六级标题。\n\n## 标题 1\n\n### 标题 2\n\n#### 标题 3\n\n##### 标题 4\n\n###### 标题 5\n\n###### 标题 6\n\n### 2. 文字样式\n\n语法：`**加粗**`、`*斜体*`、`~~删除线~~`，行内代码用反引号包裹。\n\n| 样式     | 语法              | 效果               |\n| -------- | ----------------- | ------------------ |\n| 加粗     | `**文字**`        | **文字**           |\n| 斜体     | `*文字*`          | _文字_             |\n| 加粗斜体 | `***文字***`      | **_文字_**         |\n| 删除线   | `~~文字~~`        | ~~文字~~           |\n| 行内代码 | `code`            | `code`             |\n| 上标     | `<sup>文字</sup>` | E = mc<sup>2</sup> |\n| 下标     | `<sub>文字</sub>` | H<sub>2</sub>O     |\n| 下划线   | `<u>文字</u>`     | <u>下划线</u>      |\n\n软换行：行尾两个空格加回车。\n\n### 3. 列表\n\n#### 无序列表\n\n- 苹果\n- 香蕉\n  - 车厘子（缩进子项）\n  - 黑樱桃\n\n#### 有序列表\n\n1. 第一步\n2. 第二步\n3. 第三步\n\n#### 任务列表\n\n- [x] 已完成任务\n- [ ] 未完成任务\n- [ ] 另一个未完成任务\n\n### 4. 引用\n\n语法：行首 `>`。\n\n> 这是一段引用。\n>\n> > 嵌套引用。\n>\n> 引用可以包含 **格式** 和 `代码`。\n\n### 5. 链接与图片\n\n[普通链接](https://example.com)\n\n[带标题的链接](https://example.com \"示例网站\")\n\n自动链接：<https://example.com>\n\n![Alt 文本](https://picsum.photos/seed/picsum/800/400)\n\n### 6. 代码块\n\n#### 6.1 基础高亮\n\n语法：三个反引号加语言名。自动显示语言徽标与行号，悬停右上角有复制、行号开关、折叠按钮。\n\n```javascript\nfunction fibonacci(n) {\n  if (n <= 1) return n;\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconsole.log(fibonacci(10)); // 55\n```\n\n```tsx\nimport { useState } from \"react\";\n\ninterface Props {\n  name: string;\n  age?: number;\n}\n\nfunction Greeting({ name, age }: Props) {\n  const [count, setCount] = useState(0);\n  return (\n    <div>\n      <h1>Hello, {name}!</h1>\n      {age && <p>Age: {age}</p>}\n      <p>Count: {count}</p>\n      <button onClick={() => setCount((c) => c + 1)}>+</button>\n    </div>\n  );\n}\n```\n\n```css\n.container {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));\n  gap: 1.5rem;\n  padding: 2rem;\n  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n}\n\n.card {\n  border-radius: 12px;\n  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n  transition: transform 0.2s ease;\n}\n\n.card:hover {\n  transform: translateY(-4px);\n}\n```\n\n#### 6.2 行高亮\n\n语法：代码块后加 `{行号}`，支持单个、逗号分隔和范围，如 `{1,6,10-20}`。\n\n```javascript {1,3,5-6}\nfunction greet(name) {\n  const msg = `Hello, ${name}`;\n  const loud = msg.toUpperCase();\n  const words = loud.split(\" \");\n  const parts = words.slice(0, 2);\n  return parts.join(\"!\");\n}\n\nconsole.log(greet(\"world\"));\n```\n\n#### 6.3 Diff 高亮\n\n语法一（推荐）：行尾加 `// [!code ++]` / `// [!code --]` 注释标记。标记会被剥离，代码保持合法，行号与代码之间显示 `+`/`-`。\n\n```javascript\nconst count = 1; // [!code --]\nconst count = 2; // [!code ++]\nconst enabled = true;\n```\n\n也支持 `#`（shell/python）与 `<!-- -->`（HTML）注释风格：\n\n```bash\necho \"old\" # [!code --]\necho \"new\" # [!code ++]\n```\n\n语法二：`diff` 语言，`+`/`-` 前缀行，前缀同样会移到行号旁：\n\n```diff\n- const count = 1;\n+ const count = 2;\n  const enabled = true;\n```\n\n#### 6.4 代码分组\n\n语法：`:::code-group` 容器，内部代码块用 `[标签名]` 标注，顶部出现可切换的标签栏。\n\n:::code-group\n\n```javascript [javascript]\nimport express from \"express\";\n\nconst app = express();\n\napp.get(\"/api/users\", async (req, res) => {\n  const users = await db.users.findAll();\n  res.json(users);\n});\n\napp.listen(3000, () => {\n  console.log(\"Server running on port 3000\");\n});\n```\n\n```python [python]\nfrom flask import Flask, jsonify\n\napp = Flask(__name__)\n\n@app.route('/api/users')\ndef get_users():\n    users = User.query.all()\n    return jsonify([u.to_dict() for u in users])\n```\n\n```go [go]\npackage main\n\nimport (\n\t\"encoding/json\"\n\t\"net/http\"\n)\n\ntype User struct {\n\tID   int    `json:\"id\"`\n\tName string `json:\"name\"`\n}\n\nfunc usersHandler(w http.ResponseWriter, r *http.Request) {\n\tusers := []User{{1, \"Alice\"}, {2, \"Bob\"}}\n\tjson.NewEncoder(w).Encode(users)\n}\n\nfunc main() {\n\thttp.HandleFunc(\"/api/users\", usersHandler)\n\thttp.ListenAndServe(\":8080\", nil)\n}\n```\n\n:::\n\n#### 6.5 单标签代码块（显示标题）\n\n语法：`[标签名]` 不放进 `:::code-group` 时，显示为代码块标题。\n\n```rust [Rust 示例]\nfn main() {\n    let msg = \"Hello, World!\";\n    println!(\"{}\", msg);\n}\n```\n\n### 7. 表格\n\n语法：`| 列 | 列 |`，对齐方式 `:---` 左对齐、`:---:` 居中、`---:` 右对齐。\n\n| 名称 | 价格  | 库存 | 备注     |\n| ---- | ----- | ---- | -------- |\n| 苹果 | ¥5.0  | 100  | 新鲜到货 |\n| 香蕉 | ¥3.5  | 50   | 促销中   |\n| 樱桃 | ¥15.0 | 20   | 进口     |\n| 榴莲 | ¥25.0 | 5    | 限量     |\n\n右对齐示例：\n\n| 左对齐 | 居中 | 右对齐 |\n| :----- | :--: | -----: |\n| 左     |  中  |     右 |\n| 文本   | 文本 |   文本 |\n\n### 8. 数学公式（KaTeX）\n\n行内公式：$E = mc^2$\n\n行内公式：$\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}$\n\n块级公式：\n\n$$\n\\int_{-\\infty}^{\\infty} e^{-x^2} \\, dx = \\sqrt{\\pi}\n$$\n\n$$\n\\begin{bmatrix}\n1 & 0 & 0 \\\\\n0 & 1 & 0 \\\\\n0 & 0 & 1\n\\end{bmatrix}\n$$\n\n### 9. 特殊容器（directives）\n\n语法：`:::` 围栏 + 容器名。\n\n:::tip\n这是一条提示信息。\n:::\n\n:::warning\n这是一条警告信息。\n:::\n\n:::danger\n这是一条危险信息。\n:::\n\n:::info\n这是一条信息容器。\n:::\n\n#### 折叠详情\n\n语法：HTML `<details>` + `<summary>`。\n\n<details>\n<summary>点击展开</summary>\n\n这是折叠内容中的 markdown，但是需要 rehype-raw 配合使用。\n\n</details>\n\n> 注意：`remark-directive@4` 不支持 `:::` 嵌套闭合（连续 `:::` 闭合栅栏）。嵌套应使用 HTML `<details>` + 内部指令方式。\n\n<details class=\"directive directive-details\">\n<summary>点击查看详情</summary>\n\n这是折叠内容。\n\n:::warning\n内部还有警告。\n:::\n\n</details>\n\n### 10. HTML 原始内容\n\n语法：直接书写 HTML，经 rehype-raw 渲染。\n\n<p style=\"color: var(--app-primary);\">这是 HTML 渲染的段落。</p>\n\n### 11. Mermaid 图表\n\n语法：```mermaid 代码块。\n\n```mermaid\ngraph TD\n  A[开始] --> B{验证}\n  B -->|通过| C[处理]\n  B -->|失败| D[报错]\n  C --> E[完成]\n  D --> E\n```\n\n### 12. 自动标题锚点\n\n每个标题都会自动生成锚点链接（`rehype-autolink-headings`），鼠标悬停可以看到链接图标。\n\n### 13. 综合示例\n\n#### 文章布局示例\n\n> **摘要：** 本文展示了多种 Markdown 语法特性的组合使用。\n\n| 特性      | 支持情况 | 备注                               |\n| --------- | -------- | ---------------------------------- |\n| 语法高亮  | ✅       | rehype-pretty-code                 |\n| 行高亮    | ✅       | `{1,6,10-20}` 语法                 |\n| Diff 高亮 | ✅       | `// [!code ++]` 尾标或 `diff` 语言 |\n| 代码分组  | ✅       | `:::code-group` 显式分组           |\n| 行号      | ✅       | 自动添加                           |\n| 数学公式  | ✅       | KaTeX                              |\n| 任务列表  | ✅       | GFM                                |\n| 目录锚点  | ✅       | 自动生成                           |\n\n:::code-group\n\n```bash [pnpm]\npnpm add hono\n```\n\n```bash [npm]\nnpm install hono\n```\n\n```bash [yarn]\nyarn add hono\n```\n\n```bash [bun]\nbun add hono\n```\n\n:::\n\n数学与代码结合：\n\n$$\nF(n) = \\begin{cases}\n0 & n = 0 \\\\\n1 & n = 1 \\\\\nF(n-1) + F(n-2) & n > 1\n\\end{cases}\n$$\n\n```javascript\nfunction fib(n) {\n  if (n < 2) return n;\n  let a = 0,\n    b = 1;\n  for (let i = 2; i <= n; i++) {\n    [a, b] = [b, a + b];\n  }\n  return b;\n}\n\n// 输出前 20 项\nconsole.log(Array.from({ length: 20 }, (_, i) => fib(i)));\n// → [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181]\n```\n\n---\n",
     "status": "published",
     "visibility": "public",
     "allow_comment": true,
-    "is_pinned": false,
-    "featured_weight": 0
+    "is_pinned": true,
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": "https://picx.19981204.xyz/rest/2026/08/qCU4vJk.png",
+    "author": "rx-ted"
   },
   {
     "title": "Shared packages",
@@ -415,7 +554,10 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "en",
+    "cover": null,
+    "author": "rx-ted"
   },
   {
     "title": "共享包",
@@ -426,6 +568,9 @@
     "visibility": "public",
     "allow_comment": true,
     "is_pinned": false,
-    "featured_weight": 0
+    "featured_weight": 0,
+    "lang": "zh-CN",
+    "cover": null,
+    "author": "rx-ted"
   }
 ]

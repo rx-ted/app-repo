@@ -496,7 +496,7 @@ class SystemInitService {
           userId: SYSTEM_USER_ID,
           slug: doc.slug,
           title: doc.title,
-          coverImage: null,
+          coverImage: doc.cover ?? null,
           isPinned: doc.is_pinned ?? false,
           featuredWeight: doc.featured_weight ?? 0,
           status: (doc.status as 'draft' | 'published' | 'archived') ?? 'published',

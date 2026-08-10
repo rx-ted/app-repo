@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
+import { POST_META_KEYS, warnUnknownMetaFields } from '@/lib/post-parser';
 
 // ─── Config ────────────────────────────────────────────────────────
 const SOURCE_DIRS = ['docs/architecture', 'docs/guides'];
@@ -20,7 +21,8 @@ interface FrontMatter {
   allow_comment?: boolean;
   pinned?: boolean;
   featured_weight?: number;
-  [key: string]: unknown;
+  lang?: string;
+  cover?: string;
 }
 
 interface Doc {
@@ -29,18 +31,19 @@ interface Doc {
   slug: string;
   docHash: string;
   frontMatter: FrontMatter;
+  rawFrontMatter: Record<string, unknown>;
   body: string;
   contentMd: string;
 }
 
 // ─── YAML front-matter parser ─────────────────────────────────────
-function parseFrontMatter(content: string): { frontMatter: FrontMatter; body: string } {
+function parseFrontMatter(content: string): { frontMatter: FrontMatter; rawFrontMatter: Record<string, unknown>; body: string } {
   const match = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n/);
-  if (!match) return { frontMatter: {}, body: content };
+  if (!match) return { frontMatter: {}, rawFrontMatter: {}, body: content };
 
   const yaml = match[1];
   const body = content.slice(match[0].length);
-  const frontMatter: FrontMatter = {};
+  const raw: Record<string, unknown> = {};
   let currentKey: string | null = null;
 
   for (const line of yaml.split('\n')) {
@@ -48,22 +51,30 @@ function parseFrontMatter(content: string): { frontMatter: FrontMatter; body: st
     if (keyMatch) {
       currentKey = keyMatch[1];
       let value: unknown = keyMatch[2].trim();
-      if (value === '' || value === 'true') value = true;
+      if (value === '') continue;
+      if (value === 'true') value = true;
       else if (value === 'false') value = false;
       else if (value === 'null') value = null;
-      else if (!isNaN(Number(value)) && value !== '') value = Number(value);
-      frontMatter[currentKey] = value;
+      else if (!isNaN(Number(value))) value = Number(value);
+      raw[currentKey] = value;
     } else if (currentKey && line.match(/^\s+- /)) {
       const arrVal = line.replace(/^\s+- /, '').trim();
-      if (!Array.isArray(frontMatter[currentKey])) frontMatter[currentKey] = [];
-      (frontMatter[currentKey] as string[]).push(arrVal);
+      if (!Array.isArray(raw[currentKey])) raw[currentKey] = [];
+      (raw[currentKey] as string[]).push(arrVal);
     }
   }
 
-  return { frontMatter, body };
+  warnUnknownMetaFields(raw);
+
+  const fm: Record<string, unknown> = {};
+  for (const key of POST_META_KEYS) {
+    if (raw[key] !== undefined) fm[key] = raw[key];
+  }
+
+  return { frontMatter: fm as FrontMatter, rawFrontMatter: raw, body };
 }
 
-function buildFrontMatterYaml(fm: FrontMatter): string {
+function buildFrontMatterYaml(fm: Record<string, unknown>): string {
   const lines = ['---'];
   for (const [k, v] of Object.entries(fm)) {
     if (Array.isArray(v)) {
@@ -106,6 +117,11 @@ function filePathToSlug(relPath: string, usedSlugs: Set<string>): string {
 // ─── Hash ─────────────────────────────────────────────────────────
 function sha256(content: string): string {
   return createHash('sha256').update(content, 'utf-8').digest('hex');
+}
+
+// ─── Language ─────────────────────────────────────────────────────
+function deriveLang(slug: string): 'zh-CN' | 'en' {
+  return slug.endsWith('.zh') ? 'zh-CN' : 'en';
 }
 
 // ─── Image discovery ──────────────────────────────────────────────
@@ -215,14 +231,14 @@ async function main() {
   for (const relPath of allMdFiles) {
     const absPath = join(root, relPath);
     const content = readFileSync(absPath, 'utf-8');
-    const { frontMatter, body } = parseFrontMatter(content);
+    const { frontMatter, rawFrontMatter, body } = parseFrontMatter(content);
 
     const slug = filePathToSlug(relPath, usedSlugs);
     linkMap[absPath] = slug;
     const docHash = sha256(body);
     rawBodies.set(relPath, body);
 
-    docs.push({ filePath: relPath, absPath, slug, docHash, frontMatter, body, contentMd: '' });
+    docs.push({ filePath: relPath, absPath, slug, docHash, frontMatter, rawFrontMatter, body, contentMd: '' });
   }
 
   console.log(`  Found ${docs.length} documents`);
@@ -253,7 +269,7 @@ async function main() {
     }
 
     const rewritten = rewriteBody(doc.body, doc.absPath, linkMap);
-    const fm: FrontMatter = { ...doc.frontMatter, slug: doc.slug, doc_hash: doc.docHash };
+    const fm: Record<string, unknown> = { ...doc.rawFrontMatter, slug: doc.slug, doc_hash: doc.docHash };
     doc.contentMd = buildFrontMatterYaml(fm) + '\n' + rewritten;
     seededDocs.push(doc);
   }
@@ -269,6 +285,9 @@ async function main() {
     allow_comment: doc.frontMatter.allow_comment ?? true,
     is_pinned: doc.frontMatter.pinned ?? false,
     featured_weight: doc.frontMatter.featured_weight ?? 0,
+    lang: doc.frontMatter.lang ?? deriveLang(doc.slug),
+    cover: doc.frontMatter.cover ?? null,
+    author: doc.frontMatter.author ?? null,
   }));
 
   const outputPath = join(root, 'apps', 'platform-api', 'src', 'seed-data', 'import-docs-output.json');

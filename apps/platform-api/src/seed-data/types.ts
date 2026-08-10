@@ -41,4 +41,7 @@ export interface DocSeed {
   allow_comment: boolean;
   is_pinned: boolean;
   featured_weight: number;
+  lang: string;
+  cover: string | null;
+  author: string | null;
 }
