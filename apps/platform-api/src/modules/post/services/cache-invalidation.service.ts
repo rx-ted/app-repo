@@ -35,7 +35,7 @@ export class CacheInvalidationService {
       this.invalidatePostLists(),
       this.invalidatePostCalendars(),
       this.cache.delete(CACHE_KEYS.postSlug(slug)),
-      this.cache.delete(CACHE_KEYS.blogHome),
+      this.cache.deleteByPattern(CACHE_KEYS.blogHomePattern),
     ]);
   }
 }

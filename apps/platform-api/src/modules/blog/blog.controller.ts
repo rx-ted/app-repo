@@ -1,4 +1,4 @@
-import { Get, Inject, Param, Controller, Ctx, UseGuards } from '@rx-ted/packages-honest';
+import { Get, Inject, Param, Controller, Ctx, UseGuards, Query } from '@rx-ted/packages-honest';
 import type { Context } from 'hono';
 import BlogService from '@/modules/blog/blog.service';
 import { DashboardService } from '@/modules/blog/services/dashboard.service';
@@ -45,6 +45,11 @@ class BlogController {
     apiDoc: {
       summary: '获取博客摘要',
       tags: ['Blog'],
+      request: {
+        query: z.object({
+          lang: z.enum(['en', 'zh-CN']).optional().describe('读者偏好语言，用于置顶文章去重'),
+        }),
+      },
       responses: {
         200: {
           description: '博客摘要信息',
@@ -53,8 +58,10 @@ class BlogController {
       },
     },
   })
-  async getSummary() {
-    return this.blogService.getSummary();
+  async getSummary(@Query('lang') lang?: string) {
+    const normalized: 'en' | 'zh-CN' | undefined =
+      lang === 'en' || lang === 'zh-CN' ? lang : undefined;
+    return this.blogService.getSummary(normalized);
   }
 
   @Get('me', {

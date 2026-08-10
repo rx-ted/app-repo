@@ -34,7 +34,8 @@ export const CACHE_KEYS = {
   postIdPattern: 'post:id:*',
 
   // Blog
-  blogHome: 'blog:home',
+  blogHome: (lang?: string) => `blog:home:${lang ?? 'all'}`,
+  blogHomePattern: 'blog:home:*',
   blogAuthor: (username: string, page: number) => `blog:author:${username}:${page}`,
   blogDashboard: (userId: string) => `blog:dashboard:${userId}`,
   blogSearch: (kw: string, page: number, pageSize: number) =>

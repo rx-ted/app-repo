@@ -2070,6 +2070,20 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "zh-CN"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "博客摘要信息",
