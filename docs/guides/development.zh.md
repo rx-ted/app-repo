@@ -127,7 +127,7 @@ git push
 git push origin main
 ```
 
-CI（`.github/workflows/publish.yml`）自动执行：
+CI（`.github/workflows/release.yml`）自动执行：
 
 ```
 检测 changeset → version bump → build → npm publish

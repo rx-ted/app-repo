@@ -32,9 +32,8 @@ lang: zh-CN
 | 文件 | 触发时机 | 作用 |
 | --- | --- | --- |
 | `ci.yml` | `pull_request`（opened/synchronize/reopened/ready_for_review）+ `push` main | lint/format/typecheck/test/build |
-| `pr-auto-merge.yml` | `pull_request_target` | 为每个 PR 开启 auto-merge（squash） |
+| `pr-auto-merge.yml` | `pull_request_target` | 为非 bot PR 开启 auto-merge（squash）；版本 PR 改由人工合并 |
 | `release.yml` | `push` main | Changesets 版本管理 + tag + GitHub Release + npm 发布 |
-| `publish.yml` | 手动 `workflow_dispatch`（填 tag） | 兜底：手动重新发布某个包 |
 
 ## CI（`ci.yml`）
 
@@ -58,7 +57,7 @@ on:
 
 ## PR 自动合并（`pr-auto-merge.yml`）
 
-任何 PR 打开/更新时，用 `peter-evans/enable-pull-request-automerge@v3` 开启 auto-merge（squash）。
+任何 PR 打开/更新时，用 `peter-evans/enable-pull-request-automerge@v3` 开启 auto-merge（squash）——但 **`github-actions[bot]` 创建的 PR（即 changesets 的 "Version Packages" 版本 PR）除外**，这些必须由维护者手动合并：bot 合并不会重新触发 `release.yml`（见下方"常见问题"）。
 
 前置条件（仓库设置，需 admin）：
 
@@ -76,8 +75,8 @@ on:
 
 ```
 push main → 检查 .changeset/*.md
-  ├─ 有 changeset → 创建/更新 "Version Packages" PR → 开启 auto-merge
-  │     PR 合并（CI 通过后）→ version bump + changelog 落在 main → 再次触发本流程
+  ├─ 有 changeset → 创建/更新 "Version Packages" PR
+  │     维护者手动合并 → version bump + changelog 落在 main → 再次触发本流程
   └─ 无 changeset（版本 PR 合并后）→ Build → Tag → GitHub Release → npm publish (OIDC)
 ```
 
@@ -108,7 +107,7 @@ push main → 检查 .changeset/*.md
    - **Allowed actions**: `npm publish`
 3. 保存后重复配置所有包：`@rx-ted/packages-core`、`@rx-ted/packages-honest`、`@rx-ted/packages-honest-plugins`、`@rx-ted/packages-markdown-editor`
 
-> 常见报错 `404 Not Found ... you do not have permission to access it`：Trusted Publisher 没覆盖该包，或 workflow filename 填错（例如填了 `publish.yml`）。npm 保存时不校验，发布时才报错。
+> 常见报错 `404 Not Found ... you do not have permission to access it`：Trusted Publisher 没覆盖该包，或 workflow filename 与实际执行 `npm publish` 的 workflow（`release.yml`）不一致。npm 保存时不校验，发布时才报错。
 
 ### `repository` 字段要求
 
@@ -126,14 +125,6 @@ Error verifying sigstore provenance bundle: Failed to validate repository inform
 }
 ```
 
-## 手动兜底发布（`publish.yml`）
-
-正常发布已集成在 `release.yml`，`publish.yml` 仅作为**手动补发**工具：
-
-1. Actions → Publish → Run workflow
-2. 输入 tag，如 `@rx-ted/packages-core@1.0.3`
-3. 使用 OIDC 重新发布该版本
-
 ## Token 策略
 
 | 用途 | 方式 | 是否需要手动配置 |
@@ -144,9 +135,11 @@ Error verifying sigstore provenance bundle: Failed to validate repository inform
 
 ## 常见问题
 
-### 版本合并后没有自动发布
+### 版本 PR 合并后没有自动发布
 
-changesets 的 "Version Packages" PR 自动合并到 main 时，偶尔不会触发新的 push workflow run。处理方式：向 main 推一个空 commit（`git commit --allow-empty -m "ci: trigger release"`）重新触发 `release.yml`。发布步骤是幂等的，会自动补齐所有缺失版本。
+changesets 的 "Version Packages" PR 被 auto-merge 时，合并是用 `GITHUB_TOKEN` 完成的，操作者记为 `github-actions[bot]`。GitHub 会抑制由 `GITHUB_TOKEN` 引发的事件所触发的 workflow run，因此合并产生的 push 不会启动新的 `release.yml`，发布步骤被跳过。
+
+因此版本 PR **改为人工合并**（见 `pr-auto-merge.yml`），push 会记在维护者名下，发布流程正常触发。若某次发布仍被跳过，可向 main 推一个空 commit（`git commit --allow-empty -m "ci: trigger release"`）重新触发。发布步骤是幂等的，会自动补齐所有缺失版本。
 
 ### PR 上 CI 不运行
 

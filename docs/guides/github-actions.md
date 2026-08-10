@@ -32,9 +32,8 @@ All automation in this repo runs on GitHub Actions, covering **CI checks, PR aut
 | File | Trigger | Purpose |
 | --- | --- | --- |
 | `ci.yml` | `pull_request` (opened/synchronize/reopened/ready_for_review) + `push` main | lint/format/typecheck/test/build |
-| `pr-auto-merge.yml` | `pull_request_target` | enables auto-merge (squash) for every PR |
+| `pr-auto-merge.yml` | `pull_request_target` | enables auto-merge (squash) for non-bot PRs; version PRs are merged manually |
 | `release.yml` | `push` main | Changesets versioning + tag + GitHub Release + npm publishing |
-| `publish.yml` | manual `workflow_dispatch` (fill in a tag) | fallback: manually re-publish a single package |
 
 ## CI (`ci.yml`)
 
@@ -58,7 +57,7 @@ The `versify` job runs in sequence:
 
 ## PR auto-merge (`pr-auto-merge.yml`)
 
-Whenever a PR is opened/updated, `peter-evans/enable-pull-request-automerge@v3` enables auto-merge (squash).
+Whenever a PR is opened/updated, `peter-evans/enable-pull-request-automerge@v3` enables auto-merge (squash) — except PRs authored by `github-actions[bot]`, i.e. the changesets "Version Packages" PRs. Those are merged manually by a maintainer: a bot merge wouldn't re-trigger `release.yml` (see the FAQ below).
 
 Prerequisites (repo settings, admin required):
 
@@ -76,8 +75,8 @@ Trigger: push to main. Core logic is driven by `changesets/action`:
 
 ```
 push main → check .changeset/*.md
-  ├─ has changesets → create/update the "Version Packages" PR → enable auto-merge
-  │     PR merged (after CI passes) → version bump + changelog lands on main → triggers this flow again
+  ├─ has changesets → create/update the "Version Packages" PR
+  │     maintainer merges it manually → version bump + changelog lands on main → triggers this flow again
   └─ no changesets (after the version PR merges) → Build → Tag → GitHub Release → npm publish (OIDC)
 ```
 
@@ -108,7 +107,7 @@ Configure Trusted Publisher (OIDC) on npmjs.com for **every package you want to 
    - **Allowed actions**: `npm publish`
 3. Save, then repeat for every package: `@rx-ted/packages-core`, `@rx-ted/packages-honest`, `@rx-ted/packages-honest-plugins`, `@rx-ted/packages-markdown-editor`
 
-> Common error `404 Not Found ... you do not have permission to access it`: the Trusted Publisher doesn't cover that package, or the workflow filename is wrong (e.g. `publish.yml` was entered). npm doesn't validate on save — the error only appears at publish time.
+> Common error `404 Not Found ... you do not have permission to access it`: the Trusted Publisher doesn't cover that package, or the workflow filename doesn't match the one that actually runs `npm publish` (`release.yml`). npm doesn't validate on save — the error only appears at publish time.
 
 ### `repository` field requirement
 
@@ -126,14 +125,6 @@ Error verifying sigstore provenance bundle: Failed to validate repository inform
 }
 ```
 
-## Manual fallback publishing (`publish.yml`)
-
-Normal publishing is integrated into `release.yml`; `publish.yml` only serves as a **manual backfill** tool:
-
-1. Actions → Publish → Run workflow
-2. Enter a tag, e.g. `@rx-ted/packages-core@1.0.3`
-3. Re-publish that version using OIDC
-
 ## Token strategy
 
 | Purpose | Method | Manual config needed? |
@@ -146,7 +137,9 @@ Normal publishing is integrated into `release.yml`; `publish.yml` only serves as
 
 ### No auto-publish after the version PR merges
 
-When changesets' "Version Packages" PR auto-merges into main, the resulting push occasionally doesn't trigger a new workflow run. Fix: push an empty commit to main (`git commit --allow-empty -m "ci: trigger release"`) to re-trigger `release.yml`. The publish step is idempotent and fills in all missing versions.
+When changesets' "Version Packages" PR is auto-merged, the merge is performed with `GITHUB_TOKEN` and attributed to `github-actions[bot]`. GitHub suppresses workflow runs triggered by events caused by `GITHUB_TOKEN`, so the resulting push to main doesn't start a new `release.yml` run and the publish steps are skipped.
+
+The version PR is therefore **merged manually** (see `pr-auto-merge.yml`), so the push is attributed to a maintainer and the release runs normally. If a release still gets skipped, re-trigger by pushing an empty commit to main (`git commit --allow-empty -m "ci: trigger release"`). The publish step is idempotent and fills in all missing versions.
 
 ### CI not running on PRs
 
