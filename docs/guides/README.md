@@ -6,7 +6,7 @@ category: guide
 status: published
 visibility: public
 allow_comment: true
-pinned: false
+pinned: true
 featured_weight: 0
 lang: en
 ---
@@ -25,6 +25,7 @@ lang: en
 | [e2e-testing](./e2e-testing.md) | E2E testing workflow |
 | [api-routes](./api-routes.md) | Full API route documentation |
 | [markdown-syntax](./markdown-syntax.md) | Supported Markdown syntax quick reference |
+| [front-matter](./front-matter.md) | Front matter fields reference for posts |
 | [github-actions](./github-actions.md) | GitHub Actions workflows (CI / auto-merge / release / npm OIDC) |
 
 ### `packages/markdown-editor` usage guide

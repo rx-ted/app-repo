@@ -9,9 +9,10 @@ tags:
 status: published
 visibility: public
 allow_comment: true
-pinned: false
+pinned: true
 featured_weight: 0
 lang: zh-CN
+cover: https://picx.19981204.xyz/rest/2026/08/qCU4vJk.png
 ---
 
 [English](./markdown-syntax.md) | **中文**
