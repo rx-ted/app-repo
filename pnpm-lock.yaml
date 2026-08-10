@@ -67,7 +67,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: ^2.0.10
-        version: 2.0.12(hono@4.12.27)
+        version: 2.0.12(hono@4.12.34)
       '@noble/hashes':
         specifier: ^1.8.0
         version: 1.8.0
@@ -87,8 +87,8 @@ importers:
         specifier: ^4.0.3
         version: 4.0.3
       hono:
-        specifier: ^4.12.27
-        version: 4.12.27
+        specifier: ^4.12.34
+        version: 4.12.34
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
@@ -113,7 +113,7 @@ importers:
     devDependencies:
       '@hono/vite-dev-server':
         specifier: ^0.26.0
-        version: 0.26.1(hono@4.12.27)(miniflare@4.20260504.0)(wrangler@4.88.0)
+        version: 0.26.1(hono@4.12.34)(miniflare@4.20260504.0)(wrangler@4.88.0)
       '@types/jsonwebtoken':
         specifier: ^9.0.10
         version: 9.0.10
@@ -3886,6 +3886,10 @@ packages:
     resolution: {integrity: sha512-1yrb/+w6HWQJrUCLkJ2IF5jNIPvvFkblV5RNOYl6bV+OA6p9GLcMpHFFGTosSvHvcAUibuUukRqhlYI4z32C7Q==}
     engines: {node: '>=16.9.0'}
 
+  hono@4.12.34:
+    resolution: {integrity: sha512-GqXJqY/xJkJmuloTrnV1ZEXG3fqte+VjkUqoRNZXcrUidiUOP4fMSIHHY4tsqZBK++kVyWmt/AAfSUuy57/eSA==}
+    engines: {node: '>=16.9.0'}
+
   hookable@5.5.3:
     resolution: {integrity: sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ==}
 
@@ -7049,18 +7053,18 @@ snapshots:
   '@getbrevo/brevo@5.0.4':
     optional: true
 
-  '@hono/node-server@1.19.15(hono@4.12.27)':
+  '@hono/node-server@1.19.15(hono@4.12.34)':
     dependencies:
-      hono: 4.12.27
+      hono: 4.12.34
 
-  '@hono/node-server@2.0.12(hono@4.12.27)':
+  '@hono/node-server@2.0.12(hono@4.12.34)':
     dependencies:
-      hono: 4.12.27
+      hono: 4.12.34
 
-  '@hono/vite-dev-server@0.26.1(hono@4.12.27)(miniflare@4.20260504.0)(wrangler@4.88.0)':
+  '@hono/vite-dev-server@0.26.1(hono@4.12.34)(miniflare@4.20260504.0)(wrangler@4.88.0)':
     dependencies:
-      '@hono/node-server': 1.19.15(hono@4.12.27)
-      hono: 4.12.27
+      '@hono/node-server': 1.19.15(hono@4.12.34)
+      hono: 4.12.34
       minimatch: 9.0.9
     optionalDependencies:
       miniflare: 4.20260504.0
@@ -9230,6 +9234,8 @@ snapshots:
   highlight.js@11.11.1: {}
 
   hono@4.12.27: {}
+
+  hono@4.12.34: {}
 
   hookable@5.5.3: {}
 
