@@ -1,6 +1,6 @@
 {
   "name": "@rx-ted/packages-honest-plugins-counter",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "private": true,
   "description": "Counter plugin for @rx-ted/packages-honest (Durable Objects)",
   "type": "module",
