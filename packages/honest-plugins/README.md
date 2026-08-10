@@ -1,6 +1,6 @@
 # @rx-ted/packages-honest-plugins
 
-HonestJS 插件集合 — db, cache, mail, s3, api-doc。
+HonestJS 插件集合 — db, cache, mail, s3, api-doc, counter。
 
 ## 插件列表
 
@@ -11,6 +11,7 @@ HonestJS 插件集合 — db, cache, mail, s3, api-doc。
 | `mail` | `@rx-ted/packages-honest-plugins-mail` | 邮件（Resend/Brevo/SMTP） |
 | `s3` | `@rx-ted/packages-honest-plugins-s3` | 对象存储（AWS S3） |
 | `api-doc` | `@rx-ted/packages-honest-plugins-api-doc` | OpenAPI 文档 + Scalar UI |
+| `counter` | `@rx-ted/packages-honest-plugins-counter` | 计数/统计（Durable Object + debounced flush） |
 
 ## 导入方式
 
@@ -21,6 +22,7 @@ import { CacheService } from '@rx-ted/packages-honest-plugins/cache'
 import { MailPlugin } from '@rx-ted/packages-honest-plugins/mail'
 import { S3Plugin } from '@rx-ted/packages-honest-plugins/s3'
 import { ApiDocPlugin } from '@rx-ted/packages-honest-plugins/api-doc'
+import { CounterService } from '@rx-ted/packages-honest-plugins/counter'
 ```
 
 ## 子包结构
@@ -31,7 +33,8 @@ packages/honest-plugins/
 ├── cache/       @rx-ted/packages-honest-plugins-cache   (private)
 ├── mail/        @rx-ted/packages-honest-plugins-mail    (private)
 ├── s3/          @rx-ted/packages-honest-plugins-s3      (private)
-└── api-doc/     @rx-ted/packages-honest-plugins-api-doc (private)
+├── api-doc/     @rx-ted/packages-honest-plugins-api-doc (private)
+└── counter/     @rx-ted/packages-honest-plugins-counter (private)
 ```
 
 子包为 `private: true`，仅通过 barrel 包 `@rx-ted/packages-honest-plugins` 发布。
