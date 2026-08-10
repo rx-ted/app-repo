@@ -127,7 +127,7 @@ Only maintainers can operate; this is handled automatically by CI.
 git push origin main
 ```
 
-CI (`.github/workflows/publish.yml`) automatically executes:
+CI (`.github/workflows/release.yml`) automatically executes:
 
 ```
 detect changeset → version bump → build → npm publish

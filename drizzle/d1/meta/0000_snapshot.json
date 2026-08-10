@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "cd43441a-e1e2-4e24-8b43-83e0c76ba5a3",
+  "id": "a1a6aa14-f2f2-44d7-8927-751820288305",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "announcements": {
@@ -663,8 +663,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "friendLinks": {
-      "name": "friendLinks",
+    "discoveries": {
+      "name": "discoveries",
       "columns": {
         "id": {
           "name": "id",
@@ -701,6 +701,29 @@
           "notNull": false,
           "autoincrement": false
         },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'other'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'active'"
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "sort_order": {
           "name": "sort_order",
           "type": "integer",
@@ -709,13 +732,20 @@
           "autoincrement": false,
           "default": 0
         },
-        "is_active": {
-          "name": "is_active",
+        "fail_count": {
+          "name": "fail_count",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": true
+          "default": 0
+        },
+        "last_checked_at": {
+          "name": "last_checked_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
@@ -1509,6 +1539,14 @@
           "notNull": false,
           "autoincrement": false,
           "default": 0
+        },
+        "reading_time": {
+          "name": "reading_time",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 1
         },
         "status": {
           "name": "status",
