@@ -178,7 +178,7 @@ describe('CounterDriver', () => {
 
 describe('CounterPlugin in-memory fallback', () => {
   async function bootMemoryPlugin(handlers: Record<string, FlushHandler> = {}) {
-    const plugin = new CounterPlugin();
+    const plugin = new CounterPlugin({ flushIntervalMs: 0, flushDebounceMs: 0 });
     plugin.logger = silentLogger;
     for (const [pattern, handler] of Object.entries(handlers)) {
       plugin.registerFlushHandler(pattern, handler);
@@ -206,6 +206,19 @@ describe('CounterPlugin in-memory fallback', () => {
     await driver.increment('stats:v:1', 10);
     await driver.decrement('stats:v:1', 3);
     expect(await driver.mget(['stats:v:1', 'stats:v:2'])).toEqual([7, 0]);
+  });
+
+  it('pendingKeys returns hot keys until they are flushed', async () => {
+    const handler = vi.fn();
+    const plugin = await bootMemoryPlugin({ 'stats:v:': handler });
+    const driver = plugin.getClient();
+
+    await driver.increment('stats:v:1', 2);
+    await driver.increment('stats:l:2', 3);
+    expect((await driver.pendingKeys()).sort()).toEqual(['stats:l:2', 'stats:v:1']);
+
+    await driver.flushAll();
+    expect(await driver.pendingKeys()).toEqual([]);
   });
 
   it('flush dispatches pending delta to registered handler and clears it', async () => {
@@ -271,5 +284,146 @@ describe('CounterPlugin in-memory fallback', () => {
     const result = await driver.flushAll();
     expect(result.success).toBe(false);
     expect(result.error).toBe('boom');
+  });
+
+  it('keeps pending on flush failure and retries on the next pass', async () => {
+    let fail = true;
+    const handler = vi.fn(async () => {
+      if (fail) throw new Error('DB down');
+    });
+    const plugin = await bootMemoryPlugin({ 'stats:v:': handler });
+    const driver = plugin.getClient();
+
+    await driver.increment('stats:v:1', 3);
+    const first = await driver.flush('stats:v:1');
+    expect(first.success).toBe(false);
+    expect(await driver.pending('stats:v:1')).toBe(3);
+
+    fail = false;
+    const second = await driver.flush('stats:v:1');
+    expect(second).toEqual({ flushed: 3, success: true });
+    expect(await driver.pending('stats:v:1')).toBe(0);
+  });
+
+  it('tracks hot keys again after a full flush', async () => {
+    const handler = vi.fn();
+    const plugin = await bootMemoryPlugin({ 'stats:v:': handler });
+    const driver = plugin.getClient();
+
+    await driver.increment('stats:v:1', 1);
+    await driver.flushAll();
+    await driver.increment('stats:v:1', 2);
+    await driver.flushAll();
+
+    expect(handler).toHaveBeenNthCalledWith(1, 'stats:v:1', 1);
+    expect(handler).toHaveBeenNthCalledWith(2, 'stats:v:1', 2);
+    expect(await driver.pending('stats:v:1')).toBe(0);
+  });
+
+  it('registers itself under the plugin key for flush-handler wiring', async () => {
+    const plugin = await bootMemoryPlugin();
+    expect(ComponentManager.getPlugin('app:counter-plugin')).toBe(plugin);
+  });
+
+  it('auto-flushes hot keys on the configured interval', async () => {
+    vi.useFakeTimers();
+    try {
+      const handler = vi.fn();
+      const plugin = new CounterPlugin({ flushIntervalMs: 100, flushDebounceMs: 0 });
+      plugin.logger = silentLogger;
+      plugin.registerFlushHandler('stats:v:', handler);
+      await plugin.beforeModulesRegistered({} as never, {} as never);
+      const driver = plugin.getClient();
+
+      await driver.increment('stats:v:1', 2);
+      await vi.advanceTimersByTimeAsync(100);
+
+      expect(handler).toHaveBeenCalledWith('stats:v:1', 2);
+      expect(await driver.pending('stats:v:1')).toBe(0);
+      await plugin.close();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('clears the auto-flush timer on close', async () => {
+    vi.useFakeTimers();
+    try {
+      const handler = vi.fn();
+      const plugin = new CounterPlugin({ flushIntervalMs: 100, flushDebounceMs: 0 });
+      plugin.logger = silentLogger;
+      plugin.registerFlushHandler('stats:v:', handler);
+      await plugin.beforeModulesRegistered({} as never, {} as never);
+      const driver = plugin.getClient();
+
+      await driver.increment('stats:v:1', 2);
+      await plugin.close();
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(handler).not.toHaveBeenCalled();
+      expect(await driver.pending('stats:v:1')).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('debounces a per-key flush shortly after writes', async () => {
+    vi.useFakeTimers();
+    try {
+      const handler = vi.fn();
+      const plugin = new CounterPlugin({ flushIntervalMs: 0, flushDebounceMs: 3000 });
+      plugin.logger = silentLogger;
+      plugin.registerFlushHandler('stats:v:', handler);
+      await plugin.beforeModulesRegistered({} as never, {} as never);
+      const driver = plugin.getClient();
+
+      await driver.increment('stats:v:1', 1);
+      await vi.advanceTimersByTimeAsync(1000);
+      await driver.increment('stats:v:1', 2);
+      await vi.advanceTimersByTimeAsync(2999);
+
+      expect(handler).not.toHaveBeenCalled();
+      expect(await driver.pending('stats:v:1')).toBe(3);
+
+      await vi.advanceTimersByTimeAsync(1);
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledWith('stats:v:1', 3);
+      expect(await driver.pending('stats:v:1')).toBe(0);
+      await plugin.close();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps pending and retries when a debounced flush fails', async () => {
+    vi.useFakeTimers();
+    try {
+      let fail = true;
+      const handler = vi.fn(async () => {
+        if (fail) throw new Error('DB down');
+      });
+      const plugin = new CounterPlugin({ flushIntervalMs: 0, flushDebounceMs: 3000 });
+      plugin.logger = silentLogger;
+      plugin.registerFlushHandler('stats:v:', handler);
+      await plugin.beforeModulesRegistered({} as never, {} as never);
+      const driver = plugin.getClient();
+
+      await driver.increment('stats:v:1', 3);
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(handler).toHaveBeenCalledWith('stats:v:1', 3);
+      expect(await driver.pending('stats:v:1')).toBe(3);
+
+      fail = false;
+      await driver.increment('stats:v:1', 2);
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(handler).toHaveBeenLastCalledWith('stats:v:1', 5);
+      expect(await driver.pending('stats:v:1')).toBe(0);
+      await plugin.close();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

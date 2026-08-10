@@ -12,6 +12,8 @@ export interface CounterDriver {
   flush(key: string): Promise<FlushResult>;
   flushAll(): Promise<FlushResult>;
   pending(key: string): Promise<number>;
+  /** Snapshot of keys touched since the last successful flush (hot keys). */
+  pendingKeys(): Promise<string[]>;
   close(): Promise<void>;
   healthCheck(): Promise<boolean>;
 }
