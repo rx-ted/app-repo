@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia';
-import { onMounted, watch } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import {
@@ -82,6 +82,12 @@ function goToCategory(category: string) {
   router.push({ path: '/posts', query: { category } });
 }
 
+const hasActiveFilter = computed(
+  () =>
+    Boolean(props.keyword || props.tag || props.category || props.author) ||
+    props.excludeSlugs.length > 0,
+);
+
 watch(
   () => blog.page,
   () => {
@@ -89,7 +95,13 @@ watch(
   },
 );
 
-onMounted(() => loadArticles(1));
+onMounted(() => {
+  if (hasActiveFilter.value && blog.page !== 1) {
+    blog.page = 1;
+  } else {
+    void loadArticles();
+  }
+});
 watch(
   () => props.excludeSlugs.join(','),
   () => {
