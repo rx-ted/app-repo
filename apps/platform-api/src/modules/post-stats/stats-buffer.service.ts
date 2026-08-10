@@ -1,8 +1,14 @@
-import { Inject, Service } from '@rx-ted/packages-honest';
-import { CounterService } from '@rx-ted/packages-honest-plugins/counter';
-import { eq, sql } from 'drizzle-orm';
+import { ComponentManager, Inject, Service } from '@rx-ted/packages-honest';
+import {
+  CounterService,
+  COUNTER_PLUGIN_KEY,
+  type CounterPlugin,
+} from '@rx-ted/packages-honest-plugins/counter';
+import { sql } from 'drizzle-orm';
+import { CacheService } from '@rx-ted/packages-honest-plugins/cache';
 import { DbService } from '@rx-ted/packages-honest-plugins/db';
 import { postStats } from '@/schema';
+import { CACHE_KEYS } from '@/constants';
 
 const COUNTER_KEYS = {
   views: (postId: number) => `stats:v:${postId}`,
@@ -10,12 +16,71 @@ const COUNTER_KEYS = {
   comments: (postId: number) => `stats:c:${postId}`,
 } as const;
 
+type StatsKind = 'views' | 'likes' | 'comments';
+
+const STATS_COLUMNS: Record<StatsKind, 'viewCount' | 'likeCount' | 'commentCount'> = {
+  views: 'viewCount',
+  likes: 'likeCount',
+  comments: 'commentCount',
+};
+
+const FLUSH_PATTERNS: Record<StatsKind, string> = {
+  views: 'stats:v:',
+  likes: 'stats:l:',
+  comments: 'stats:c:',
+};
+
 @Service()
 export class StatsBufferService {
   constructor(
     @Inject(CounterService) private counter: CounterService,
     @Inject(DbService) private db: DbService,
-  ) {}
+    @Inject(CacheService) private cache: CacheService,
+  ) {
+    this.registerFlushHandlers();
+  }
+
+  private registerFlushHandlers(): void {
+    const plugin = ComponentManager.getPlugin<CounterPlugin>(COUNTER_PLUGIN_KEY);
+    for (const kind of Object.keys(STATS_COLUMNS) as StatsKind[]) {
+      plugin.registerFlushHandler(FLUSH_PATTERNS[kind], (key, delta) =>
+        this.applyFlush(key, kind, delta),
+      );
+    }
+  }
+
+  private async applyFlush(key: string, kind: StatsKind, delta: number): Promise<void> {
+    if (delta === 0) return;
+    const postId = this.postIdFromKey(key);
+    const zeroes = { viewCount: 0, likeCount: 0, commentCount: 0 };
+    await this.db
+      .insert(postStats)
+      .values({ postId, ...zeroes, [STATS_COLUMNS[kind]]: delta })
+      .onConflictDoUpdate({
+        target: postStats.postId,
+        set: { [STATS_COLUMNS[kind]]: sql`${postStats[STATS_COLUMNS[kind]]} + ${delta}` },
+      });
+    await this.cache.deleteByPattern(CACHE_KEYS.blogHomePattern);
+  }
+
+  async getBufferedTotals(): Promise<{ views: number; likes: number; comments: number }> {
+    const totals = { views: 0, likes: 0, comments: 0 };
+    const keys = await this.counter.pendingKeys();
+    for (const key of keys) {
+      if (key.startsWith(FLUSH_PATTERNS.views)) {
+        totals.views += await this.counter.pending(key);
+      } else if (key.startsWith(FLUSH_PATTERNS.likes)) {
+        totals.likes += await this.counter.pending(key);
+      } else if (key.startsWith(FLUSH_PATTERNS.comments)) {
+        totals.comments += await this.counter.pending(key);
+      }
+    }
+    return totals;
+  }
+
+  private postIdFromKey(key: string): number {
+    return Number(key.split(':')[2]);
+  }
 
   async recordView(postId: number): Promise<void> {
     await this.counter.increment(COUNTER_KEYS.views(postId));
@@ -41,46 +106,6 @@ export class StatsBufferService {
   }
 
   async flushPostStats(postId: number): Promise<void> {
-    const viewsPending = await this.counter.pending(COUNTER_KEYS.views(postId));
-    const likesPending = await this.counter.pending(COUNTER_KEYS.likes(postId));
-    const commentsPending = await this.counter.pending(COUNTER_KEYS.comments(postId));
-
-    if (!viewsPending && !likesPending && !commentsPending) return;
-
-    const [existing] = await this.db
-      .select()
-      .from(postStats)
-      .where(eq(postStats.postId, postId))
-      .limit(1);
-
-    if (!existing) {
-      await this.db.insert(postStats).values({
-        postId,
-        viewCount: viewsPending,
-        likeCount: likesPending,
-        commentCount: commentsPending,
-      });
-    } else {
-      if (viewsPending) {
-        await this.db
-          .update(postStats)
-          .set({ viewCount: sql`view_count + ${viewsPending}` })
-          .where(eq(postStats.postId, postId));
-      }
-      if (likesPending) {
-        await this.db
-          .update(postStats)
-          .set({ likeCount: sql`like_count + ${likesPending}` })
-          .where(eq(postStats.postId, postId));
-      }
-      if (commentsPending) {
-        await this.db
-          .update(postStats)
-          .set({ commentCount: sql`comment_count + ${commentsPending}` })
-          .where(eq(postStats.postId, postId));
-      }
-    }
-
     await Promise.all([
       this.counter.flush(COUNTER_KEYS.views(postId)),
       this.counter.flush(COUNTER_KEYS.likes(postId)),

@@ -1,10 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { createTestApplication } from '@rx-ted/packages-honest';
-import { Container } from '@rx-ted/packages-honest';
+import { createTestApplication, Container, ComponentManager } from '@rx-ted/packages-honest';
 import { ApiDocPlugin } from '@rx-ted/packages-honest-plugins/api-doc';
 import { CacheService } from '@rx-ted/packages-honest-plugins/cache';
 import { DbService } from '@rx-ted/packages-honest-plugins/db';
-import { CounterService } from '@rx-ted/packages-honest-plugins/counter';
+import { CounterService, COUNTER_PLUGIN_KEY } from '@rx-ted/packages-honest-plugins/counter';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -54,6 +53,10 @@ describe('generate openapi snapshot', () => {
       consumePending: () => Promise.resolve(0),
       reset: () => Promise.resolve(),
     } as any);
+
+    ComponentManager.registerPlugin(COUNTER_PLUGIN_KEY, {
+      registerFlushHandler: () => {},
+    } as never);
 
     const plugin = new ApiDocPlugin({
       specUrl: '/openapi.json',

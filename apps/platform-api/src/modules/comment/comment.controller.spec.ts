@@ -1,10 +1,32 @@
 import 'reflect-metadata';
-import { describe, it, expect, vi } from 'vitest';
-import { Container } from '@rx-ted/packages-honest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Container, ComponentManager } from '@rx-ted/packages-honest';
+import { COUNTER_GLOBAL_KEY, COUNTER_PLUGIN_KEY } from '@rx-ted/packages-honest-plugins/counter';
 import { CacheService } from '@rx-ted/packages-honest-plugins/cache';
 import { DbService } from '@rx-ted/packages-honest-plugins/db';
 import { createControllerTestApplication } from '@rx-ted/packages-honest';
 import CommentController from '@/modules/comment/comment.controller';
+
+function mockCounterDriver() {
+  return {
+    increment: vi.fn().mockResolvedValue(1),
+    decrement: vi.fn().mockResolvedValue(0),
+    value: vi.fn().mockResolvedValue(0),
+    mget: vi.fn().mockResolvedValue([0, 0, 0]),
+    flush: vi.fn().mockResolvedValue({ flushed: 0, success: true }),
+    flushAll: vi.fn().mockResolvedValue({ flushed: 0, success: true }),
+    pending: vi.fn().mockResolvedValue(0),
+    close: vi.fn().mockResolvedValue(undefined),
+    healthCheck: vi.fn().mockResolvedValue(true),
+  };
+}
+
+beforeEach(() => {
+  ComponentManager.registerPlugin(COUNTER_GLOBAL_KEY, mockCounterDriver() as never);
+  ComponentManager.registerPlugin(COUNTER_PLUGIN_KEY, {
+    registerFlushHandler: vi.fn(),
+  } as never);
+});
 
 function mockDbWithChain(resolvedRows: any[]) {
   const dbResult = {

@@ -8,6 +8,7 @@ import { CommentRepository } from '@/modules/comment/repositories/comment.reposi
 import CommentLikeService from '@/modules/comment/services/comment-like.service';
 import CommentNotificationService from '@/modules/comment/services/comment-notification.service';
 import CommentReportService from '@/modules/comment/services/comment-report.service';
+import PostStatsService from '@/modules/post-stats/post-stats.service';
 import { GeoipService } from '@/modules/geoip/geoip.service';
 import { comments, users, userProfiles } from '@/schema';
 import { notFound, forbidden, badRequest } from '@/lib/api-error';
@@ -24,6 +25,7 @@ class CommentService {
     @Inject(CommentLikeService) private likeService: CommentLikeService,
     @Inject(CommentNotificationService) private notifService: CommentNotificationService,
     @Inject(CommentReportService) private reportService: CommentReportService,
+    @Inject(PostStatsService) private postStats: PostStatsService,
     @Inject(GeoipService) private geoipService: GeoipService,
   ) {}
 
@@ -85,6 +87,10 @@ class CommentService {
       if (mentions.length) {
         this.notifService.notifyMention(Number(comment.id), input.userId, mentions, input.content);
       }
+    }
+
+    if (input.tag === 'post' && input.postId) {
+      await this.postStats.recordComment(input.postId);
     }
 
     return { affectedRows: 1, id: comment.id };
