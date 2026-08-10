@@ -37,7 +37,7 @@
     "test:watch": "vitest",
     "typecheck": "vue-tsc --noEmit",
     "pretest": "node scripts/build-themes.mjs",
-    "build": "vite build && vue-tsc -p tsconfig.build.json && node scripts/postbuild.mjs",
+    "build": "vite build && vite build --config vite.demo.config.ts && vue-tsc -p tsconfig.build.json && node scripts/postbuild.mjs",
     "prebuild": "node scripts/build-themes.mjs",
     "demo": "vite --config vite.demo.config.ts",
     "predemo": "node scripts/build-themes.mjs"
