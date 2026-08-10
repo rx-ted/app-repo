@@ -18,6 +18,7 @@ import {
   postCategories,
 } from '@/schema';
 import { DEFAULTS, CACHE_KEYS } from '@/constants';
+import { dialect } from '@/utils';
 
 function generateSlug(title: string): string {
   let slug = title
@@ -168,9 +169,13 @@ class PostService {
     return cacheable(this.cache, cacheKey, 300, async () => {
       const start = new Date(year, month - 1, 1);
       const end = new Date(year, month, 1);
+      const dayExpr =
+        dialect === 'mysql'
+          ? sql<string>`DATE(FROM_UNIXTIME(${postCore.publishedAt}))`
+          : sql<string>`DATE(${postCore.publishedAt}, 'unixepoch')`;
       const rows = await this.db
         .select({
-          date: sql<string>`DATE(${postCore.publishedAt})`,
+          date: dayExpr,
           count: sql<number>`COUNT(*)`,
         })
         .from(postCore)
@@ -182,7 +187,7 @@ class PostService {
             lt(postCore.publishedAt, end),
           ),
         )
-        .groupBy(sql`DATE(${postCore.publishedAt})`);
+        .groupBy(dayExpr);
       const result: Record<string, number> = {};
       for (const row of rows) {
         result[row.date] = row.count;
