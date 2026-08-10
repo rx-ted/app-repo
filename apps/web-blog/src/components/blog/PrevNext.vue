@@ -40,11 +40,12 @@ function onNa() {
 async function fetchAdjacent(slug: string) {
   loading.value = true;
   try {
-    const body = await http.get<{ prev: typeof prev.value; next: typeof next.value }>(
-      `/posts/${slug}/adjacent`,
-    );
-    prev.value = body.prev ?? null;
-    next.value = body.next ?? null;
+    const body = await http.get<{
+      prev: typeof prev.value;
+      next: typeof next.value;
+    }>(`/posts/${slug}/adjacent`);
+    prev.value = body.data?.prev ?? null;
+    next.value = body.data?.next ?? null;
   } catch {
     prev.value = null;
     next.value = null;
