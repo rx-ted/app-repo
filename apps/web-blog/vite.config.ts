@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vite';
 import vueDevTools from 'vite-plugin-vue-devtools';
-import { getWorkspaceAliases } from '../../vitest.workspace-aliases';
+import { getWorkspaceAliases } from '../../vitest.workspace-aliases.ts';
 
 // https://vite.dev/config/
 export default defineConfig({
