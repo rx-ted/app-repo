@@ -79,19 +79,24 @@ jobs:
 
       - name: Create GitHub Releases
         if: steps.changesets.outputs.pullRequestNumber == ''
-        run: |
-          if [ ! -s /tmp/new-tags.txt ]; then
-            echo "No new tags to release"
-            exit 0
-          fi
-          while read -r tag; do
-            [ -z "$tag" ] && continue
-            if ! gh release view "$tag" >/dev/null 2>&1; then
-              gh release create "$tag" --generate-notes
-            fi
-          done < /tmp/new-tags.txt
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pnpm list -r --json --depth -1 > /tmp/workspace-pkgs.json
+          node -e "
+            const pkgs = JSON.parse(require('fs').readFileSync('/tmp/workspace-pkgs.json','utf8'));
+            const { execSync } = require('child_process');
+            pkgs.filter(p => !p.private).forEach(p => {
+              const tag = p.name + '@' + p.version;
+              try { execSync('git rev-parse ' + tag, { stdio: 'pipe' }); }
+              catch(e) { console.log('Skip ' + tag + ' (no tag at HEAD)'); return; }
+              let released = false;
+              try { execSync('gh release view ' + tag, { stdio: 'pipe' }); released = true; } catch(e) {}
+              if (released) { console.log('Release ' + tag + ' already exists'); return; }
+              console.log('Creating release for ' + tag);
+              execSync('gh release create ' + tag + ' --generate-notes', { stdio: 'inherit' });
+            });
+          "
 
       - name: Publish to npm (OIDC)
         if: steps.changesets.outputs.pullRequestNumber == ''
