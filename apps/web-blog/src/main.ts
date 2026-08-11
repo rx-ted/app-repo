@@ -10,6 +10,7 @@ import './styles/main.scss';
 import { dataSymbol } from './theme/data';
 import { initData } from './theme/default';
 import { tokenStorage } from '@/lib/http/tokenStorage';
+import { useSessionStore } from '@/stores/session';
 
 async function bootstrap() {
   const app = createApp(App);
@@ -24,7 +25,6 @@ async function bootstrap() {
   app.mount('#app');
 
   // don't block layout rendering — fetch auth / user session in background
-  const { useSessionStore } = await import('@/stores/session');
   const store = useSessionStore();
   store.bootstrap();
 
