@@ -1,6 +1,8 @@
 import { unified } from 'unified';
 import type { PluggableList } from 'unified';
 import type { Options as PrettyCodeOptions, Theme } from 'rehype-pretty-code';
+import { createHighlighter, createJavaScriptRegexEngine } from 'shiki';
+import type { BundledHighlighterOptions, Highlighter } from 'shiki';
 import remarkParse from 'remark-parse';
 import remarkDirective from 'remark-directive';
 import remarkGfm from 'remark-gfm';
@@ -240,11 +242,21 @@ export function rehypeCodeData() {
 }
 
 // ── Build rehype-pretty-code options for a given shiki code theme ──
+async function createPrettyCodeHighlighter(
+  options: BundledHighlighterOptions<any, any>,
+): Promise<Highlighter> {
+  return createHighlighter({
+    ...options,
+    engine: createJavaScriptRegexEngine(),
+  });
+}
+
 export function getPrettyCodeOptions(codeTheme: string): PrettyCodeOptions {
   return {
     theme: codeTheme as Theme,
     keepBackground: true,
     defaultLang: 'plaintext',
+    getHighlighter: createPrettyCodeHighlighter,
     filterMetaString(meta: string) {
       return meta
         .replace(/\b(group|tab)=\S+/g, '')
