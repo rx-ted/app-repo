@@ -31,7 +31,7 @@ export default defineConfig({
     },
   },
   build: {
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 800,
     rollupOptions: {
       output: {
         manualChunks(id: string) {
@@ -41,13 +41,8 @@ export default defineConfig({
             id.includes('node_modules/vue-router')
           )
             return 'vendor-vue';
-          if (id.includes('node_modules/naive-ui')) return 'vendor-ui';
-          if (
-            id.includes('node_modules/markdown-it') ||
-            id.includes('node_modules/highlight.js') ||
-            id.includes('node_modules/dompurify')
-          )
-            return 'vendor-markdown';
+          if (id.includes('node_modules/katex')) return 'markdown-math';
+          if (id.includes('node_modules/emojilib')) return 'markdown-emoji';
         },
       },
     },
