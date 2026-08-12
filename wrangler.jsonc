@@ -1,0 +1,72 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "api",
+	"main": "apps/platform-api/runtime/cloudflare.ts",
+	"compatibility_date": "2026-05-11",
+	"dev": {
+		"port": 3000
+	},
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1,
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 1,
+			"persist": true,
+			"invocation_logs": true
+		},
+		"traces": {
+			"enabled": true,
+			"persist": true,
+			"head_sampling_rate": 1
+		}
+	},
+	"upload_source_maps": true,
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"vars": {
+		"DEBUG": "false",
+		"RATE_LIMIT_ENABLED": "true",
+		"MAIL_RESEND_FROM_EMAIL": "noreply@19981204.xyz",
+		"MAIL_RESEND_FROM_NAME": "noreply",
+		"MAIL_BREVO_FROM_EMAIL": "noreply@19981204.xyz",
+		"MAIL_BREVO_FROM_NAME": "noreply",
+		"MAIL_SMTP_HOST": "smtp.126.com",
+		"MAIL_SMTP_PORT": "465",
+		"MAIL_SMTP_USER": "rx_ted@126.com",
+		"MAIL_SMTP_FROM_EMAIL": "rx_ted@126.com",
+		"MAIL_SMTP_FROM_NAME": "rx-ted",
+		"GITHUB_CLIENT_ID": "Iv23libiF0w1ybmvskWW",
+		"FRONTEND_DOMAIN": "blog.19981204.xyz",
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "db",
+			"database_id": "6eb9d50a-4303-42b6-ac1b-a2321918de09"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "KV_BINDING",
+			"id": "b165d3a208664239873c8b0d19cd40f9"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "COUNTER_DO",
+				"class_name": "CounterDO"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"CounterDO"
+			]
+		}
+	]
+}
