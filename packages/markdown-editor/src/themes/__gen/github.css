@@ -1,4 +1,4 @@
-.markdown-body-root[data-me-preview-theme="github"] {
+.markdown-body-root[data-me-preview-theme=github] {
   --me-text: #1f2328;
   --me-text-secondary: #57606a;
   --me-text-muted: #8c959f;
@@ -19,15 +19,14 @@
   --me-bg-danger: #ffebe9;
   --me-bg-info: #ddf4ff;
   --me-error: #cf222e;
-  --me-font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji";
+  --me-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans',
+    Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
   --me-font-size: 16px;
   --me-line-height: 1.5;
   --me-content-max-width: 100%;
   --me-content-padding: 24px 24px 48px;
 }
-.markdown-body-root[data-me-preview-theme="github"][data-me-mode="dark"] {
+.markdown-body-root[data-me-preview-theme=github][data-me-mode=dark] {
   --me-text: #e6edf3;
   --me-text-secondary: #9198a1;
   --me-text-muted: #6e7681;

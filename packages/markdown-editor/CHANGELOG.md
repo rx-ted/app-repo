@@ -1,5 +1,12 @@
 # @rx-ted/packages-markdown-editor
 
+## 0.1.1
+
+### Patch Changes
+
+- c15bdef: Switch shiki syntax highlighting to the lighter JavaScript regex engine so code blocks no longer download the oniguruma wasm bundle at runtime
+- e102b47: Commit the generated per-theme CSS assets (`src/themes/__gen/*.css`) so apps that consume the package source can build from a fresh checkout without depending on the theme codegen step or the turbo build cache
+
 ## 0.1.0
 
 ### Minor Changes
