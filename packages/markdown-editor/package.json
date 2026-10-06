@@ -43,7 +43,7 @@
     "predemo": "node scripts/build-themes.mjs"
   },
   "dependencies": {
-    "katex": "^0.18.1",
+    "katex": "^0.18.2",
     "mdast-util-to-string": "^4.0.0",
     "mermaid": "^11.16.1",
     "rehype-autolink-headings": "^7.1.0",
