@@ -186,8 +186,8 @@ updatedAt: "2026-10-28T10:00:00Z"
 |---|---|---|
 | authors | D1 | 作者基本信息；文章数可从索引统计或维护聚合值 |
 | posts | D1 索引 + GitHub Markdown | 标题、slug、作者、分类、发布时间、内容 SHA、状态等 |
-| tags | D1 | 标签元信息、文章关联数量 |
-| categories | D1 | 分类元信息、文章关联数量 |
+| tags | docs分支 | 标签元信息、文章关联数量 |
+| categories | docs分支 | 分类元信息、文章关联数量 |
 | views | D1 或 KV 计数方案 | 每篇文章总浏览量，不记录具体用户的浏览历史 |
 | likes | D1 事件/计数，或 KV 聚合 | 若允许每人仅点赞一次，需要用户/匿名标识去重 |
 | favorites | D1 | 可选；若需要查看“我的收藏”，必须记录用户与文章的关系 |
@@ -226,7 +226,7 @@ KV 更适合：
 
 ### 6.5 标签、分类、作者和文章数量
 
-- D1 保存规范化的文章与标签/分类关联。
+- docs分支 保存规范化的文章与标签/分类关联。 后续可能会以d1存储。
 - 文章发布、下架、删除或更改标签时，保证关联与聚合数量更新。
 - 对计数缓存设计定期重算/校验任务，避免失败后出现永久偏差。
 - 避免在前端维护权威文章数或标签数。
@@ -257,27 +257,27 @@ KV 更适合：
 所有管理接口均需认证与权限校验；公开读取接口按需开放。
 
 ### 文章
-- `GET /api/posts`：分页、搜索、标签/分类筛选。
-- `GET /api/posts/:slug`：公开文章详情。
-- `POST /api/admin/posts`：创建文章。
-- `PUT /api/admin/posts/:slug`：更新文章，要求提交期望的内容 SHA 或版本号。
-- `DELETE /api/admin/posts/:slug`：删除/归档文章。
-- `POST /api/admin/posts/:slug/publish`：发布。
-- `POST /api/admin/posts/:slug/unpublish`：取消发布。
-- `GET /api/admin/deployments/:id`：查询构建部署状态。
+- `GET /api/v1/posts`：分页、搜索、标签/分类筛选。
+- `GET /api/v1/posts/:slug`：公开文章详情。
+- `POST /api/v1/posts`：创建文章。
+- `PUT /api/v1/posts/:slug`：更新文章，要求提交期望的内容 SHA 或版本号。
+- `DELETE /api/v1/posts/:slug`：删除/归档文章。
+- `POST /api/v1/posts/:slug/publish`：发布。
+- `POST /api/v1/posts/:slug/unpublish`：取消发布。
+- `GET /api/v1/deployments/:id`：查询构建部署状态。
 
 ### 用户
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/logout`
-- `POST /api/auth/refresh`
-- `POST /api/auth/password/change`
-- `GET /api/me`
-- `PATCH /api/me`
-- `POST /api/auth/oauth/:provider/start`
-- `GET /api/auth/oauth/:provider/callback`
-- `POST /api/me/identities/:provider/link`
-- `DELETE /api/me/identities/:provider`
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `POST /api/v1/auth/refresh`
+- `POST /api/v1/auth/password/change`
+- `GET /api/v1/me`
+- `PATCH /api/v1/me`
+- `POST /api/v1/auth/oauth/:provider/start`
+- `GET /api/v1/auth/oauth/:provider/callback`
+- `POST /api/v1/me/identities/:provider/link`
+- `DELETE /api/v1/me/identities/:provider`
 
 ### 统计和评论
 - `POST /api/posts/:slug/views`
