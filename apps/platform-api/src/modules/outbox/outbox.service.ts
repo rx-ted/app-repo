@@ -39,10 +39,24 @@ class OutboxService {
       .where(eq(outboxEvents.id, Number(id)));
   }
 
-  async markFailed(id: number | string, error: string): Promise<void> {
+  async markFailed(id: number | string, error: string, attempts = 0): Promise<void> {
     await this.db
       .update(outboxEvents)
-      .set({ status: 'failed', attempts: 0, errorMessage: error.slice(0, 500), updatedAt: new Date() })
+      .set({ status: 'failed', attempts, errorMessage: error.slice(0, 500), updatedAt: new Date() })
+      .where(eq(outboxEvents.id, Number(id)));
+  }
+
+  private async scheduleRetry(id: number | string, attempts: number, error: string): Promise<void> {
+    const delayMs = Math.min(5 * 60 * 1000, 2 ** Math.max(1, attempts) * 1000);
+    await this.db
+      .update(outboxEvents)
+      .set({
+        status: 'pending',
+        attempts,
+        errorMessage: error.slice(0, 500),
+        availableAt: new Date(Date.now() + delayMs),
+        updatedAt: new Date(),
+      })
       .where(eq(outboxEvents.id, Number(id)));
   }
 
@@ -57,7 +71,13 @@ class OutboxService {
         await processor(event);
         await this.markDone(event.id);
       } catch (error) {
-        await this.markFailed(event.id, error instanceof Error ? error.message : String(error));
+        const nextAttempts = (event.attempts ?? 0) + 1;
+        const message = error instanceof Error ? error.message : String(error);
+        if (nextAttempts >= 5) {
+          await this.markFailed(event.id, message, nextAttempts);
+        } else {
+          await this.scheduleRetry(event.id, nextAttempts, message);
+        }
       }
     }
   }

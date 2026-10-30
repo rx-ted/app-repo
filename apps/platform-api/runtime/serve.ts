@@ -1,5 +1,6 @@
 import { serve } from '@hono/node-server';
 import { createApp } from '../src/index';
+import OutboxProcessorService from '../src/modules/outbox/outbox-processor.service';
 
 const { app, hono } = await createApp();
 
@@ -14,6 +15,13 @@ const server = serve({ fetch: hono.fetch, port }, async (info) => {
   console.log(`[platform-api] server running at http://localhost:${info.port}`);
   // Runtime Phase: HTTP 已就绪，后台启动所有服务
   await app.getPluginEngine().runBootstrap();
+  try {
+    const processor = app.getContainer().resolve(OutboxProcessorService);
+    processor.start(5000);
+    console.log('[platform-api] outbox processor started');
+  } catch (err) {
+    console.warn('[platform-api] outbox processor not started:', err);
+  }
   console.log('[platform-api] application ready');
 });
 

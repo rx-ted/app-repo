@@ -2,6 +2,7 @@ import { loadEnv } from '@rx-ted/packages-core';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp } from '../src/index';
+import OutboxProcessorService from '../src/modules/outbox/outbox-processor.service';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -28,3 +29,10 @@ Bun.serve({
 
 console.log(`[platform-api] server running at http://localhost:${port}`);
 app.getPluginEngine().runBootstrap();
+try {
+  const processor = app.getContainer().resolve(OutboxProcessorService);
+  processor.start(5000);
+  console.log('[platform-api] outbox processor started');
+} catch (err) {
+  console.warn('[platform-api] outbox processor not started:', err);
+}

@@ -1,5 +1,6 @@
 import { Inject, Service } from '@rx-ted/packages-honest';
 import { DbService } from '@rx-ted/packages-honest-plugins/db';
+import OutboxService from '@/modules/outbox/outbox.service';
 import { CacheService, cacheable } from '@rx-ted/packages-honest-plugins/cache';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
@@ -43,6 +44,7 @@ class PostService {
     @Inject(DbService) private db: DbService,
     @Inject(CacheService) private cache: CacheService,
     @Inject(StatsBufferService) private statsBuffer: StatsBufferService,
+    @Inject(OutboxService) private outbox?: OutboxService,
   ) {}
 
   private async mergeBufferedStats(
@@ -264,6 +266,15 @@ class PostService {
       categoryIds: input.categoryIds,
     });
 
+    if (this.outbox) {
+      void this.outbox
+        .enqueue(input.status === 'published' ? 'post.published' : 'post.created', {
+          slug,
+          status: input.status ?? 'draft',
+        })
+        .catch(() => undefined);
+    }
+
     return { slug };
   }
 
@@ -272,6 +283,7 @@ class PostService {
     input: Partial<{
       title: string;
       contentMd: string;
+      status?: 'draft' | 'published' | 'archived';
       tagIds?: number[];
       categoryIds?: number[];
       updatedBy: string | null;
@@ -283,6 +295,15 @@ class PostService {
       categoryIds: input.categoryIds,
     });
     if (!post) return null;
+
+    if (this.outbox) {
+      void this.outbox
+        .enqueue('post.updated', {
+          slug,
+          status: input.status,
+        })
+        .catch(() => undefined);
+    }
 
     return PostMapper.toMutationResponse(1);
   }

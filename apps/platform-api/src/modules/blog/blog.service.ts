@@ -150,6 +150,10 @@ export class BlogService {
     return this.computeBlogAggregates();
   }
 
+  async refreshAggregates(): Promise<void> {
+    await this.getBlogAggregates();
+  }
+
   private async getHomeBase(lang?: BlogLang): Promise<BlogHomeResponse> {
     return cacheable(this.cache, CACHE_KEYS.blogHome(lang), 60, async () => {
       const aggregates = await this.getBlogAggregates();
