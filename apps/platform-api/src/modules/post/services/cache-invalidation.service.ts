@@ -1,5 +1,5 @@
 import { Inject, Service } from '@rx-ted/packages-honest';
-import { CacheService } from '@rx-ted/packages-honest-plugins/cache';
+import { CacheService, bumpCacheVersion } from '@rx-ted/packages-honest-plugins/cache';
 import { CACHE_KEYS } from '@/constants/cache-keys';
 
 @Service()
@@ -7,7 +7,7 @@ export class CacheInvalidationService {
   constructor(@Inject(CacheService) private cache: CacheService) {}
 
   async invalidatePostLists(): Promise<number> {
-    return this.cache.deleteByPattern(CACHE_KEYS.postListPattern);
+    return bumpCacheVersion(this.cache, 'post:list');
   }
 
   async invalidatePostSlug(slug: string): Promise<boolean> {

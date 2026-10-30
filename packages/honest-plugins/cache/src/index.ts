@@ -3,6 +3,17 @@ export { CACHE_GLOBAL_KEY, CacheService } from './cache-service';
 export type { CacheDriver } from './types';
 export { cacheable } from './cacheable';
 export { cacheableSWR } from './swr';
+export {
+  getCacheVersion,
+  bumpCacheVersion,
+  versionedCacheKey,
+} from './versioned';
+export {
+  setWithTags,
+  invalidateTag,
+  invalidateTags,
+  cacheableTagged,
+} from './tags';
 
 // Auto-detect cache plugin (recommended)
 export { CachePlugin, findKvBinding, resolveBinding } from './resolve';

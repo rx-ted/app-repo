@@ -27,7 +27,7 @@ import {
   users,
 } from '@/schema';
 import type { PostEntity, PostListEntity } from '@/modules/post/entities/post.entity';
-import { CacheService, cacheable } from '@rx-ted/packages-honest-plugins/cache';
+import { CacheService, cacheable, versionedCacheKey } from '@rx-ted/packages-honest-plugins/cache';
 import { CacheInvalidationService } from '@/modules/post/services/cache-invalidation.service';
 
 function deriveLang(slug: string): 'en' | 'zh-CN' {
@@ -130,7 +130,11 @@ class PostRepository {
     },
   ): Promise<{ list: PostListEntity[]; total: number }> {
     const excludeSlugs = [...new Set(options?.excludeSlugs ?? [])].sort();
-    const cacheKey = `post:list:${page}:${pageSize}:${options?.keyword ?? ''}:${options?.tag ?? ''}:${options?.category ?? ''}:${options?.author ?? ''}:${options?.lang ?? ''}:${excludeSlugs.join(',')}`;
+    const cacheKey = await versionedCacheKey(
+      this.cache,
+      'post:list',
+      `${page}:${pageSize}:${options?.keyword ?? ''}:${options?.tag ?? ''}:${options?.category ?? ''}:${options?.author ?? ''}:${options?.lang ?? ''}:${excludeSlugs.join(',')}`,
+    );
     return cacheable(this.cache, cacheKey, 60, async () => {
       const conditions: ReturnType<typeof eq>[] = [eq(postCore.status, 'published')];
 

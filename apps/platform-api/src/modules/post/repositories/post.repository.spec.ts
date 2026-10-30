@@ -82,10 +82,14 @@ vi.mock('@rx-ted/packages-honest', () => {
   };
 });
 
-vi.mock('@rx-ted/packages-honest-plugins/cache', () => ({
-  CacheService: class {},
-  cacheable: vi.fn((_cache: unknown, _key: string, _ttl: number, fn: () => unknown) => fn()),
-}));
+vi.mock('@rx-ted/packages-honest-plugins/cache', async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  return {
+    ...actual,
+    CacheService: class {},
+    cacheable: vi.fn((_cache: unknown, _key: string, _ttl: number, fn: () => unknown) => fn()),
+  };
+});
 
 describe('PostRepository', () => {
   let repo: PostRepository;
