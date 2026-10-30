@@ -60,6 +60,22 @@ class OutboxService {
       .where(eq(outboxEvents.id, Number(id)));
   }
 
+
+  async list(status?: string, limit = 20): Promise<any[]> {
+    let query = this.db.select().from(outboxEvents).orderBy(outboxEvents.id).limit(Math.min(Math.max(limit, 1), 100));
+    if (status) {
+      query = query.where(eq(outboxEvents.status, status as any)) as any;
+    }
+    return query;
+  }
+
+  async retry(id: string | number): Promise<void> {
+    await this.db
+      .update(outboxEvents)
+      .set({ status: 'pending', attempts: 0, errorMessage: null, availableAt: new Date(), updatedAt: new Date() })
+      .where(eq(outboxEvents.id, Number(id)));
+  }
+
   async processPending(processor: (event: OutboxEventRow) => Promise<void>, limit = 10): Promise<void> {
     const events = await this.fetchPending(limit);
     for (const event of events) {
