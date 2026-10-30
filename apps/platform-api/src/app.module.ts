@@ -21,6 +21,7 @@ import MailModule from '@/modules/mail/mail.module';
 
 import NotificationModule from '@/modules/notification/notification.module';
 
+import OutboxModule from '@/modules/outbox/outbox.module';
 import PermissionModule from '@/modules/permission/permission.module';
 import PermissionRequestModule from '@/modules/permission-request/permission-request.module';
 
@@ -58,6 +59,8 @@ import SearchModule from '@/modules/search/search.module';
     HelloModule,
     MailModule,
     NotificationModule,
+
+    OutboxModule,
 
     PermissionModule,
     PermissionRequestModule,
