@@ -66,6 +66,7 @@ class PostService {
       author?: string;
       lang?: 'en' | 'zh-CN';
       excludeSlugs?: string[];
+      cursor?: string;
     },
   ) {
     const result = await this.postRepo.list(page, pageSize, options);
@@ -128,6 +129,7 @@ class PostService {
     return {
       list: enriched.map(PostMapper.toCardResponse),
       total: result.total,
+      nextCursor: result.nextCursor,
     };
   }
 

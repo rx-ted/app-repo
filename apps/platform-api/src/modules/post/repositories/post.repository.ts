@@ -30,6 +30,28 @@ import type { PostEntity, PostListEntity } from '@/modules/post/entities/post.en
 import { CacheService, cacheable, versionedCacheKey } from '@rx-ted/packages-honest-plugins/cache';
 import { CacheInvalidationService } from '@/modules/post/services/cache-invalidation.service';
 
+function encodePostCursor(createdAt: Date | string, id: number): string | null {
+  try {
+    const iso = createdAt instanceof Date ? createdAt.toISOString() : new Date(createdAt).toISOString();
+    return btoa(`${iso}|${id}`);
+  } catch {
+    return null;
+  }
+}
+
+function decodePostCursor(cursor?: string): { createdAt: Date; id: number } | null {
+  if (!cursor) return null;
+  try {
+    const [iso, id] = atob(cursor).split('|');
+    const createdAt = new Date(iso);
+    const parsedId = Number(id);
+    if (Number.isNaN(createdAt.getTime()) || !Number.isInteger(parsedId)) return null;
+    return { createdAt, id: parsedId };
+  } catch {
+    return null;
+  }
+}
+
 function deriveLang(slug: string): 'en' | 'zh-CN' {
   return slug.endsWith('.zh') ? 'zh-CN' : 'en';
 }
@@ -127,66 +149,85 @@ class PostRepository {
       author?: string;
       lang?: 'en' | 'zh-CN';
       excludeSlugs?: string[];
+      cursor?: string;
     },
-  ): Promise<{ list: PostListEntity[]; total: number }> {
+  ): Promise<{ list: PostListEntity[]; total: number; nextCursor: string | null }> {
     const excludeSlugs = [...new Set(options?.excludeSlugs ?? [])].sort();
+    const cursor = decodePostCursor(options?.cursor);
     const cacheKey = await versionedCacheKey(
       this.cache,
       'post:list',
-      `${page}:${pageSize}:${options?.keyword ?? ''}:${options?.tag ?? ''}:${options?.category ?? ''}:${options?.author ?? ''}:${options?.lang ?? ''}:${excludeSlugs.join(',')}`,
+      `${page}:${pageSize}:${options?.keyword ?? ''}:${options?.tag ?? ''}:${options?.category ?? ''}:${options?.author ?? ''}:${options?.lang ?? ''}:${excludeSlugs.join(',')}:${options?.cursor ?? ''}`,
     );
     return cacheable(this.cache, cacheKey, 60, async () => {
-      const conditions: ReturnType<typeof eq>[] = [eq(postCore.status, 'published')];
+      const baseConditions: ReturnType<typeof eq>[] = [eq(postCore.status, 'published')];
 
       if (options?.lang) {
-        conditions.push(
+        baseConditions.push(
           options.lang === 'zh-CN' ? like(postCore.slug, '%.zh') : notLike(postCore.slug, '%.zh'),
         );
       }
 
       if (options?.keyword) {
-        conditions.push(like(postCore.title, `%${options.keyword}%`));
+        baseConditions.push(like(postCore.title, `%${options.keyword}%`));
       }
       if (excludeSlugs.length) {
-        conditions.push(not(inArray(postCore.slug, excludeSlugs)));
+        baseConditions.push(not(inArray(postCore.slug, excludeSlugs)));
       }
       if (options?.tag) {
-        conditions.push(
+        baseConditions.push(
           sql`${postCore.id} IN (SELECT ${postTagMappings.postId} FROM ${postTagMappings} INNER JOIN ${postTags} ON ${postTagMappings.tagId} = ${postTags.id} WHERE ${postTags.slug} = ${options.tag})`,
         );
       }
       if (options?.category) {
-        conditions.push(
+        baseConditions.push(
           sql`${postCore.id} IN (SELECT ${postCategoryMappings.postId} FROM ${postCategoryMappings} INNER JOIN ${postCategories} ON ${postCategoryMappings.categoryId} = ${postCategories.id} WHERE ${postCategories.slug} = ${options.category})`,
         );
       }
       if (options?.author) {
-        conditions.push(
+        baseConditions.push(
           sql`${postCore.userId} IN (SELECT ${users.id} FROM ${users} WHERE ${users.username} = ${options.author})`,
+        );
+      }
+
+      const listConditions = [...baseConditions];
+      if (cursor) {
+        listConditions.push(
+          or(
+            lt(postCore.createdAt, cursor.createdAt),
+            and(eq(postCore.createdAt, cursor.createdAt), lt(postCore.id, cursor.id)),
+          ) as any,
         );
       }
 
       const [totalResult] = await this.db
         .select({ total: count() })
         .from(postCore)
-        .where(and(...conditions));
+        .where(and(...baseConditions));
       const total = totalResult.total;
 
-      const result: any[] = await this.db
+      const rows: any[] = await this.db
         .select()
         .from(postCore)
         .leftJoin(users, eq(postCore.userId, users.id))
         .leftJoin(postContent, eq(postCore.id, postContent.postId))
         .leftJoin(postStats, eq(postCore.id, postStats.postId))
-        .where(and(...conditions))
-        .orderBy(desc(postCore.createdAt))
-        .limit(pageSize)
-        .offset(computeOffset({ page, pageSize }));
+        .where(and(...listConditions))
+        .orderBy(desc(postCore.createdAt), desc(postCore.id))
+        .limit(pageSize + 1)
+        .offset(cursor ? 0 : computeOffset({ page, pageSize }));
+      const hasMore = rows.length > pageSize;
+      const pageRows = rows.slice(0, pageSize);
+      const nextCursor = hasMore && pageRows.length
+        ? encodePostCursor(pageRows[pageRows.length - 1].postCore.createdAt, pageRows[pageRows.length - 1].postCore.id)
+        : null;
+
       return {
-        list: result.map((r) =>
+        list: pageRows.map((r) =>
           mapToPostListEntity(r.postCore, r.postContent, r.postStats, r.users),
         ),
         total,
+        nextCursor,
       };
     });
   }

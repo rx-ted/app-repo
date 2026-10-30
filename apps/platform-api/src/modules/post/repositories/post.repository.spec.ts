@@ -127,7 +127,7 @@ describe('PostRepository', () => {
 
       const result = await repo.list(1, DEFAULTS.PAGE_SIZE);
 
-      expect(result).toEqual({ list: [], total: 0 });
+      expect(result).toEqual({ list: [], total: 0, nextCursor: null });
     });
 
     it('should filter by keyword', async () => {

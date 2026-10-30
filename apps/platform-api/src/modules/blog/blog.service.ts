@@ -5,7 +5,7 @@ import { CacheService, cacheable } from '@rx-ted/packages-honest-plugins/cache';
 import { getUptimeMs } from '@/modules/system/system-info.service';
 import { computeOffset } from '@/common/utils/pagination';
 import { StatsBufferService } from '@/modules/post-stats/stats-buffer.service';
-import { postCore, postStats, users, postTags, postCategories } from '@/schema';
+import { postCore, postStats, users, postTags } from '@/schema';
 import type {
   BlogHomeResponse,
   BlogSearchResponse,
@@ -91,12 +91,16 @@ export class BlogService {
 
   private async getHomeBase(lang?: BlogLang): Promise<BlogHomeResponse> {
     return cacheable(this.cache, CACHE_KEYS.blogHome(lang), 60, async () => {
-      const [postCountResult] = await this.db
-        .select({ total: count() })
-        .from(postCore)
-        .where(eq(postCore.status, 'published'));
-      const [tagCountResult] = await this.db.select({ total: count() }).from(postTags);
-      const [catCountResult] = await this.db.select({ total: count() }).from(postCategories);
+      const [aggregateResult] = await this.db
+        .select({
+          postCount: sql<number>`(SELECT COUNT(*) FROM postCore WHERE status = 'published')`,
+          tagCount: sql<number>`(SELECT COUNT(*) FROM postTags)`,
+          categoryCount: sql<number>`(SELECT COUNT(*) FROM postCategories)`,
+          totalViews: sql<number>`COALESCE((SELECT SUM(ps.viewCount) FROM postStats ps INNER JOIN postCore pc ON pc.id = ps.postId WHERE pc.status = 'published'), 0)`,
+          totalLikes: sql<number>`COALESCE((SELECT SUM(ps.likeCount) FROM postStats ps INNER JOIN postCore pc ON pc.id = ps.postId WHERE pc.status = 'published'), 0)`,
+          totalComments: sql<number>`COALESCE((SELECT SUM(ps.commentCount) FROM postStats ps INNER JOIN postCore pc ON pc.id = ps.postId WHERE pc.status = 'published'), 0)`,
+        })
+        .from(sql`(SELECT 1) AS one`);
 
       const featuredRows: any[] = await this.db
         .select()
@@ -124,22 +128,6 @@ export class BlogService {
         .where(and(eq(postCore.status, 'published'), eq(postCore.isPinned, true)))
         .orderBy(desc(postCore.featuredWeight), desc(postCore.createdAt))
         .limit(PINNED_QUERY_LIMIT);
-
-      const [viewsResult] = await this.db
-        .select({ total: sql<number>`COALESCE(SUM(${postStats.viewCount}), 0)` })
-        .from(postStats)
-        .innerJoin(postCore, eq(postCore.id, postStats.postId))
-        .where(eq(postCore.status, 'published'));
-      const [likesResult] = await this.db
-        .select({ total: sql<number>`COALESCE(SUM(${postStats.likeCount}), 0)` })
-        .from(postStats)
-        .innerJoin(postCore, eq(postCore.id, postStats.postId))
-        .where(eq(postCore.status, 'published'));
-      const [commentsResult] = await this.db
-        .select({ total: sql<number>`COALESCE(SUM(${postStats.commentCount}), 0)` })
-        .from(postStats)
-        .innerJoin(postCore, eq(postCore.id, postStats.postId))
-        .where(eq(postCore.status, 'published'));
 
       const trendingTagRows = await this.db
         .select({ name: postTags.name, usageCount: postTags.usageCount })
@@ -171,12 +159,12 @@ export class BlogService {
           title: '可扩展全栈博客系统',
           description: '围绕内容、认证、权限、缓存与搜索能力构建的全栈博客平台。',
           stats: {
-            posts: postCountResult.total,
-            tags: tagCountResult.total,
-            categories: catCountResult.total,
-            totalViews: Number(viewsResult.total),
-            totalLikes: Number(likesResult.total),
-            totalComments: Number(commentsResult.total),
+            posts: Number(aggregateResult?.postCount ?? 0),
+            tags: Number(aggregateResult?.tagCount ?? 0),
+            categories: Number(aggregateResult?.categoryCount ?? 0),
+            totalViews: Number(aggregateResult?.totalViews ?? 0),
+            totalLikes: Number(aggregateResult?.totalLikes ?? 0),
+            totalComments: Number(aggregateResult?.totalComments ?? 0),
             runtime: formatUptime(getUptimeMs()),
           },
         },

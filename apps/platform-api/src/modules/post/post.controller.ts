@@ -46,6 +46,7 @@ class PostController {
           schema: z.object({
             list: z.array(PostListEntitySchema),
             total: z.number(),
+            nextCursor: z.string().nullable().optional(),
           }),
         },
       },
@@ -59,13 +60,14 @@ class PostController {
     @Query('category') category?: string,
     @Query('author') author?: string,
     @Query('lang') lang?: 'en' | 'zh-CN',
+    @Query('cursor') cursor?: string,
   ) {
     return this.postService.list(
       page ? Math.max(1, Number(page)) : 1,
       pageSize
         ? Math.max(1, Math.min(DEFAULTS.MAX_PAGE_SIZE, Number(pageSize)))
         : DEFAULTS.PAGE_SIZE,
-      { keyword, tag, category, author, lang },
+      { keyword, tag, category, author, lang, cursor },
     );
   }
 

@@ -31,6 +31,7 @@ export const PostListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(10),
   lang: z.enum(['en', 'zh-CN']).optional(),
+  cursor: z.string().optional(),
 });
 
 export type CreatePostInput = z.infer<typeof CreatePostSchema>;
