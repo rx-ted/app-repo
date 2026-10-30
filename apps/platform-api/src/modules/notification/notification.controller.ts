@@ -1,4 +1,5 @@
-import { Controller, Get, Inject, Param, Post, UseGuards } from '@rx-ted/packages-honest';
+import { Controller, Ctx, Get, Inject, Param, Post, UseGuards } from '@rx-ted/packages-honest';
+import type { Context } from 'hono';
 import { z } from '@/lib/openapi';
 import { AuthGuard } from '@/common/guards';
 import {
@@ -6,6 +7,10 @@ import {
   NotificationSummaryResponseSchema,
 } from '@/modules/notification/dtos/notification.response.dto';
 import NotificationService from '@/modules/notification/notification.service';
+
+function getUserId(c: Context): string {
+  return (c.get('user') as { userId: string }).userId;
+}
 
 @UseGuards(AuthGuard)
 @Controller('notification', {
@@ -28,8 +33,8 @@ export class NotificationController {
       },
     },
   })
-  async listMine() {
-    return this.notificationService.listMine();
+  async listMine(@Ctx() c: Context) {
+    return this.notificationService.listMine(getUserId(c));
   }
 
   @Get('me/summary', {
@@ -44,8 +49,8 @@ export class NotificationController {
       },
     },
   })
-  async getSummary() {
-    return this.notificationService.getSummary();
+  async getSummary(@Ctx() c: Context) {
+    return this.notificationService.getSummary(getUserId(c));
   }
 
   @Post('read-all', {
@@ -60,8 +65,8 @@ export class NotificationController {
       },
     },
   })
-  async markAllRead() {
-    return this.notificationService.markAllRead();
+  async markAllRead(@Ctx() c: Context) {
+    return this.notificationService.markAllRead(getUserId(c));
   }
 
   @Post(':id/read', {
@@ -79,8 +84,8 @@ export class NotificationController {
       },
     },
   })
-  async markRead(@Param('id') id: string) {
-    return this.notificationService.markRead(Number(id));
+  async markRead(@Param('id') id: string, @Ctx() c: Context) {
+    return this.notificationService.markRead(getUserId(c), Number(id));
   }
 }
 

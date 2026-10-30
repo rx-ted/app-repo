@@ -86,9 +86,9 @@ describe('NotificationService (integration)', () => {
       const rows = [makeNotification({ id: 1 }), makeNotification({ id: 2, title: 'Second' })];
       db.select.mockReturnValue(makeSelectChain(rows));
 
-      const result = await service.listMine();
+      const result = await service.listMine('user-1');
 
-      expect(cache.get).toHaveBeenCalledWith('notifications:list');
+      expect(cache.get).toHaveBeenCalledWith('notifications:list:user-1');
       expect(db.select).toHaveBeenCalled();
       expect(result).toHaveLength(2);
       expect(result[0].id).toBe('1');
@@ -108,9 +108,9 @@ describe('NotificationService (integration)', () => {
       ];
       cache.get.mockResolvedValue(cached);
 
-      const result = await service.listMine();
+      const result = await service.listMine('user-1');
 
-      expect(cache.get).toHaveBeenCalledWith('notifications:list');
+      expect(cache.get).toHaveBeenCalledWith('notifications:list:user-1');
       expect(db.select).not.toHaveBeenCalled();
       expect(result).toEqual(cached);
     });
@@ -120,10 +120,10 @@ describe('NotificationService (integration)', () => {
       const row = makeNotification();
       db.select.mockReturnValue(makeSelectChain([row]));
 
-      await service.listMine();
+      await service.listMine('user-1');
 
       expect(cache.set).toHaveBeenCalledWith(
-        'notifications:list',
+        'notifications:list:user-1',
         expect.arrayContaining([expect.objectContaining({ id: '1' })]),
         60,
       );
@@ -133,7 +133,7 @@ describe('NotificationService (integration)', () => {
       cache.get.mockResolvedValue(null);
       db.select.mockReturnValue(makeSelectChain([]));
 
-      const result = await service.listMine();
+      const result = await service.listMine('user-1');
 
       expect(result).toEqual([]);
     });
@@ -151,7 +151,7 @@ describe('NotificationService (integration)', () => {
           ]),
         );
 
-      const result = await service.getSummary();
+      const result = await service.getSummary('user-1');
 
       expect(result.unreadCount).toBe(3);
       expect(result.recent).toHaveLength(2);
@@ -163,7 +163,7 @@ describe('NotificationService (integration)', () => {
         .mockReturnValueOnce(makeSelectChain([{ value: null }]))
         .mockReturnValueOnce(makeSelectChain([]));
 
-      const result = await service.getSummary();
+      const result = await service.getSummary('user-1');
 
       expect(result.unreadCount).toBe(0);
       expect(result.recent).toEqual([]);
@@ -174,18 +174,18 @@ describe('NotificationService (integration)', () => {
     it('should update all unread notifications and clear cache', async () => {
       db.update.mockReturnValue(makeUpdateChain([{ affectedRows: 5 }]));
 
-      const result = await service.markAllRead();
+      const result = await service.markAllRead('user-1');
 
       expect(db.update).toHaveBeenCalled();
-      expect(cache.delete).toHaveBeenCalledWith('notifications:list');
-      expect(cache.delete).toHaveBeenCalledWith('notifications:summary');
+      expect(cache.delete).toHaveBeenCalledWith('notifications:list:user-1');
+      expect(cache.delete).toHaveBeenCalledWith('notifications:summary:user-1');
       expect(result.affectedRows).toBe(5);
     });
 
     it('should return 0 affected rows when none updated', async () => {
       db.update.mockReturnValue(makeUpdateChain([{ affectedRows: 0 }]));
 
-      const result = await service.markAllRead();
+      const result = await service.markAllRead('user-1');
 
       expect(result.affectedRows).toBe(0);
     });
@@ -195,11 +195,11 @@ describe('NotificationService (integration)', () => {
     it('should mark specific notification as read and clear cache', async () => {
       db.update.mockReturnValue(makeUpdateChain([{ affectedRows: 1 }]));
 
-      const result = await service.markRead(42);
+      const result = await service.markRead('user-1', 42);
 
       expect(db.update).toHaveBeenCalled();
-      expect(cache.delete).toHaveBeenCalledWith('notifications:list');
-      expect(cache.delete).toHaveBeenCalledWith('notifications:summary');
+      expect(cache.delete).toHaveBeenCalledWith('notifications:list:user-1');
+      expect(cache.delete).toHaveBeenCalledWith('notifications:summary:user-1');
       expect(result.affectedRows).toBe(1);
     });
   });
