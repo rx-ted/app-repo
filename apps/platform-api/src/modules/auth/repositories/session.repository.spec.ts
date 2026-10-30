@@ -6,6 +6,8 @@ const mockCache = {
   get: vi.fn(),
   set: vi.fn(),
   delete: vi.fn(),
+  incr: vi.fn().mockResolvedValue(1),
+  expire: vi.fn().mockResolvedValue(true),
 };
 
 describe('SessionRepository', () => {

@@ -116,6 +116,11 @@ class SessionManagerService {
       });
     }
 
+    const acquired = await this.sessionRepo.tryAcquireRefreshLock(tokenHash);
+    if (!acquired) {
+      throw new HTTPException(429, { message: 'Concurrent refresh token rotation detected' });
+    }
+
     const newRefresh = generateRefreshToken();
     const now = new Date().toISOString();
 

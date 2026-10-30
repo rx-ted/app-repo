@@ -47,6 +47,7 @@ const mockSessionRepo = {
   getRefreshTokenHash: vi.fn(),
   getCurrentHashIndex: vi.fn(),
   deleteHashKey: vi.fn(),
+  tryAcquireRefreshLock: vi.fn().mockResolvedValue(true),
 };
 
 const mockCache = {

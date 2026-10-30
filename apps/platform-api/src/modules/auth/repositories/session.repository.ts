@@ -152,6 +152,18 @@ class SessionRepository {
     session.lastActiveAt = new Date().toISOString();
     await this.cache.set(`session:${sessionId}`, session, AUTH.SESSION_TTL_SECONDS);
   }
+
+  async tryAcquireRefreshLock(tokenHash: string): Promise<boolean> {
+    const key = `refresh-lock:${tokenHash}`;
+    if (typeof this.cache.incr !== 'function') {
+      return true;
+    }
+    const count = await this.cache.incr(key);
+    if (count === 1 && typeof this.cache.expire === 'function') {
+      await this.cache.expire(key, 10);
+    }
+    return count === 1;
+  }
 }
 
 export { SessionRepository };
