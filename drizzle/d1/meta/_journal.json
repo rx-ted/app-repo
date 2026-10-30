@@ -22,6 +22,20 @@
       "when": 1793349817820,
       "tag": "0002_blog_aggregates",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1793352580802,
+      "tag": "0003_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1793352675800,
+      "tag": "0004_outbox_events",
+      "breakpoints": true
     }
   ]
 }
