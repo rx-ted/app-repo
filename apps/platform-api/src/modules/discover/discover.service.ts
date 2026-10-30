@@ -1,7 +1,7 @@
 import { Inject, Service } from '@rx-ted/packages-honest';
 import { eq, asc, or } from 'drizzle-orm';
 import { DbService } from '@rx-ted/packages-honest-plugins/db';
-import { CacheService, cacheable } from '@rx-ted/packages-honest-plugins/cache';
+import { CacheService } from '@rx-ted/packages-honest-plugins/cache';
 import { HTTPException } from 'hono/http-exception';
 import { discoveries } from '@/schema';
 
@@ -13,7 +13,8 @@ import { AUTH } from '@/constants/auth';
 
 const DISCOVERIES_ACTIVE_KEY = 'discoveries:active';
 const DISCOVERIES_ALL_KEY = 'discoveries:all';
-const DISCOVERIES_TTL = 300;
+const DISCOVERIES_TTL = 600;
+const DISCOVERIES_NEGATIVE_TTL = 60;
 
 function mapRow(row: typeof discoveries.$inferSelect): DiscoveryEntity {
   return {
@@ -35,25 +36,63 @@ function mapRow(row: typeof discoveries.$inferSelect): DiscoveryEntity {
 
 @Service()
 class DiscoverService {
+  private readonly inflights = new Map<string, Promise<DiscoveryEntity[]>>();
+
   constructor(
     @Inject(DbService) private db: DbService,
     @Inject(CacheService) private cache: CacheService,
     @Inject(MailService) private mailService: MailService,
   ) {}
 
+  private async loadDiscoveries(key: string): Promise<DiscoveryEntity[]> {
+    try {
+      const cached = await this.cache.get<DiscoveryEntity[]>(key);
+      if (cached !== null) return cached;
+    } catch {
+      // KV/read failure: fall through to DB instead of failing the request.
+    }
+
+    let promise = this.inflights.get(key);
+    if (!promise) {
+      promise = (async () => {
+        try {
+          const rows = await this.db
+            .select()
+            .from(discoveries)
+            .orderBy(asc(discoveries.sortOrder), asc(discoveries.createdAt));
+          const mapped = rows.map((r) => mapRow(r));
+          try {
+            await this.cache.set(
+              key,
+              mapped,
+              mapped.length ? DISCOVERIES_TTL : DISCOVERIES_NEGATIVE_TTL,
+            );
+          } catch {
+            // KV/write failure should not fail the request.
+          }
+          return mapped;
+        } finally {
+          this.inflights.delete(key);
+        }
+      })();
+      this.inflights.set(key, promise);
+    }
+
+    try {
+      return await promise;
+    } catch (error) {
+      try {
+        const cached = await this.cache.get<DiscoveryEntity[]>(key);
+        if (cached !== null) return cached;
+      } catch {
+        // ignore
+      }
+      throw error;
+    }
+  }
+
   async listActive(category?: string, status?: string) {
-    const list = await cacheable<DiscoveryEntity[]>(
-      this.cache,
-      DISCOVERIES_ACTIVE_KEY,
-      DISCOVERIES_TTL,
-      async () => {
-        const rows = await this.db
-          .select()
-          .from(discoveries)
-          .orderBy(asc(discoveries.sortOrder), asc(discoveries.createdAt));
-        return rows.map((r) => mapRow(r));
-      },
-    );
+    const list = await this.loadDiscoveries(DISCOVERIES_ACTIVE_KEY);
 
     let filtered = list;
     if (category) filtered = filtered.filter((l) => l.category === category);
@@ -63,18 +102,7 @@ class DiscoverService {
   }
 
   async listAll(status?: string, category?: string) {
-    const list = await cacheable<DiscoveryEntity[]>(
-      this.cache,
-      DISCOVERIES_ALL_KEY,
-      DISCOVERIES_TTL,
-      async () => {
-        const rows = await this.db
-          .select()
-          .from(discoveries)
-          .orderBy(asc(discoveries.sortOrder), asc(discoveries.createdAt));
-        return rows.map((r) => mapRow(r));
-      },
-    );
+    const list = await this.loadDiscoveries(DISCOVERIES_ALL_KEY);
 
     let filtered = list;
     if (status) filtered = filtered.filter((l) => l.status === status);
