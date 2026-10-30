@@ -1,5 +1,5 @@
 import { Inject, Service } from '@rx-ted/packages-honest';
-import { eq, desc, and, like, count, gt, sql } from 'drizzle-orm';
+import { eq, desc, and, like, count, gt, notInArray, sql } from 'drizzle-orm';
 import { DbService } from '@rx-ted/packages-honest-plugins/db';
 import { CacheService, cacheable } from '@rx-ted/packages-honest-plugins/cache';
 import { getUptimeMs } from '@/modules/system/system-info.service';
@@ -202,7 +202,8 @@ export class BlogService {
   }): Promise<BlogSearchResponse> {
     const page = params.page ?? 1;
     const pageSize = params.pageSize ?? 10;
-    const cacheKey = `blog:search:${params.keyword ?? ''}:${page}:${pageSize}`;
+    const excludeSlugs = [...new Set(params.excludeSlugs ?? [])].sort();
+    const cacheKey = `blog:search:${params.keyword ?? ''}:${params.tag ?? ''}:${params.category ?? ''}:${params.author ?? ''}:${excludeSlugs.join(',')}:${page}:${pageSize}`;
 
     return cacheable(this.cache, cacheKey, 60, async () => {
       const conditions = [eq(postCore.status, 'published')];
@@ -210,8 +211,8 @@ export class BlogService {
       if (params.keyword) {
         conditions.push(like(postCore.title, `%${params.keyword}%`));
       }
-      if (params.excludeSlugs?.length) {
-        conditions.push(sql`${postCore.slug} NOT IN (${params.excludeSlugs.join(',')})`);
+      if (excludeSlugs.length) {
+        conditions.push(notInArray(postCore.slug, excludeSlugs));
       }
 
       let query = this.db

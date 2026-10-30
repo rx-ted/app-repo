@@ -129,7 +129,8 @@ class PostRepository {
       excludeSlugs?: string[];
     },
   ): Promise<{ list: PostListEntity[]; total: number }> {
-    const cacheKey = `post:list:${page}:${pageSize}:${options?.keyword ?? ''}:${options?.tag ?? ''}:${options?.category ?? ''}:${options?.author ?? ''}:${options?.lang ?? ''}`;
+    const excludeSlugs = [...new Set(options?.excludeSlugs ?? [])].sort();
+    const cacheKey = `post:list:${page}:${pageSize}:${options?.keyword ?? ''}:${options?.tag ?? ''}:${options?.category ?? ''}:${options?.author ?? ''}:${options?.lang ?? ''}:${excludeSlugs.join(',')}`;
     return cacheable(this.cache, cacheKey, 60, async () => {
       const conditions: ReturnType<typeof eq>[] = [eq(postCore.status, 'published')];
 
@@ -142,8 +143,8 @@ class PostRepository {
       if (options?.keyword) {
         conditions.push(like(postCore.title, `%${options.keyword}%`));
       }
-      if (options?.excludeSlugs?.length) {
-        conditions.push(not(inArray(postCore.slug, options.excludeSlugs)));
+      if (excludeSlugs.length) {
+        conditions.push(not(inArray(postCore.slug, excludeSlugs)));
       }
       if (options?.tag) {
         conditions.push(
@@ -269,71 +270,120 @@ class PostRepository {
     });
   }
 
-  async create(data: Omit<PostEntity, 'id' | 'createdAt' | 'updatedAt'>): Promise<PostEntity> {
+  async create(
+    data: Omit<PostEntity, 'id' | 'createdAt' | 'updatedAt'> & {
+      tagIds?: number[];
+      categoryIds?: number[];
+    },
+  ): Promise<PostEntity> {
     const now = new Date();
-    await this.db.insert(postCore).values({
-      userId: data.authorId,
-      slug: data.slug,
-      title: data.title,
-      coverImage: data.coverImage ?? null,
-      isPinned: data.isPinned ?? false,
-      featuredWeight: data.featuredWeight ?? 0,
-      status: data.status ?? 'draft',
-      visibility: data.visibility ?? 'public',
-      allowComment: data.allowComment ?? true,
-      createdAt: now,
-      updatedAt: now,
-      publishedAt: data.status === 'published' ? now : null,
-      createdBy: data.createdBy,
-      updatedBy: data.updatedBy,
+    let createdId!: number;
+
+    const runTransaction =
+      typeof this.db.transaction === 'function'
+        ? this.db.transaction.bind(this.db)
+        : async (fn: (tx: any) => Promise<void>) => fn(this.db);
+    await runTransaction(async (tx: any) => {
+      await tx.insert(postCore).values({
+        userId: data.authorId,
+        slug: data.slug,
+        title: data.title,
+        coverImage: data.coverImage ?? null,
+        isPinned: data.isPinned ?? false,
+        featuredWeight: data.featuredWeight ?? 0,
+        status: data.status ?? 'draft',
+        visibility: data.visibility ?? 'public',
+        allowComment: data.allowComment ?? true,
+        createdAt: now,
+        updatedAt: now,
+        publishedAt: data.status === 'published' ? now : null,
+        createdBy: data.createdBy,
+        updatedBy: data.updatedBy,
+      });
+
+      const [created] = await tx
+        .select()
+        .from(postCore)
+        .where(eq(postCore.slug, data.slug))
+        .limit(1);
+      if (!created) throw new Error('Failed to create post');
+      createdId = Number(created.id);
+
+      if (data.contentMd) {
+        await tx.insert(postContent).values({
+          postId: created.id,
+          contentMd: data.contentMd,
+        });
+      }
+
+      if (data.tagIds?.length) {
+        await tx
+          .insert(postTagMappings)
+          .values(data.tagIds.map((tagId) => ({ postId: created.id, tagId })));
+      }
+      if (data.categoryIds?.length) {
+        await tx
+          .insert(postCategoryMappings)
+          .values(data.categoryIds.map((categoryId) => ({ postId: created.id, categoryId })));
+      }
     });
 
-    const [created] = await this.db
-      .select()
-      .from(postCore)
-      .where(eq(postCore.slug, data.slug))
-      .limit(1);
-    if (!created) throw new Error('Failed to create post');
-
-    if (data.contentMd) {
-      await this.db.insert(postContent).values({
-        postId: created.id,
-        contentMd: data.contentMd,
-      });
-    }
-
     await this.cacheInvalidator.invalidatePostRelated(data.slug);
-    return (await this.findById(String(created.id)))!;
+    return (await this.findById(String(createdId)))!;
   }
 
-  async update(slug: string, data: Partial<PostEntity>): Promise<PostEntity | null> {
+  async update(
+    slug: string,
+    data: Partial<PostEntity> & { tagIds?: number[]; categoryIds?: number[] },
+  ): Promise<PostEntity | null> {
     const existing = await this.db.select().from(postCore).where(eq(postCore.slug, slug)).limit(1);
     if (!existing.length) return null;
 
+    const postId = existing[0].id;
     const updateData: Record<string, unknown> = { updatedAt: new Date() };
     if (data.title !== undefined) updateData.title = data.title;
     if (data.status !== undefined) updateData.status = data.status;
     if (data.updatedBy !== undefined) updateData.updatedBy = data.updatedBy;
 
-    await this.db.update(postCore).set(updateData).where(eq(postCore.slug, slug));
+    const runTransaction =
+      typeof this.db.transaction === 'function'
+        ? this.db.transaction.bind(this.db)
+        : async (fn: (tx: any) => Promise<void>) => fn(this.db);
+    await runTransaction(async (tx: any) => {
+      await tx.update(postCore).set(updateData).where(eq(postCore.slug, slug));
 
-    if (data.contentMd !== undefined) {
-      const existingContent = await this.db
-        .select()
-        .from(postContent)
-        .where(eq(postContent.postId, existing[0].id))
-        .limit(1);
-      if (existingContent.length) {
-        await this.db
-          .update(postContent)
-          .set({ contentMd: data.contentMd })
-          .where(eq(postContent.postId, existing[0].id));
-      } else {
-        await this.db
-          .insert(postContent)
-          .values({ postId: existing[0].id, contentMd: data.contentMd });
+      if (data.contentMd !== undefined) {
+        const existingContent = await tx
+          .select()
+          .from(postContent)
+          .where(eq(postContent.postId, postId))
+          .limit(1);
+        if (existingContent.length) {
+          await tx
+            .update(postContent)
+            .set({ contentMd: data.contentMd })
+            .where(eq(postContent.postId, postId));
+        } else {
+          await tx.insert(postContent).values({ postId, contentMd: data.contentMd });
+        }
       }
-    }
+
+      if (data.tagIds !== undefined) {
+        await tx.delete(postTagMappings).where(eq(postTagMappings.postId, postId));
+        if (data.tagIds.length) {
+          await tx.insert(postTagMappings).values(data.tagIds.map((tagId) => ({ postId, tagId })));
+        }
+      }
+
+      if (data.categoryIds !== undefined) {
+        await tx.delete(postCategoryMappings).where(eq(postCategoryMappings.postId, postId));
+        if (data.categoryIds.length) {
+          await tx
+            .insert(postCategoryMappings)
+            .values(data.categoryIds.map((categoryId) => ({ postId, categoryId })));
+        }
+      }
+    });
 
     await this.cacheInvalidator.invalidatePostRelated(slug);
     return this.findBySlug(slug);

@@ -231,7 +231,7 @@ class PostService {
       slug = `${slug}-${Date.now()}`;
     }
 
-    const created = await this.postRepo.create({
+    await this.postRepo.create({
       title: resolvedTitle,
       slug,
       lang: slug.endsWith('.zh') ? 'zh-CN' : 'en',
@@ -258,19 +258,9 @@ class PostService {
       publishedAt: input.status === 'published' ? new Date().toISOString() : null,
       createdBy: input.createdBy,
       updatedBy: input.updatedBy,
+      tagIds: input.tagIds,
+      categoryIds: input.categoryIds,
     });
-
-    const postId = Number(created.id);
-    if (input.tagIds?.length) {
-      await this.db
-        .insert(postTagMappings)
-        .values(input.tagIds.map((tagId) => ({ postId, tagId })));
-    }
-    if (input.categoryIds?.length) {
-      await this.db
-        .insert(postCategoryMappings)
-        .values(input.categoryIds.map((categoryId) => ({ postId, categoryId })));
-    }
 
     return { slug };
   }
@@ -285,28 +275,12 @@ class PostService {
       updatedBy: string | null;
     }>,
   ) {
-    const post = await this.postRepo.update(slug, input);
+    const post = await this.postRepo.update(slug, {
+      ...input,
+      tagIds: input.tagIds,
+      categoryIds: input.categoryIds,
+    });
     if (!post) return null;
-
-    if (input.tagIds !== undefined) {
-      await this.db.delete(postTagMappings).where(eq(postTagMappings.postId, Number(post.id)));
-      if (input.tagIds.length) {
-        await this.db
-          .insert(postTagMappings)
-          .values(input.tagIds.map((tagId) => ({ postId: Number(post.id), tagId })));
-      }
-    }
-
-    if (input.categoryIds !== undefined) {
-      await this.db
-        .delete(postCategoryMappings)
-        .where(eq(postCategoryMappings.postId, Number(post.id)));
-      if (input.categoryIds.length) {
-        await this.db
-          .insert(postCategoryMappings)
-          .values(input.categoryIds.map((categoryId) => ({ postId: Number(post.id), categoryId })));
-      }
-    }
 
     return PostMapper.toMutationResponse(1);
   }
