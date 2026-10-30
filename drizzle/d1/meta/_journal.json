@@ -15,6 +15,13 @@
       "when": 1793348953152,
       "tag": "0001_performance_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793349817820,
+      "tag": "0002_blog_aggregates",
+      "breakpoints": true
     }
   ]
 }

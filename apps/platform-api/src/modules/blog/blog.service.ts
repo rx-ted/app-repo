@@ -5,7 +5,7 @@ import { CacheService, cacheable } from '@rx-ted/packages-honest-plugins/cache';
 import { getUptimeMs } from '@/modules/system/system-info.service';
 import { computeOffset } from '@/common/utils/pagination';
 import { StatsBufferService } from '@/modules/post-stats/stats-buffer.service';
-import { postCore, postStats, users, postTags } from '@/schema';
+import { postCore, postStats, users, postTags, blogAggregates } from '@/schema';
 import type {
   BlogHomeResponse,
   BlogSearchResponse,
@@ -89,18 +89,70 @@ export class BlogService {
     };
   }
 
+  private toAggregateDate(value: unknown): Date {
+    if (value instanceof Date) return value;
+    return new Date(String(value));
+  }
+
+  private async computeBlogAggregates() {
+    const [result] = await this.db
+      .select({
+        postCount: sql<number>`(SELECT COUNT(*) FROM postCore WHERE status = 'published')`,
+        tagCount: sql<number>`(SELECT COUNT(*) FROM postTags)`,
+        categoryCount: sql<number>`(SELECT COUNT(*) FROM postCategories)`,
+        totalViews: sql<number>`COALESCE((SELECT SUM(ps.viewCount) FROM postStats ps INNER JOIN postCore pc ON pc.id = ps.postId WHERE pc.status = 'published'), 0)`,
+        totalLikes: sql<number>`COALESCE((SELECT SUM(ps.likeCount) FROM postStats ps INNER JOIN postCore pc ON pc.id = ps.postId WHERE pc.status = 'published'), 0)`,
+        totalComments: sql<number>`COALESCE((SELECT SUM(ps.commentCount) FROM postStats ps INNER JOIN postCore pc ON pc.id = ps.postId WHERE pc.status = 'published'), 0)`,
+      })
+      .from(sql`(SELECT 1) AS one`);
+
+    const now = new Date();
+    const values = {
+      publishedPostCount: Number(result?.postCount ?? 0),
+      tagCount: Number(result?.tagCount ?? 0),
+      categoryCount: Number(result?.categoryCount ?? 0),
+      totalViews: Number(result?.totalViews ?? 0),
+      totalLikes: Number(result?.totalLikes ?? 0),
+      totalComments: Number(result?.totalComments ?? 0),
+      updatedAt: now,
+    };
+
+    const [existing] = await this.db.select().from(blogAggregates).limit(1);
+    if (existing) {
+      await this.db
+        .update(blogAggregates)
+        .set({
+          publishedPostCount: values.publishedPostCount,
+          tagCount: values.tagCount,
+          categoryCount: values.categoryCount,
+          totalViews: values.totalViews,
+          totalLikes: values.totalLikes,
+          totalComments: values.totalComments,
+          updatedAt: values.updatedAt,
+        })
+        .where(eq(blogAggregates.id, existing.id));
+    } else {
+      await this.db.insert(blogAggregates).values(values);
+    }
+
+    return { ...values, id: existing?.id ?? 1 };
+  }
+
+  private async getBlogAggregates() {
+    const [existing] = await this.db.select().from(blogAggregates).limit(1);
+    if (existing) {
+      const ageMs = Date.now() - this.toAggregateDate(existing.updatedAt).getTime();
+      if (ageMs < 5 * 60 * 1000) {
+        return existing;
+      }
+    }
+
+    return this.computeBlogAggregates();
+  }
+
   private async getHomeBase(lang?: BlogLang): Promise<BlogHomeResponse> {
     return cacheable(this.cache, CACHE_KEYS.blogHome(lang), 60, async () => {
-      const [aggregateResult] = await this.db
-        .select({
-          postCount: sql<number>`(SELECT COUNT(*) FROM postCore WHERE status = 'published')`,
-          tagCount: sql<number>`(SELECT COUNT(*) FROM postTags)`,
-          categoryCount: sql<number>`(SELECT COUNT(*) FROM postCategories)`,
-          totalViews: sql<number>`COALESCE((SELECT SUM(ps.viewCount) FROM postStats ps INNER JOIN postCore pc ON pc.id = ps.postId WHERE pc.status = 'published'), 0)`,
-          totalLikes: sql<number>`COALESCE((SELECT SUM(ps.likeCount) FROM postStats ps INNER JOIN postCore pc ON pc.id = ps.postId WHERE pc.status = 'published'), 0)`,
-          totalComments: sql<number>`COALESCE((SELECT SUM(ps.commentCount) FROM postStats ps INNER JOIN postCore pc ON pc.id = ps.postId WHERE pc.status = 'published'), 0)`,
-        })
-        .from(sql`(SELECT 1) AS one`);
+      const aggregates = await this.getBlogAggregates();
 
       const featuredRows: any[] = await this.db
         .select()
@@ -159,12 +211,12 @@ export class BlogService {
           title: '可扩展全栈博客系统',
           description: '围绕内容、认证、权限、缓存与搜索能力构建的全栈博客平台。',
           stats: {
-            posts: Number(aggregateResult?.postCount ?? 0),
-            tags: Number(aggregateResult?.tagCount ?? 0),
-            categories: Number(aggregateResult?.categoryCount ?? 0),
-            totalViews: Number(aggregateResult?.totalViews ?? 0),
-            totalLikes: Number(aggregateResult?.totalLikes ?? 0),
-            totalComments: Number(aggregateResult?.totalComments ?? 0),
+            posts: aggregates.publishedPostCount,
+            tags: aggregates.tagCount,
+            categories: aggregates.categoryCount,
+            totalViews: aggregates.totalViews,
+            totalLikes: aggregates.totalLikes,
+            totalComments: aggregates.totalComments,
             runtime: formatUptime(getUptimeMs()),
           },
         },

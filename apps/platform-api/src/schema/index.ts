@@ -35,6 +35,7 @@ import { AuditLogsSchema } from '@/modules/audit/entities/audit.entity';
 import { AuthorStatsSchema } from '@/modules/author-stats/entities/author-stats.entity';
 import { AnnouncementsSchema } from '@/modules/announcement/entities/announcement.entity';
 import { DiscoveriesSchema } from '@/modules/discover/entities/discover.entity';
+import { BlogAggregatesSchema } from '@/modules/blog/entities/blog-aggregates.entity';
 import { SystemMetaSchema } from '@/modules/system/entities/system-meta.entity';
 const _compiled = compileSchema(dialect, {
   systemMeta: SystemMetaSchema,
@@ -66,6 +67,7 @@ const _compiled = compileSchema(dialect, {
   authorStats: AuthorStatsSchema,
   announcements: AnnouncementsSchema,
   discoveries: DiscoveriesSchema,
+  blogAggregates: BlogAggregatesSchema,
 });
 
 export const systemMeta = _compiled.systemMeta;
@@ -97,3 +99,4 @@ export const auditLogs = _compiled.auditLogs;
 export const authorStats = _compiled.authorStats;
 export const announcements = _compiled.announcements;
 export const discoveries = _compiled.discoveries;
+export const blogAggregates = _compiled.blogAggregates;
