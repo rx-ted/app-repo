@@ -11,6 +11,7 @@ import AuthorStatsModule from '@/modules/author-stats/author-stats.module';
 import BlogModule from '@/modules/blog/blog.module';
 
 import CategoryModule from '@/modules/category/category.module';
+import CommentMapModule from '@/modules/comment-map/comment-map.module';
 import CommentModule from '@/modules/comment/comment.module';
 
 import DiscoverModule from '@/modules/discover/discover.module';
@@ -51,6 +52,8 @@ import SearchModule from '@/modules/search/search.module';
 
     CategoryModule,
     CommentModule,
+
+    CommentMapModule,
 
     DiscoverModule,
 

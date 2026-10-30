@@ -33,6 +33,7 @@ import {
 import { NotificationsSchema } from '@/modules/notification/entities/notification.entity';
 import { AuditLogsSchema } from '@/modules/audit/entities/audit.entity';
 import { AuthorStatsSchema } from '@/modules/author-stats/entities/author-stats.entity';
+import { PostDiscussionMapSchema } from '@/modules/comment/entities/post-discussion-map.entity';
 import { OutboxEventsSchema } from '@/modules/outbox/entities/outbox.entity';
 import { SessionsSchema } from '@/modules/auth/entities/session.entity';
 import { AnnouncementsSchema } from '@/modules/announcement/entities/announcement.entity';
@@ -42,6 +43,7 @@ import { SystemMetaSchema } from '@/modules/system/entities/system-meta.entity';
 const _compiled = compileSchema(dialect, {
   outboxEvents: OutboxEventsSchema,
   sessions: SessionsSchema,
+  postDiscussionMaps: PostDiscussionMapSchema,
   systemMeta: SystemMetaSchema,
   users: UsersSchema,
   userAuth: UserAuthSchema,
@@ -77,6 +79,7 @@ const _compiled = compileSchema(dialect, {
 export const systemMeta = _compiled.systemMeta;
 export const sessions = _compiled.sessions;
 export const outboxEvents = _compiled.outboxEvents;
+export const postDiscussionMaps = _compiled.postDiscussionMaps;
 export const users = _compiled.users;
 export const userAuth = _compiled.userAuth;
 export const userProfiles = _compiled.userProfiles;
