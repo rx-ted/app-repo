@@ -2,6 +2,7 @@
 export { CACHE_GLOBAL_KEY, CacheService } from './cache-service';
 export type { CacheDriver } from './types';
 export { cacheable } from './cacheable';
+export { cacheableSWR } from './swr';
 
 // Auto-detect cache plugin (recommended)
 export { CachePlugin, findKvBinding, resolveBinding } from './resolve';
