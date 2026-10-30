@@ -1,13 +1,12 @@
 import { Controller, Get, Inject, Param, Post, Query, UseGuards } from '@rx-ted/packages-honest';
-import { AuthGuard, RolesGuard, PermissionsGuard } from '@/common/guards';
-import { Roles, Permissions } from '@/common/decorators';
-import { ROLES, PERMISSIONS } from '@/constants';
+import { AuthGuard, RolesGuard } from '@/common/guards';
+import { Roles } from '@/common/decorators';
+import { ROLES } from '@/constants';
 import OutboxService from '@/modules/outbox/outbox.service';
 import OutboxProcessorService from '@/modules/outbox/outbox-processor.service';
 
-@UseGuards(AuthGuard, RolesGuard, PermissionsGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Roles(ROLES.ADMIN)
-@Permissions(PERMISSIONS.AUDIT_ACCESS_ANY)
 @Controller('outbox', { tag: { name: 'Outbox', description: 'Outbox 事件管理' } })
 export class OutboxController {
   constructor(
