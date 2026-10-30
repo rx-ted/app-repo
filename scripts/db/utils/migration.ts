@@ -7,6 +7,32 @@ interface Journal {
   entries: { idx: number; tag: string }[];
 }
 
+function extractIndexNames(sql: string): string[] {
+  const indexes: string[] = [];
+  const re = /CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?`?(\w+)`?/gi;
+  let match;
+  while ((match = re.exec(sql)) !== null) {
+    indexes.push(match[1]);
+  }
+  return indexes;
+}
+
+async function indexExists(indexName: string): Promise<boolean> {
+  try {
+    const stdout = await execCapture("pnpm", [
+      "wrangler", "d1", "execute", "db", "--local", "--json",
+      `--command=SELECT count(*) AS cnt FROM sqlite_master WHERE type='index' AND name='${indexName}'`,
+    ]);
+    const match = stdout.match(/\[\s*\{/);
+    const jsonStart = match ? match.index : stdout.indexOf('[');
+    const parsed = JSON.parse(jsonStart >= 0 ? stdout.slice(jsonStart) : stdout);
+    const rows = Array.isArray(parsed) ? parsed[0]?.results : parsed?.results;
+    return (rows?.[0]?.cnt ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
 async function readJournal(migrationsDir: string): Promise<Journal> {
   const raw = await readFile(resolve(migrationsDir, "meta", "_journal.json"), "utf-8");
   return JSON.parse(raw) as Journal;
@@ -28,9 +54,11 @@ async function tableExists(tableName: string, db: string): Promise<boolean> {
       "wrangler", "d1", "execute", db, "--local", "--json",
       `--command=SELECT count(*) AS cnt FROM sqlite_master WHERE type='table' AND name='${tableName}'`,
     ]);
-    const parsed = JSON.parse(stdout);
+    const match = stdout.match(/\[\s*\{/);
+    const jsonStart = match ? match.index : stdout.indexOf('[');
+    const parsed = JSON.parse(jsonStart >= 0 ? stdout.slice(jsonStart) : stdout);
     const rows = Array.isArray(parsed) ? parsed[0]?.results : parsed?.results;
-    return rows?.[0]?.cnt > 0;
+    return (rows?.[0]?.cnt ?? 0) > 0;
   } catch {
     return false;
   }
@@ -51,19 +79,29 @@ export async function executeD1Migrations(migrationsDir: string, db: string = "d
   for (const entry of journal.entries) {
     const sql = await readFile(resolve(migrationsDir, `${entry.tag}.sql`), "utf-8");
     const tables = extractTableNames(sql);
-    if (tables.length === 0) break;
+    const indexes = extractIndexNames(sql);
+
+    if (tables.length === 0 && indexes.length === 0) break;
 
     let allExist = true;
     for (const t of tables) {
-      if (!(await tableExists(t, db))) {
+      const e = await tableExists(t, db);
+      if (!e) {
         allExist = false;
         break;
+      }
+    }
+    if (allExist) {
+      for (const idx of indexes) {
+        if (!(await indexExists(idx))) {
+          allExist = false;
+          break;
+        }
       }
     }
     if (!allExist) break;
     startIdx++;
   }
-
   const pending = journal.entries.slice(startIdx);
 
   if (pending.length === 0) {
