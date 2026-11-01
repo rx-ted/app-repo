@@ -4091,13 +4091,283 @@
     "/api/v1/hello": {
       "get": {
         "summary": "Say hello",
+        "description": "Returns a greeting message",
+        "tags": [
+          "Hello"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "query",
+            "required": false,
+            "description": "Username to greet",
+            "example": "world",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hello message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Greeting message",
+                      "example": "Hello, world!"
+                    },
+                    "status": {
+                      "type": "number",
+                      "description": "HTTP status code",
+                      "example": 200
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create hello resource",
+        "description": "Creates a greeting resource",
+        "tags": [
+          "Hello"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name to greet",
+                    "example": "world",
+                    "minLength": 1,
+                    "maxLength": 50
+                  },
+                  "repeat": {
+                    "type": "number",
+                    "description": "Repeat count",
+                    "example": 1,
+                    "minimum": 1,
+                    "maximum": 10
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Greeting message",
+                      "example": "Hello, world!"
+                    },
+                    "status": {
+                      "type": "number",
+                      "description": "HTTP status code",
+                      "example": 200
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload"
+          }
+        }
+      },
+      "options": {
+        "summary": "Hello options",
+        "description": "Allowed methods",
         "tags": [
           "Hello"
         ],
         "security": [],
         "responses": {
           "200": {
-            "description": "Hello message"
+            "description": "Allowed methods"
+          }
+        }
+      }
+    },
+    "/api/v1/hello/echo/{id}": {
+      "get": {
+        "summary": "Echo request metadata",
+        "description": "Demonstrates param/query/header decorators",
+        "tags": [
+          "Hello"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "x-trace-id",
+            "in": "header",
+            "required": false,
+            "description": "Trace id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "verbose",
+            "in": "query",
+            "required": false,
+            "description": "Verbose flag",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Resource id",
+            "example": 1,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Echo result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hello/{id}": {
+      "put": {
+        "summary": "Update hello resource",
+        "description": "Updates an existing greeting",
+        "tags": [
+          "Hello"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Resource id",
+            "example": 1,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name to greet",
+                    "example": "world",
+                    "minLength": 1,
+                    "maxLength": 50
+                  },
+                  "repeat": {
+                    "type": "number",
+                    "description": "Repeat count",
+                    "example": 1,
+                    "minimum": 1,
+                    "maximum": 10
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Greeting message",
+                      "example": "Hello, world!"
+                    },
+                    "status": {
+                      "type": "number",
+                      "description": "HTTP status code",
+                      "example": 200
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete hello resource",
+        "description": "Deletes a greeting",
+        "tags": [
+          "Hello"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Resource id",
+            "example": 1,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
           }
         }
       }
