@@ -46,7 +46,7 @@ export class GitHubAuthController {
     const cb = redirectUri ?? env.var('GITHUB_REDIRECT_URI', '') ?? '';
     const platformUsername = username ?? (user.username && user.username !== 'anonymous' ? user.username : undefined);
     const sessionId = (c.get('session_id') as string) ?? undefined;
-    return this.githubService.getAuthUrl(clientId, cb, platformUsername, source ?? 'github', redirect ?? '/', frontend, sessionId);
+    return await this.githubService.getAuthUrl(clientId, cb, platformUsername, source ?? 'github', redirect ?? '/', frontend, sessionId);
   }
 
   @Public()

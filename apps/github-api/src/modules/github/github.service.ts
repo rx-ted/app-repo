@@ -91,7 +91,7 @@ export class GitHubService {
     return normalizedAllowed.includes(normalizedCandidate) ? normalizedCandidate.replace(/^https?:\/\//, '') : fallback;
   }
 
-  getAuthUrl(
+  async getAuthUrl(
     clientId: string,
     redirectUri: string,
     username?: string,
@@ -99,11 +99,11 @@ export class GitHubService {
     redirect: string = '/',
     frontend?: string,
     sessionId?: string,
-  ): { url: string; state: string; source: string; redirect: string; frontend: string } {
+  ): Promise<{ url: string; state: string; source: string; redirect: string; frontend: string }> {
     const state = crypto.randomUUID();
     const resolvedFrontend = this.resolveFrontend(frontend, source);
-    // Store state -> optional username/session/source/redirect/frontend with short TTL.
-    void this.cache.set(this.stateKey(state), { username, sessionId, source, redirect, frontend: resolvedFrontend }, 600);
+    // Persist state before returning the authorization URL.
+    await this.cache.set(this.stateKey(state), { username, sessionId, source, redirect, frontend: resolvedFrontend }, 600);
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirectUri,
