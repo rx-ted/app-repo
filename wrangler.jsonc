@@ -26,7 +26,7 @@
 		"nodejs_compat"
 	],
 	"vars": {
-		"DEBUG": "false",
+		"DEBUG": "true",
 		"RATE_LIMIT_ENABLED": "true",
 		"MAIL_RESEND_FROM_EMAIL": "noreply@19981204.xyz",
 		"MAIL_RESEND_FROM_NAME": "noreply",
