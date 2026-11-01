@@ -32,7 +32,8 @@ import { CacheInvalidationService } from '@/modules/post/services/cache-invalida
 
 function encodePostCursor(createdAt: Date | string, id: number): string | null {
   try {
-    const iso = createdAt instanceof Date ? createdAt.toISOString() : new Date(createdAt).toISOString();
+    const iso =
+      createdAt instanceof Date ? createdAt.toISOString() : new Date(createdAt).toISOString();
     return btoa(`${iso}|${id}`);
   } catch {
     return null;
@@ -218,9 +219,13 @@ class PostRepository {
         .offset(cursor ? 0 : computeOffset({ page, pageSize }));
       const hasMore = rows.length > pageSize;
       const pageRows = rows.slice(0, pageSize);
-      const nextCursor = hasMore && pageRows.length
-        ? encodePostCursor(pageRows[pageRows.length - 1].postCore.createdAt, pageRows[pageRows.length - 1].postCore.id)
-        : null;
+      const nextCursor =
+        hasMore && pageRows.length
+          ? encodePostCursor(
+              pageRows[pageRows.length - 1].postCore.createdAt,
+              pageRows[pageRows.length - 1].postCore.id,
+            )
+          : null;
 
       return {
         list: pageRows.map((r) =>

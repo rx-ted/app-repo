@@ -14,6 +14,13 @@ export const envParams = {
   get FRONTEND_DOMAIN() {
     return env.var('FRONTEND_DOMAIN', 'blog.19981204.xyz');
   },
+  get FRONTEND_ALLOWED_ORIGINS() {
+    const raw = env.var('FRONTEND_ALLOWED_ORIGINS', this.FRONTEND_DOMAIN);
+    return String(raw)
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  },
   get SITE_LICENSE() {
     return env.var('SITE_LICENSE', 'CC BY-NC-SA 4.0');
   },

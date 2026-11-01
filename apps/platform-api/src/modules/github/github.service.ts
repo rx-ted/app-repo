@@ -54,7 +54,11 @@ export class GitHubService {
     if (!secret) return plain;
     const key = await this.deriveKey(secret);
     const iv = crypto.getRandomValues(new Uint8Array(12));
-    const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plain));
+    const encrypted = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      new TextEncoder().encode(plain),
+    );
     const bytes = new Uint8Array(encrypted);
     return `enc:${btoa(String.fromCharCode(...iv))}:${btoa(String.fromCharCode(...bytes))}`;
   }
@@ -71,7 +75,11 @@ export class GitHubService {
     return new TextDecoder().decode(decrypted);
   }
 
-  getAuthUrl(clientId: string, redirectUri: string, username: string): { url: string; state: string } {
+  getAuthUrl(
+    clientId: string,
+    redirectUri: string,
+    username: string,
+  ): { url: string; state: string } {
     const state = crypto.randomUUID();
     // Store state -> username with short TTL.
     void this.cache.set(this.stateKey(state), { username }, 600);
@@ -101,7 +109,7 @@ export class GitHubService {
       body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
     });
     if (!tokenRes.ok) throw new HTTPException(502, { message: 'github_unavailable' });
-    const tokenJson = await tokenRes.json() as any;
+    const tokenJson = (await tokenRes.json()) as any;
     if (tokenJson.error || !tokenJson.access_token) {
       throw new HTTPException(401, { message: 'github_reauth_required' });
     }
@@ -115,7 +123,7 @@ export class GitHubService {
       },
     });
     if (!userRes.ok) throw new HTTPException(502, { message: 'github_unavailable' });
-    const githubUser = await userRes.json() as any;
+    const githubUser = (await userRes.json()) as any;
     const login = String(githubUser.login);
 
     const expiresIn = Number(tokenJson.expires_in ?? 8 * 60 * 60);
@@ -127,7 +135,9 @@ export class GitHubService {
       login,
       scope: tokenJson.scope ?? '',
       expiresAt,
-      refreshToken: tokenJson.refresh_token ? await this.encryptToken(tokenJson.refresh_token) : undefined,
+      refreshToken: tokenJson.refresh_token
+        ? await this.encryptToken(tokenJson.refresh_token)
+        : undefined,
       createdAt: new Date().toISOString(),
     };
 
@@ -166,7 +176,12 @@ export class GitHubService {
 
   private normalizePath(path: string): string {
     const normalized = path.replace(/^\/+/, '').replace(/\\/g, '/');
-    if (!normalized || normalized.includes('..') || normalized.startsWith('/') || normalized.includes('\0')) {
+    if (
+      !normalized ||
+      normalized.includes('..') ||
+      normalized.startsWith('/') ||
+      normalized.includes('\0')
+    ) {
       throw new HTTPException(400, { message: 'invalid_argument' });
     }
     if (normalized.startsWith('.git/') || normalized === '.git') {
@@ -192,7 +207,9 @@ export class GitHubService {
       throw new HTTPException(401, { message: 'github_reauth_required' });
     }
 
-    const url = new URL(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(normalizedPath)}`);
+    const url = new URL(
+      `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(normalizedPath)}`,
+    );
     if (ref) url.searchParams.set('ref', ref);
     const res = await fetch(url.toString(), { headers: this.headers(tokenRecord.accessToken) });
     if (res.status === 401) {
@@ -206,7 +223,7 @@ export class GitHubService {
     }
     if (res.status === 404) throw new HTTPException(404, { message: 'discussion_not_found' });
     if (!res.ok) throw new HTTPException(502, { message: 'github_unavailable' });
-    const body = await res.json() as any;
+    const body = (await res.json()) as any;
     if (Array.isArray(body)) {
       throw new HTTPException(400, { message: 'invalid_argument' });
     }
@@ -244,7 +261,7 @@ export class GitHubService {
         { headers: this.headers(tokenRecord.accessToken) },
       );
       if (existingRes.ok) {
-        const existing = await existingRes.json() as any;
+        const existing = (await existingRes.json()) as any;
         const error = new HTTPException(409, { message: 'sha_conflict' });
         (error as any).currentSha = existing?.sha;
         throw error;
@@ -258,14 +275,17 @@ export class GitHubService {
     };
     if (sha) body.sha = sha;
 
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(normalizedPath)}`, {
-      method: 'PUT',
-      headers: { ...this.headers(tokenRecord.accessToken), 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    const res = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(normalizedPath)}`,
+      {
+        method: 'PUT',
+        headers: { ...this.headers(tokenRecord.accessToken), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      },
+    );
 
     if (res.status === 409) {
-      const body = await res.json().catch(() => ({})) as any;
+      const body = (await res.json().catch(() => ({}))) as any;
       const currentSha = body?.content?.sha;
       const error = new HTTPException(409, { message: 'sha_conflict' });
       if (currentSha) (error as any).currentSha = currentSha;
@@ -282,7 +302,7 @@ export class GitHubService {
     }
     if (!res.ok) throw new HTTPException(502, { message: 'github_unavailable' });
 
-    const json = await res.json() as any;
+    const json = (await res.json()) as any;
     return { sha: json.content?.sha, commitSha: json.commit?.sha, htmlUrl: json.content?.html_url };
   }
 
@@ -305,26 +325,28 @@ export class GitHubService {
       throw new HTTPException(401, { message: 'github_reauth_required' });
     }
 
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(normalizedPath)}`, {
-      method: 'DELETE',
-      headers: { ...this.headers(tokenRecord.accessToken), 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: message || `blog(api): delete ${normalizedPath} by ${username}`,
-        sha,
-        branch: branch || 'main',
-      }),
-    });
+    const res = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(normalizedPath)}`,
+      {
+        method: 'DELETE',
+        headers: { ...this.headers(tokenRecord.accessToken), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message || `blog(api): delete ${normalizedPath} by ${username}`,
+          sha,
+          branch: branch || 'main',
+        }),
+      },
+    );
     if (res.status === 401) {
       await this.invalidateToken(username);
       throw new HTTPException(401, { message: 'github_reauth_required' });
     }
     if (res.status === 404) throw new HTTPException(404, { message: 'discussion_not_found' });
     if (!res.ok) throw new HTTPException(502, { message: 'github_unavailable' });
-    const json = await res.json().catch(() => ({})) as any;
+    const json = (await res.json().catch(() => ({}))) as any;
     return { commitSha: json.commit?.sha };
   }
   // (class methods below)
-
 
   private async graphql<T = any>(
     username: string,
@@ -357,10 +379,11 @@ export class GitHubService {
     }
     if (!res.ok) throw new HTTPException(502, { message: 'github_unavailable' });
 
-    const json = await res.json() as any;
+    const json = (await res.json()) as any;
     if (json.errors?.length) {
       const message = String(json.errors[0]?.message ?? 'github_unavailable');
-      if (/not found/i.test(message)) throw new HTTPException(404, { message: 'discussion_not_found' });
+      if (/not found/i.test(message))
+        throw new HTTPException(404, { message: 'discussion_not_found' });
       throw new HTTPException(502, { message: 'github_unavailable' });
     }
     return json.data as T;
@@ -372,14 +395,23 @@ export class GitHubService {
     return `${body}\n\n<!-- blog-source:start -->\n\n> 来源：[${title ?? '博客文章'}](${blogUrl})\n> 页面：\`${blogUrl.replace(/^https?:\/\/[^/]+/, '')}\`\n\n<!-- blog-source:end -->`;
   }
 
-  private async resolveDiscussionNode(username: string, owner: string, repo: string, number: number): Promise<string> {
-    const data = await this.graphql(username, `
+  private async resolveDiscussionNode(
+    username: string,
+    owner: string,
+    repo: string,
+    number: number,
+  ): Promise<string> {
+    const data = await this.graphql(
+      username,
+      `
       query GetDiscussionNode($owner: String!, $name: String!, $number: Int!) {
         repository(owner: $owner, name: $name) {
           discussion(number: $number) { id }
         }
       }
-    `, { owner, name: repo, number });
+    `,
+      { owner, name: repo, number },
+    );
     const id = data?.repository?.discussion?.id;
     if (!id) throw new HTTPException(404, { message: 'discussion_not_found' });
     return id;
@@ -393,7 +425,9 @@ export class GitHubService {
     cursor?: string,
   ): Promise<{ pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: any[] }> {
     this.allowedRepoCheck(owner, repo);
-    const data = await this.graphql(username, `
+    const data = await this.graphql(
+      username,
+      `
       query ListDiscussions($owner: String!, $name: String!, $first: Int!, $after: String, $categoryId: ID) {
         repository(owner: $owner, name: $name) {
           discussions(first: $first, after: $after, categoryId: $categoryId) {
@@ -406,7 +440,9 @@ export class GitHubService {
           }
         }
       }
-    `, { owner, name: repo, first: 20, after: cursor || null, categoryId: categoryId || null });
+    `,
+      { owner, name: repo, first: 20, after: cursor || null, categoryId: categoryId || null },
+    );
 
     if (!data?.repository) throw new HTTPException(404, { message: 'discussion_not_found' });
     return data.repository.discussions;
@@ -414,7 +450,9 @@ export class GitHubService {
 
   async getDiscussion(username: string, owner: string, repo: string, number: number): Promise<any> {
     this.allowedRepoCheck(owner, repo);
-    const data = await this.graphql(username, `
+    const data = await this.graphql(
+      username,
+      `
       query GetDiscussion($owner: String!, $name: String!, $number: Int!) {
         repository(owner: $owner, name: $name) {
           discussion(number: $number) {
@@ -424,7 +462,9 @@ export class GitHubService {
           }
         }
       }
-    `, { owner, name: repo, number });
+    `,
+      { owner, name: repo, number },
+    );
     const discussion = data?.repository?.discussion;
     if (!discussion) throw new HTTPException(404, { message: 'discussion_not_found' });
     return discussion;
@@ -444,20 +484,26 @@ export class GitHubService {
   ): Promise<any> {
     this.allowedRepoCheck(owner, repo);
     const machineTitle = slug ? `${title}\n\n[blog-post:${slug}]` : title;
-    const repositoryData = await this.graphql(username, `
+    const repositoryData = await this.graphql(
+      username,
+      `
       query RepositoryInfo($owner: String!, $name: String!) {
         repository(owner: $owner, name: $name) {
           id
           discussionCategories(first: 50) { nodes { id name slug } }
         }
       }
-    `, { owner, name: repo });
+    `,
+      { owner, name: repo },
+    );
     const repository = repositoryData?.repository;
     if (!repository) throw new HTTPException(404, { message: 'discussion_not_found' });
 
     let resolvedCategoryId = categoryId;
     if (!resolvedCategoryId && categorySlug) {
-      const found = repository.discussionCategories.nodes.find((c: any) => c.slug === categorySlug || c.name === categorySlug);
+      const found = repository.discussionCategories.nodes.find(
+        (c: any) => c.slug === categorySlug || c.name === categorySlug,
+      );
       resolvedCategoryId = found?.id;
     }
     if (!resolvedCategoryId && repository.discussionCategories.nodes.length > 0) {
@@ -467,20 +513,24 @@ export class GitHubService {
 
     const finalBody = this.appendSourceBlock(body, blogUrl, postTitle ?? title);
 
-    const data = await this.graphql(username, `
+    const data = await this.graphql(
+      username,
+      `
       mutation CreateDiscussion($input: CreateDiscussionInput!) {
         createDiscussion(input: $input) {
           discussion { number title url body createdAt }
         }
       }
-    `, {
-      input: {
-        repositoryId: repository.id,
-        categoryId: resolvedCategoryId,
-        title: machineTitle,
-        body: finalBody,
+    `,
+      {
+        input: {
+          repositoryId: repository.id,
+          categoryId: resolvedCategoryId,
+          title: machineTitle,
+          body: finalBody,
+        },
       },
-    });
+    );
 
     return data.createDiscussion.discussion;
   }
@@ -498,30 +548,43 @@ export class GitHubService {
     this.allowedRepoCheck(owner, repo);
     const id = await this.resolveDiscussionNode(username, owner, repo, number);
     const finalBody = body ? this.appendSourceBlock(body, blogUrl, postTitle) : undefined;
-    const data = await this.graphql(username, `
+    const data = await this.graphql(
+      username,
+      `
       mutation UpdateDiscussion($input: UpdateDiscussionInput!) {
         updateDiscussion(input: $input) {
           discussion { number title url body updatedAt }
         }
       }
-    `, {
-      input: {
-        discussionId: id,
-        ...(title ? { title } : {}),
-        ...(finalBody ? { body: finalBody } : {}),
+    `,
+      {
+        input: {
+          discussionId: id,
+          ...(title ? { title } : {}),
+          ...(finalBody ? { body: finalBody } : {}),
+        },
       },
-    });
+    );
     return data.updateDiscussion.discussion;
   }
 
-  async closeDiscussion(username: string, owner: string, repo: string, number: number): Promise<void> {
+  async closeDiscussion(
+    username: string,
+    owner: string,
+    repo: string,
+    number: number,
+  ): Promise<void> {
     this.allowedRepoCheck(owner, repo);
     const id = await this.resolveDiscussionNode(username, owner, repo, number);
-    await this.graphql(username, `
+    await this.graphql(
+      username,
+      `
       mutation CloseDiscussion($input: CloseDiscussionInput!) {
         closeDiscussion(input: $input) { discussion { number } }
       }
-    `, { input: { discussionId: id } });
+    `,
+      { input: { discussionId: id } },
+    );
   }
 
   async listComments(
@@ -532,7 +595,9 @@ export class GitHubService {
     cursor?: string,
   ): Promise<{ pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: any[] }> {
     this.allowedRepoCheck(owner, repo);
-    const data = await this.graphql(username, `
+    const data = await this.graphql(
+      username,
+      `
       query ListComments($owner: String!, $name: String!, $number: Int!, $first: Int!, $after: String) {
         repository(owner: $owner, name: $name) {
           discussion(number: $number) {
@@ -543,42 +608,62 @@ export class GitHubService {
           }
         }
       }
-    `, { owner, name: repo, number, first: 20, after: cursor || null });
+    `,
+      { owner, name: repo, number, first: 20, after: cursor || null },
+    );
     const discussion = data?.repository?.discussion;
     if (!discussion) throw new HTTPException(404, { message: 'discussion_not_found' });
     return discussion.comments;
   }
 
-  async addComment(username: string, owner: string, repo: string, number: number, body: string): Promise<any> {
+  async addComment(
+    username: string,
+    owner: string,
+    repo: string,
+    number: number,
+    body: string,
+  ): Promise<any> {
     this.allowedRepoCheck(owner, repo);
     const id = await this.resolveDiscussionNode(username, owner, repo, number);
-    const data = await this.graphql(username, `
+    const data = await this.graphql(
+      username,
+      `
       mutation AddComment($input: AddDiscussionCommentInput!) {
         addDiscussionComment(input: $input) {
           comment { id body url createdAt }
         }
       }
-    `, { input: { discussionId: id, body } });
+    `,
+      { input: { discussionId: id, body } },
+    );
     return data.addDiscussionComment.comment;
   }
 
   async updateComment(username: string, commentId: string, body: string): Promise<any> {
-    const data = await this.graphql(username, `
+    const data = await this.graphql(
+      username,
+      `
       mutation UpdateComment($input: UpdateDiscussionCommentInput!) {
         updateDiscussionComment(input: $input) {
           comment { id body updatedAt }
         }
       }
-    `, { input: { commentId, body } });
+    `,
+      { input: { commentId, body } },
+    );
     return data.updateDiscussionComment.comment;
   }
 
   async deleteComment(username: string, commentId: string): Promise<void> {
-    await this.graphql(username, `
+    await this.graphql(
+      username,
+      `
       mutation DeleteComment($input: DeleteDiscussionCommentInput!) {
         deleteDiscussionComment(input: $input) { clientMutationId }
       }
-    `, { input: { id: commentId } });
+    `,
+      { input: { id: commentId } },
+    );
   }
 }
 

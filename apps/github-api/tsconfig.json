@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+    "strict": true,
+    "types": ["node"],
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "rootDir": "src",
+    "outDir": "./dist",
+    "lib": ["ESNext", "DOM"],
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts", "scripts/*.spec.ts"]
+}

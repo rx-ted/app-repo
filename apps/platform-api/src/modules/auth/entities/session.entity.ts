@@ -11,10 +11,18 @@ export const SessionsSchema = z.object({
     references: { table: 'users', column: 'id', onDelete: 'cascade' },
   }),
   username: zdb(z.string().max(100), { type: 'varchar', length: 100, notNull: true }),
-  deviceId: zdb(z.string().max(100).nullable(), { type: 'varchar', length: 100, dbName: 'device_id' }),
+  deviceId: zdb(z.string().max(100).nullable(), {
+    type: 'varchar',
+    length: 100,
+    dbName: 'device_id',
+  }),
   ip: zdb(z.string().max(64).nullable(), { type: 'varchar', length: 64 }),
   city: zdb(z.string().max(100).nullable(), { type: 'varchar', length: 100 }),
-  userAgent: zdb(z.string().max(512).nullable(), { type: 'varchar', length: 512, dbName: 'user_agent' }),
+  userAgent: zdb(z.string().max(512).nullable(), {
+    type: 'varchar',
+    length: 512,
+    dbName: 'user_agent',
+  }),
   refreshTokenHash: zdb(z.string().max(255), {
     type: 'varchar',
     length: 255,

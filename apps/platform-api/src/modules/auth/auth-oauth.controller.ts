@@ -32,32 +32,81 @@ class AuthOAuthController {
     @Inject(CacheService) private readonly cache: CacheService,
   ) {}
 
-  private getFrontendUrl(): string {
-    const domain = envParams.FRONTEND_DOMAIN;
-    const protocol = domain.includes('localhost') ? 'http' : 'https';
-    return `${protocol}://${domain}`;
-  }
-
   private getApiUrl(c: Context): string {
     const host = c.req.header('Host') ?? envParams.SITE_DOMAIN;
     const protocol = host.includes('localhost') ? 'http' : 'https';
     return `${protocol}://${host}`;
   }
 
-  private async generateState(redirect: string, userId?: string): Promise<string> {
+  private getAllowedFrontends(): string[] {
+    const raw = env.var('FRONTEND_ALLOWED_ORIGINS', envParams.FRONTEND_DOMAIN);
+    return String(raw)
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  private isAllowedFrontend(frontend: string): boolean {
+    const normalize = (value: string) => {
+      try {
+        return new URL(value.includes('://') ? value : `https://${value}`).origin;
+      } catch {
+        return '';
+      }
+    };
+    const normalizedCandidate = normalize(frontend);
+    if (!normalizedCandidate) return false;
+    return this.getAllowedFrontends()
+      .map((item) => normalize(item))
+      .filter(Boolean)
+      .includes(normalizedCandidate);
+  }
+
+  private resolveFrontend(frontend?: string): string {
+    const candidate =
+      frontend && this.isAllowedFrontend(frontend) ? frontend : envParams.FRONTEND_DOMAIN;
+    return candidate.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  }
+
+  private async generateState(
+    redirect: string,
+    userId?: string,
+    source?: string,
+    frontend?: string,
+  ): Promise<string> {
     const state = crypto.randomUUID();
     const data: Record<string, string> = { redirect };
     if (userId) data.userId = userId;
+    if (source) data.source = source;
+    data.frontend = this.resolveFrontend(frontend);
     await this.cache.set(`oauth:state:${state}`, JSON.stringify(data), OAUTH_STATE_TTL);
     return state;
   }
 
-  private async consumeState(state: string): Promise<{ redirect: string; userId?: string } | null> {
+  private async consumeState(state: string): Promise<{
+    redirect: string;
+    userId?: string;
+    source?: string;
+    frontend?: string;
+  } | null> {
     const key = `oauth:state:${state}`;
     const raw = await this.cache.get<string>(key);
     if (!raw) return null;
     await this.cache.delete(key);
-    return JSON.parse(raw) as { redirect: string; userId?: string };
+    return JSON.parse(raw) as {
+      redirect: string;
+      userId?: string;
+      source?: string;
+      frontend?: string;
+    };
+  }
+
+  private getFrontendUrl(frontend?: string): string {
+    const domain = this.resolveFrontend(
+      frontend ? `https://${frontend.replace(/^https?:\/\//, '')}` : undefined,
+    );
+    const protocol = domain.includes('localhost') ? 'http' : 'https';
+    return `${protocol}://${domain}`;
   }
 
   private setRefreshCookie(
@@ -82,11 +131,16 @@ class AuthOAuthController {
       responses: { 302: { description: 'Redirect to GitHub authorization' } },
     },
   })
-  async githubLogin(@Query('redirect') redirect: string = '/', @Ctx() c: Context) {
+  async githubLogin(
+    @Query('redirect') redirect: string = '/',
+    @Query('source') source: string = 'blog',
+    @Query('frontend') frontend: string | undefined,
+    @Ctx() c: Context,
+  ) {
     const clientId = env.var('GITHUB_CLIENT_ID', '');
     if (!clientId) throw new HTTPException(500, { message: 'GitHub OAuth not configured' });
 
-    const state = await this.generateState(redirect);
+    const state = await this.generateState(redirect, undefined, source, frontend);
     const callbackUrl = `${this.getApiUrl(c)}/api/v1/auth/oauth/github/callback`;
 
     const url = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${state}&scope=user:email`;
@@ -113,7 +167,7 @@ class AuthOAuthController {
     const stored = await this.consumeState(state);
     if (!stored) throw new HTTPException(400, { message: 'Invalid or expired state' });
 
-    const frontendUrl = this.getFrontendUrl();
+    const frontendUrl = this.getFrontendUrl(stored?.frontend);
 
     try {
       const providerUser = await this.oauthService.exchangeGitHubCode(code);
@@ -234,7 +288,7 @@ class AuthOAuthController {
     const stored = await this.consumeState(state);
     if (!stored?.userId) throw new HTTPException(400, { message: 'Invalid or expired state' });
 
-    const frontendUrl = this.getFrontendUrl();
+    const frontendUrl = this.getFrontendUrl(stored?.frontend);
     const redirect = stored.redirect.startsWith('/') ? stored.redirect : '/profile';
 
     try {

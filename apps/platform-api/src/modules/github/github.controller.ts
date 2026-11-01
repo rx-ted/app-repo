@@ -107,7 +107,13 @@ export class GitHubController {
     @Query('cursor') cursor?: string,
   ) {
     const user = c.get('user') as { username?: string; userId: string };
-    return this.githubService.listDiscussions(user.username ?? user.userId, owner, repo, category, cursor);
+    return this.githubService.listDiscussions(
+      user.username ?? user.userId,
+      owner,
+      repo,
+      category,
+      cursor,
+    );
   }
 
   @Get('discussions/:number', { apiDoc: { summary: '获取 Discussion', tags: ['GitHub'] } })
@@ -118,22 +124,29 @@ export class GitHubController {
     @Query('repo') repo: string,
   ) {
     const user = c.get('user') as { username?: string; userId: string };
-    return this.githubService.getDiscussion(user.username ?? user.userId, owner, repo, Number(number));
+    return this.githubService.getDiscussion(
+      user.username ?? user.userId,
+      owner,
+      repo,
+      Number(number),
+    );
   }
 
   @Post('discussions', { apiDoc: { summary: '创建 Discussion', tags: ['GitHub'] } })
   async createDiscussion(@Ctx() c: Context, @Body() body: unknown) {
-    const parsed = z.object({
-      owner: z.string(),
-      repo: z.string(),
-      title: z.string(),
-      body: z.string(),
-      categoryId: z.string().optional(),
-      categorySlug: z.string().optional(),
-      blogUrl: z.string().optional(),
-      postTitle: z.string().optional(),
-      slug: z.string().optional(),
-    }).parse(body);
+    const parsed = z
+      .object({
+        owner: z.string(),
+        repo: z.string(),
+        title: z.string(),
+        body: z.string(),
+        categoryId: z.string().optional(),
+        categorySlug: z.string().optional(),
+        blogUrl: z.string().optional(),
+        postTitle: z.string().optional(),
+        slug: z.string().optional(),
+      })
+      .parse(body);
     const user = c.get('user') as { username?: string; userId: string };
     return this.githubService.createDiscussion(
       user.username ?? user.userId,
@@ -149,20 +162,22 @@ export class GitHubController {
     );
   }
 
-    @Post('discussions/:number', { apiDoc: { summary: '更新 Discussion', tags: ['GitHub'] } })
+  @Post('discussions/:number', { apiDoc: { summary: '更新 Discussion', tags: ['GitHub'] } })
   async updateDiscussionAlias(
     @Ctx() c: Context,
     @Param('number') number: string,
     @Body() body: unknown,
   ) {
-    const parsed = z.object({
-      owner: z.string(),
-      repo: z.string(),
-      title: z.string().optional(),
-      body: z.string().optional(),
-      blogUrl: z.string().optional(),
-      postTitle: z.string().optional(),
-    }).parse(body);
+    const parsed = z
+      .object({
+        owner: z.string(),
+        repo: z.string(),
+        title: z.string().optional(),
+        body: z.string().optional(),
+        blogUrl: z.string().optional(),
+        postTitle: z.string().optional(),
+      })
+      .parse(body);
     const user = c.get('user') as { username?: string; userId: string };
     return this.githubService.updateDiscussion(
       user.username ?? user.userId,
@@ -184,11 +199,18 @@ export class GitHubController {
     @Query('repo') repo: string,
   ) {
     const user = c.get('user') as { username?: string; userId: string };
-    await this.githubService.closeDiscussion(user.username ?? user.userId, owner, repo, Number(number));
+    await this.githubService.closeDiscussion(
+      user.username ?? user.userId,
+      owner,
+      repo,
+      Number(number),
+    );
     return { ok: true };
   }
 
-  @Get('discussions/:number/comments', { apiDoc: { summary: '列出 Discussion 评论', tags: ['GitHub'] } })
+  @Get('discussions/:number/comments', {
+    apiDoc: { summary: '列出 Discussion 评论', tags: ['GitHub'] },
+  })
   async listComments(
     @Ctx() c: Context,
     @Param('number') number: string,
@@ -197,22 +219,34 @@ export class GitHubController {
     @Query('cursor') cursor?: string,
   ) {
     const user = c.get('user') as { username?: string; userId: string };
-    return this.githubService.listComments(user.username ?? user.userId, owner, repo, Number(number), cursor);
+    return this.githubService.listComments(
+      user.username ?? user.userId,
+      owner,
+      repo,
+      Number(number),
+      cursor,
+    );
   }
 
-  @Post('discussions/:number/comments', { apiDoc: { summary: '新增 Discussion 评论', tags: ['GitHub'] } })
-  async addComment(
-    @Ctx() c: Context,
-    @Param('number') number: string,
-    @Body() body: unknown,
-  ) {
-    const parsed = z.object({
-      owner: z.string(),
-      repo: z.string(),
-      body: z.string(),
-    }).parse(body);
+  @Post('discussions/:number/comments', {
+    apiDoc: { summary: '新增 Discussion 评论', tags: ['GitHub'] },
+  })
+  async addComment(@Ctx() c: Context, @Param('number') number: string, @Body() body: unknown) {
+    const parsed = z
+      .object({
+        owner: z.string(),
+        repo: z.string(),
+        body: z.string(),
+      })
+      .parse(body);
     const user = c.get('user') as { username?: string; userId: string };
-    return this.githubService.addComment(user.username ?? user.userId, parsed.owner, parsed.repo, Number(number), parsed.body);
+    return this.githubService.addComment(
+      user.username ?? user.userId,
+      parsed.owner,
+      parsed.repo,
+      Number(number),
+      parsed.body,
+    );
   }
 
   @Post('comments/:id', { apiDoc: { summary: '更新 Discussion 评论', tags: ['GitHub'] } })

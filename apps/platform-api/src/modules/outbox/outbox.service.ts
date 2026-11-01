@@ -20,7 +20,12 @@ class OutboxService {
       createdAt: now,
       updatedAt: now,
     });
-    return Number((result as any).insertId ?? (result as any).lastInsertRowid ?? (result as any).meta?.last_row_id ?? 0);
+    return Number(
+      (result as any).insertId ??
+        (result as any).lastInsertRowid ??
+        (result as any).meta?.last_row_id ??
+        0,
+    );
   }
 
   async fetchPending(limit = 10): Promise<OutboxEventRow[]> {
@@ -60,9 +65,12 @@ class OutboxService {
       .where(eq(outboxEvents.id, Number(id)));
   }
 
-
   async list(status?: string, limit = 20): Promise<any[]> {
-    let query = this.db.select().from(outboxEvents).orderBy(outboxEvents.id).limit(Math.min(Math.max(limit, 1), 100));
+    let query = this.db
+      .select()
+      .from(outboxEvents)
+      .orderBy(outboxEvents.id)
+      .limit(Math.min(Math.max(limit, 1), 100));
     if (status) {
       query = query.where(eq(outboxEvents.status, status as any)) as any;
     }
@@ -72,11 +80,20 @@ class OutboxService {
   async retry(id: string | number): Promise<void> {
     await this.db
       .update(outboxEvents)
-      .set({ status: 'pending', attempts: 0, errorMessage: null, availableAt: new Date(), updatedAt: new Date() })
+      .set({
+        status: 'pending',
+        attempts: 0,
+        errorMessage: null,
+        availableAt: new Date(),
+        updatedAt: new Date(),
+      })
       .where(eq(outboxEvents.id, Number(id)));
   }
 
-  async processPending(processor: (event: OutboxEventRow) => Promise<void>, limit = 10): Promise<void> {
+  async processPending(
+    processor: (event: OutboxEventRow) => Promise<void>,
+    limit = 10,
+  ): Promise<void> {
     const events = await this.fetchPending(limit);
     for (const event of events) {
       await this.db

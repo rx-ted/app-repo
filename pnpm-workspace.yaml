@@ -1,5 +1,6 @@
 packages:
   - "apps/platform-api"
+  - "apps/github-api"
   - "apps/web-blog"
   - "packages"
   - "packages/core"

@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "github-api",
+  "main": "runtime/cloudflare.ts",
+  "compatibility_date": "2026-05-11",
+  "dev": {
+    "port": 3001
+  },
+  "observability": {
+    "enabled": false,
+    "logs": {
+      "enabled": false
+    }
+  },
+  "upload_source_maps": true,
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "vars": {
+    "DEBUG": "true",
+    "GITHUB_CLIENT_ID": "Iv23libiF0w1ybmvskWW",
+    "FRONTEND_DOMAIN": "blog.19981204.xyz",
+    "FRONTEND_ALLOWED_ORIGINS": "https://blog.19981204.xyz,https://doc.19981204.xyz,https://github.19981204.xyz"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "KV_BINDING",
+      "id": "b165d3a208664239873c8b0d19cd40f9"
+    }
+  ],
+  "workers_dev": false,
+  "preview_urls": false
+}

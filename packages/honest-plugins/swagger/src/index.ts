@@ -97,10 +97,7 @@ export interface ApiParamOptions {
 function makeParamDecorator(kind: 'path' | 'query' | 'header') {
   return (options: ApiParamOptions) => (target: any, propertyKey: string | symbol) => {
     const current = getMeta<any[]>(target, API_PARAMETERS_META, propertyKey) ?? [];
-    setMeta(target, API_PARAMETERS_META, propertyKey, [
-      ...current,
-      { ...options, in: kind },
-    ]);
+    setMeta(target, API_PARAMETERS_META, propertyKey, [...current, { ...options, in: kind }]);
   };
 }
 
@@ -184,7 +181,11 @@ export function ApiProperty(options: ApiPropertyOptions = {}) {
   return (target: any, propertyKey: string | symbol) => {
     const ctor = typeof target === 'function' ? target : target.constructor;
     const current = ((Reflect as any).getMetadata(API_PROPERTIES_META, ctor) ?? []) as any[];
-    (Reflect as any).defineMetadata(API_PROPERTIES_META, [...current, { name: propertyKey, ...options }], ctor);
+    (Reflect as any).defineMetadata(
+      API_PROPERTIES_META,
+      [...current, { name: propertyKey, ...options }],
+      ctor,
+    );
   };
 }
 

@@ -256,9 +256,10 @@ export class ApiDocPlugin implements IPlugin {
         const tag = Reflect.getMetadata('api:controller:tag', route.controllerClass) as
           | ApiTagOptions
           | undefined;
-        const decoratorTags = Reflect.getMetadata(ApiDecorators.API_TAGS_META, route.controllerClass as any) as
-          | string[]
-          | undefined;
+        const decoratorTags = Reflect.getMetadata(
+          ApiDecorators.API_TAGS_META,
+          route.controllerClass as any,
+        ) as string[] | undefined;
         if (tag && !controllerTags.has(route.controller)) {
           controllerTags.set(route.controller, tag);
           tags.push({
@@ -305,21 +306,54 @@ export class ApiDocPlugin implements IPlugin {
 
       const controllerTag = controllerTags.get(route.controller);
 
-      const methodTags = Reflect.getMetadata(ApiDecorators.API_TAGS_META, route.controllerClass as any, route.handler) as
-        | string[]
+      const methodTags = Reflect.getMetadata(
+        ApiDecorators.API_TAGS_META,
+        route.controllerClass as any,
+        route.handler,
+      ) as string[] | undefined;
+      const operationMeta = (Reflect.getMetadata(
+        ApiDecorators.API_OPERATION_META,
+        route.controllerClass as any,
+        route.handler,
+      ) ?? {}) as Record<string, any>;
+      const responseMeta = (Reflect.getMetadata(
+        ApiDecorators.API_RESPONSES_META,
+        route.controllerClass as any,
+        route.handler,
+      ) ?? []) as any[];
+      const parameterMeta = (Reflect.getMetadata(
+        ApiDecorators.API_PARAMETERS_META,
+        route.controllerClass as any,
+        route.handler,
+      ) ?? []) as any[];
+      const bodyMeta = Reflect.getMetadata(
+        ApiDecorators.API_BODY_META,
+        route.controllerClass as any,
+        route.handler,
+      ) as any;
+      const securityMeta = (Reflect.getMetadata(
+        ApiDecorators.API_SECURITY_META,
+        route.controllerClass as any,
+        route.handler,
+      ) ?? Reflect.getMetadata(ApiDecorators.API_SECURITY_META, route.controllerClass as any)) as
+        | any[]
         | undefined;
-      const operationMeta = (Reflect.getMetadata(ApiDecorators.API_OPERATION_META, route.controllerClass as any, route.handler) ?? {}) as Record<
-        string,
-        any
-      >;
-      const responseMeta = (Reflect.getMetadata(ApiDecorators.API_RESPONSES_META, route.controllerClass as any, route.handler) ?? []) as any[];
-      const parameterMeta = (Reflect.getMetadata(ApiDecorators.API_PARAMETERS_META, route.controllerClass as any, route.handler) ?? []) as any[];
-      const bodyMeta = Reflect.getMetadata(ApiDecorators.API_BODY_META, route.controllerClass as any, route.handler) as any;
-      const securityMeta = (Reflect.getMetadata(ApiDecorators.API_SECURITY_META, route.controllerClass as any, route.handler) ??
-        Reflect.getMetadata(ApiDecorators.API_SECURITY_META, route.controllerClass as any)) as any[] | undefined;
-      const consumesMeta = Reflect.getMetadata(ApiDecorators.API_CONSUMES_META, route.controllerClass as any, route.handler) as string[] | undefined;
-      const producesMeta = Reflect.getMetadata(ApiDecorators.API_PRODUCES_META, route.controllerClass as any, route.handler) as string[] | undefined;
-      const excludeMeta = Reflect.getMetadata(ApiDecorators.API_EXCLUDE_META, route.controllerClass as any, route.handler) === true;
+      const consumesMeta = Reflect.getMetadata(
+        ApiDecorators.API_CONSUMES_META,
+        route.controllerClass as any,
+        route.handler,
+      ) as string[] | undefined;
+      const producesMeta = Reflect.getMetadata(
+        ApiDecorators.API_PRODUCES_META,
+        route.controllerClass as any,
+        route.handler,
+      ) as string[] | undefined;
+      const excludeMeta =
+        Reflect.getMetadata(
+          ApiDecorators.API_EXCLUDE_META,
+          route.controllerClass as any,
+          route.handler,
+        ) === true;
 
       if (excludeMeta) continue;
 
@@ -331,8 +365,12 @@ export class ApiDocPlugin implements IPlugin {
       }
 
       const operation: any = {
-        ...(operationMeta.summary || apiDoc?.summary ? { summary: operationMeta.summary ?? apiDoc?.summary } : {}),
-        ...(operationMeta.description || apiDoc?.description ? { description: operationMeta.description ?? apiDoc?.description } : {}),
+        ...(operationMeta.summary || apiDoc?.summary
+          ? { summary: operationMeta.summary ?? apiDoc?.summary }
+          : {}),
+        ...(operationMeta.description || apiDoc?.description
+          ? { description: operationMeta.description ?? apiDoc?.description }
+          : {}),
         ...(operationMeta.operationId && { operationId: operationMeta.operationId }),
         ...(operationMeta.deprecated && { deprecated: operationMeta.deprecated }),
         tags: tagName,
@@ -342,7 +380,8 @@ export class ApiDocPlugin implements IPlugin {
           : securityMeta
             ? { security: securityMeta }
             : Reflect.getMetadata('public', route.controllerClass as any, route.handler) === true ||
-              Reflect.getMetadata('public', route.controllerClass?.prototype, route.handler) === true
+                Reflect.getMetadata('public', route.controllerClass?.prototype, route.handler) ===
+                  true
               ? { security: [] }
               : this.defaultSecurity
                 ? { security: this.defaultSecurity }
@@ -393,7 +432,7 @@ export class ApiDocPlugin implements IPlugin {
         parameters.push({
           name: param.name,
           in: param.in ?? 'query',
-          required: param.required ?? (param.in === 'path'),
+          required: param.required ?? param.in === 'path',
           ...(param.description && { description: param.description }),
           ...(param.example !== undefined && { example: param.example }),
           ...(param.enum && { schema: { type: 'string', enum: param.enum } }),
@@ -422,7 +461,9 @@ export class ApiDocPlugin implements IPlugin {
           required: bodyMeta.required ?? true,
           content: {
             [contentType]: {
-              schema: bodyMeta.schema ? this.toOpenAPISchema(bodyMeta.schema) : this.metadataTypeToSchema(bodyMeta.type),
+              schema: bodyMeta.schema
+                ? this.toOpenAPISchema(bodyMeta.schema)
+                : this.metadataTypeToSchema(bodyMeta.type),
             },
           },
         };
@@ -502,7 +543,10 @@ export class ApiDocPlugin implements IPlugin {
   private metadataTypeToSchema(type: any): any {
     if (!type) return { type: 'object' };
     if (type?._def) return this.zodToOpenAPI(type);
-    if (typeof type === 'function' && Reflect.getMetadata(ApiDecorators.API_PROPERTIES_META, type)) {
+    if (
+      typeof type === 'function' &&
+      Reflect.getMetadata(ApiDecorators.API_PROPERTIES_META, type)
+    ) {
       return this.dtoToOpenAPISchema(type);
     }
     if (type === String) return { type: 'string' };
@@ -519,7 +563,9 @@ export class ApiDocPlugin implements IPlugin {
     const fields = Reflect.getMetadata(ApiDecorators.API_PROPERTIES_META, dto) ?? [];
     for (const field of fields) {
       const name = field.name;
-      const schema = field.schema ? this.toOpenAPISchema(field.schema) : this.metadataTypeToSchema(field.type);
+      const schema = field.schema
+        ? this.toOpenAPISchema(field.schema)
+        : this.metadataTypeToSchema(field.type);
       properties[name] = {
         ...schema,
         ...(field.description && { description: field.description }),
@@ -544,10 +590,16 @@ export class ApiDocPlugin implements IPlugin {
 
   private toOpenAPISchema(schema: any): any {
     if (!schema) return { type: 'object' };
-    if (typeof schema === 'function' && Reflect.getMetadata(ApiDecorators.API_PROPERTIES_META, schema)) {
+    if (
+      typeof schema === 'function' &&
+      Reflect.getMetadata(ApiDecorators.API_PROPERTIES_META, schema)
+    ) {
       return this.dtoToOpenAPISchema(schema);
     }
-    if (schema?.constructor && Reflect.getMetadata(ApiDecorators.API_PROPERTIES_META, schema.constructor)) {
+    if (
+      schema?.constructor &&
+      Reflect.getMetadata(ApiDecorators.API_PROPERTIES_META, schema.constructor)
+    ) {
       return this.dtoToOpenAPISchema(schema.constructor);
     }
     if (schema._def) {

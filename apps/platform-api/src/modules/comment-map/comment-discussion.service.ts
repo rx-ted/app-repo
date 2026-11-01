@@ -41,12 +41,24 @@ class CommentDiscussionService {
       return { status: 'not_initialized', discussionNumber: null, discussionUrl: null };
     }
     if (row.status === 'archived') {
-      return { status: 'disabled', discussionNumber: null, discussionUrl: row.discussionUrl ?? null };
+      return {
+        status: 'disabled',
+        discussionNumber: null,
+        discussionUrl: row.discussionUrl ?? null,
+      };
     }
     if (row.status !== 'active') {
-      return { status: row.status === 'failed' ? 'temporarily_unavailable' : 'pending', discussionNumber: row.discussionNumber, discussionUrl: row.discussionUrl ?? null };
+      return {
+        status: row.status === 'failed' ? 'temporarily_unavailable' : 'pending',
+        discussionNumber: row.discussionNumber,
+        discussionUrl: row.discussionUrl ?? null,
+      };
     }
-    return { status: 'active', discussionNumber: row.discussionNumber, discussionUrl: row.discussionUrl ?? null };
+    return {
+      status: 'active',
+      discussionNumber: row.discussionNumber,
+      discussionUrl: row.discussionUrl ?? null,
+    };
   }
 
   async createMapping(input: {
@@ -82,7 +94,17 @@ class CommentDiscussionService {
   }
 
   async updateMapping(id: number, input: Record<string, unknown>): Promise<void> {
-    const allowed = new Set(['postSlug', 'githubOwner', 'githubRepo', 'discussionNumber', 'discussionNodeId', 'discussionUrl', 'categorySlug', 'scope', 'status']);
+    const allowed = new Set([
+      'postSlug',
+      'githubOwner',
+      'githubRepo',
+      'discussionNumber',
+      'discussionNodeId',
+      'discussionUrl',
+      'categorySlug',
+      'scope',
+      'status',
+    ]);
     const values: Record<string, unknown> = { updatedAt: new Date() };
     for (const [k, v] of Object.entries(input)) {
       if (allowed.has(k) && v !== undefined) values[k] = v;
@@ -109,11 +131,15 @@ class CommentDiscussionService {
     if (!slug) throw new Error('slug is required');
     if (!this.github) throw new Error('github service unavailable');
 
-    const existing = (await this.db
-      .select()
-      .from(postDiscussionMaps)
-      .where(and(eq(postDiscussionMaps.scope, scope as any), eq(postDiscussionMaps.postSlug, slug)))
-      .limit(1))[0];
+    const existing = (
+      await this.db
+        .select()
+        .from(postDiscussionMaps)
+        .where(
+          and(eq(postDiscussionMaps.scope, scope as any), eq(postDiscussionMaps.postSlug, slug)),
+        )
+        .limit(1)
+    )[0];
     if (existing) {
       return {
         status: existing.status as any,

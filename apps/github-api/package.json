@@ -1,0 +1,33 @@
+{
+  "name": "@rx-ted/github-api",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "DEBUG=true bun run --watch runtime/bun.ts",
+    "dev:vite": "DEBUG=true vite --mode dev",
+    "dev:cf": "DEBUG=true wrangler dev",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "NODE_ENV=production node --env-file=../../.env --experimental-strip-types runtime/serve.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.0.10",
+    "@rx-ted/packages-core": "workspace:^",
+    "@rx-ted/packages-honest": "workspace:^",
+    "@rx-ted/packages-honest-plugins": "workspace:^",
+    "@rx-ted/packages-honest-plugins-swagger": "workspace:^",
+    "hono": "^4.12.34",
+    "reflect-metadata": "^0.2.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@hono/vite-dev-server": "^0.26.0",
+    "@types/node": "^25.9.2",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16",
+    "vitest": "^4.1.8"
+  }
+}

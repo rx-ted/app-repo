@@ -22,8 +22,14 @@ class SessionRepository {
   }
 
   private toSessionRecord(row: any): SessionRecord {
-    const createdAt = row.createdAt instanceof Date ? row.createdAt.toISOString() : new Date(row.createdAt).toISOString();
-    const lastActiveAt = row.lastActiveAt instanceof Date ? row.lastActiveAt.toISOString() : new Date(row.lastActiveAt).toISOString();
+    const createdAt =
+      row.createdAt instanceof Date
+        ? row.createdAt.toISOString()
+        : new Date(row.createdAt).toISOString();
+    const lastActiveAt =
+      row.lastActiveAt instanceof Date
+        ? row.lastActiveAt.toISOString()
+        : new Date(row.lastActiveAt).toISOString();
     return {
       id: row.id,
       userId: row.userId,
@@ -84,7 +90,11 @@ class SessionRepository {
   async create(session: SessionRecord): Promise<void> {
     await this.persistSession(session);
     await this.cache.set(this.sessionKey(session.id), session, this.cacheTtl());
-    await this.cache.set(`session:hash-index:${session.id}`, session.refreshTokenHash, this.cacheTtl());
+    await this.cache.set(
+      `session:hash-index:${session.id}`,
+      session.refreshTokenHash,
+      this.cacheTtl(),
+    );
   }
 
   async findById(id: string): Promise<SessionRecord | null> {
@@ -93,11 +103,7 @@ class SessionRepository {
 
     if (!this.db) return null;
 
-    const rows = await this.db
-      .select()
-      .from(sessions)
-      .where(eq(sessions.id, id))
-      .limit(1);
+    const rows = await this.db.select().from(sessions).where(eq(sessions.id, id)).limit(1);
     if (!rows.length) return null;
     if (new Date(rows[0].expiresAt).getTime() <= Date.now()) {
       await this.deleteSession(id);
@@ -157,7 +163,11 @@ class SessionRepository {
   async removeFromUserSessions(userId: string, sessionId: string): Promise<void> {
     const key = `user:sessions:${userId}`;
     const ids = (await this.cache.get<string[]>(key)) ?? [];
-    await this.cache.set(key, ids.filter((id) => id !== sessionId), this.cacheTtl());
+    await this.cache.set(
+      key,
+      ids.filter((id) => id !== sessionId),
+      this.cacheTtl(),
+    );
   }
 
   async getUserSessionIds(userId: string): Promise<string[]> {
