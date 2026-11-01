@@ -14,7 +14,7 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "rootDir": "./src",
-    "outDir": "./dist"
+    "outDir": "./dist",
   },
   "include": ["src"],
   "exclude": ["**/*.test.ts"]

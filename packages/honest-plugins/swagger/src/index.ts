@@ -17,18 +17,18 @@ function methodTarget(target: any): any {
 
 function getMeta<T>(target: any, key: string, propertyKey: string | symbol): T | undefined {
   const ctor = methodTarget(target);
-  return ctor ? Reflect.getMetadata(key, ctor, propertyKey) : undefined;
+  return ctor ? (Reflect as any).getMetadata(key, ctor, propertyKey) : undefined;
 }
 
 function setMeta(target: any, key: string, propertyKey: string | symbol, value: any): void {
   const ctor = methodTarget(target);
-  if (ctor) Reflect.defineMetadata(key, value, ctor, propertyKey);
+  if (ctor) (Reflect as any).defineMetadata(key, value, ctor, propertyKey);
 }
 
 export function ApiTags(...tags: string[]) {
   return (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => {
     if (propertyKey === undefined) {
-      Reflect.defineMetadata(API_TAGS_META, tags, target);
+      (Reflect as any).defineMetadata(API_TAGS_META, tags, target);
     } else {
       const current = getMeta<any[]>(target, API_TAGS_META, propertyKey) ?? [];
       setMeta(target, API_TAGS_META, propertyKey, [...current, ...tags]);
@@ -111,8 +111,8 @@ export const ApiHeader = makeParamDecorator('header');
 export function ApiBearerAuth(name: string = 'bearerAuth') {
   return (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => {
     if (propertyKey === undefined) {
-      const sec = (Reflect.getMetadata(API_SECURITY_META, target) ?? []) as any[];
-      Reflect.defineMetadata(API_SECURITY_META, [...sec, { [name]: [] }], target);
+      const sec = ((Reflect as any).getMetadata(API_SECURITY_META, target) ?? []) as any[];
+      (Reflect as any).defineMetadata(API_SECURITY_META, [...sec, { [name]: [] }], target);
     } else {
       const current = getMeta<any[]>(target, API_SECURITY_META, propertyKey) ?? [];
       setMeta(target, API_SECURITY_META, propertyKey, [...current, { [name]: [] }]);
@@ -123,8 +123,8 @@ export function ApiBearerAuth(name: string = 'bearerAuth') {
 export function ApiBasicAuth(name: string = 'basicAuth') {
   return (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => {
     if (propertyKey === undefined) {
-      const sec = (Reflect.getMetadata(API_SECURITY_META, target) ?? []) as any[];
-      Reflect.defineMetadata(API_SECURITY_META, [...sec, { [name]: [] }], target);
+      const sec = ((Reflect as any).getMetadata(API_SECURITY_META, target) ?? []) as any[];
+      (Reflect as any).defineMetadata(API_SECURITY_META, [...sec, { [name]: [] }], target);
     } else {
       const current = getMeta<any[]>(target, API_SECURITY_META, propertyKey) ?? [];
       setMeta(target, API_SECURITY_META, propertyKey, [...current, { [name]: [] }]);
@@ -139,8 +139,8 @@ export function ApiCookieAuth(name: string = 'cookieAuth') {
 export function ApiSecurity(name: string) {
   return (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => {
     if (propertyKey === undefined) {
-      const sec = (Reflect.getMetadata(API_SECURITY_META, target) ?? []) as any[];
-      Reflect.defineMetadata(API_SECURITY_META, [...sec, { [name]: [] }], target);
+      const sec = ((Reflect as any).getMetadata(API_SECURITY_META, target) ?? []) as any[];
+      (Reflect as any).defineMetadata(API_SECURITY_META, [...sec, { [name]: [] }], target);
     } else {
       const current = getMeta<any[]>(target, API_SECURITY_META, propertyKey) ?? [];
       setMeta(target, API_SECURITY_META, propertyKey, [...current, { [name]: [] }]);
@@ -183,8 +183,8 @@ export interface ApiPropertyOptions {
 export function ApiProperty(options: ApiPropertyOptions = {}) {
   return (target: any, propertyKey: string | symbol) => {
     const ctor = typeof target === 'function' ? target : target.constructor;
-    const current = (Reflect.getMetadata(API_PROPERTIES_META, ctor) ?? []) as any[];
-    Reflect.defineMetadata(API_PROPERTIES_META, [...current, { name: propertyKey, ...options }], ctor);
+    const current = ((Reflect as any).getMetadata(API_PROPERTIES_META, ctor) ?? []) as any[];
+    (Reflect as any).defineMetadata(API_PROPERTIES_META, [...current, { name: propertyKey, ...options }], ctor);
   };
 }
 

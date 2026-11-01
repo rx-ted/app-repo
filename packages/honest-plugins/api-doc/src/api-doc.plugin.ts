@@ -18,7 +18,7 @@ import type { Context, Hono } from 'hono';
 import type { IDocRenderer } from './interfaces/renderer.interface';
 import { ScalarRenderer } from './renderers/scalar.renderer';
 import { SwaggerRenderer } from './renderers/swagger.renderer';
-import * as ApiDecorators from './decorators/api.decorators';
+import * as ApiDecorators from '@rx-ted/packages-honest-plugins-swagger';
 
 type RendererName = 'scalar' | 'swagger';
 

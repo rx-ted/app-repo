@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Put, Delete, Options, Inject, Query, Param, Body, Headers } from '@rx-ted/packages-honest';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Options,
+  Inject,
+  Query,
+  Param,
+  Body,
+  Headers,
+} from '@rx-ted/packages-honest';
 import { Public } from '@/common/decorators';
 import {
   ApiTags,
@@ -10,7 +22,7 @@ import {
   ApiQuery,
   ApiBody,
   ApiHeader,
-} from '@rx-ted/packages-honest-plugins/api-doc';
+} from '@rx-ted/packages-honest-plugins-swagger';
 import HelloService from './hello.service';
 import { HelloRequestDto, HelloResponseDto } from './hello.dto';
 
@@ -22,14 +34,15 @@ class HelloController {
   constructor(@Inject(HelloService) private helloService: HelloService) {}
 
   @Public()
-  @Get('', {
-    apiDoc: {
-      summary: 'Say hello (legacy apiDoc kept for compatibility)',
-      tags: ['Hello'],
-    },
-  })
+  @Get('')
   @ApiOperation({ summary: 'Say hello', description: 'Returns a greeting message' })
-  @ApiQuery({ name: 'username', required: false, type: String, description: 'Username to greet', example: 'world' })
+  @ApiQuery({
+    name: 'username',
+    required: false,
+    type: String,
+    description: 'Username to greet',
+    example: 'world',
+  })
   @ApiOkResponse({ description: 'Hello message', type: HelloResponseDto })
   async sayHello(@Query('username') username?: string) {
     return this.helloService.greet(username);
@@ -37,7 +50,10 @@ class HelloController {
 
   @Public()
   @Get('echo/:id', {})
-  @ApiOperation({ summary: 'Echo request metadata', description: 'Demonstrates param/query/header decorators' })
+  @ApiOperation({
+    summary: 'Echo request metadata',
+    description: 'Demonstrates param/query/header decorators',
+  })
   @ApiParam({ name: 'id', type: Number, description: 'Resource id', example: 1 })
   @ApiQuery({ name: 'verbose', required: false, type: Boolean, description: 'Verbose flag' })
   @ApiHeader({ name: 'x-trace-id', required: false, description: 'Trace id', type: String })

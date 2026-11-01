@@ -1,0 +1,38 @@
+{
+  "name": "@rx-ted/packages-honest-plugins-swagger",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NestJS-style Swagger decorators and metadata for @rx-ted/packages-honest",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "vitest": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rx-ted/honest.git"
+  },
+  "author": "rx-ted",
+  "license": "MIT",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@rx-ted/packages-core": "workspace:^"
+  },
+  "peerDependencies": {
+    "@rx-ted/packages-honest": "workspace:^",
+    "reflect-metadata": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "typescript": "^5.9.3"
+  }
+}
