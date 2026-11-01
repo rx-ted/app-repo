@@ -142,11 +142,7 @@
         "tags": [
           "Announcements"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "responses": {
           "200": {
             "description": "活跃公告列表",
@@ -225,11 +221,7 @@
         "tags": [
           "Announcements"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "page",
@@ -415,11 +407,7 @@
         "tags": [
           "Announcements"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "id",
@@ -911,11 +899,7 @@
         "tags": [
           "Auth"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -976,11 +960,7 @@
         "tags": [
           "Auth"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "responses": {
           "200": {
             "description": "Token refreshed",
@@ -1013,11 +993,7 @@
         "tags": [
           "Auth"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "responses": {
           "200": {
             "description": "Logged out",
@@ -1046,11 +1022,7 @@
         "tags": [
           "Auth"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -1303,11 +1275,7 @@
         "tags": [
           "Auth"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -1371,11 +1339,7 @@
         "tags": [
           "Auth"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -1436,11 +1400,7 @@
         "tags": [
           "Auth"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -1498,11 +1458,7 @@
         "tags": [
           "Auth"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "responses": {
           "302": {
             "description": "Redirect to GitHub authorization"
@@ -1516,11 +1472,7 @@
         "tags": [
           "Auth"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "responses": {
           "302": {
             "description": "Redirect to frontend with token"
@@ -1552,11 +1504,7 @@
         "tags": [
           "Auth"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "responses": {
           "302": {
             "description": "Redirect to frontend with status"
@@ -2065,11 +2013,7 @@
         "tags": [
           "Blog"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "lang",
@@ -2680,11 +2624,7 @@
         "tags": [
           "Blog"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "username",
@@ -2869,11 +2809,7 @@
         "tags": [
           "Blog"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "username",
@@ -3058,11 +2994,7 @@
         "tags": [
           "Categories"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "responses": {
           "200": {
             "description": "分类列表",
@@ -3291,11 +3223,7 @@
         "tags": [
           "Comments"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "tag",
@@ -3351,11 +3279,7 @@
         "tags": [
           "Comments"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "parentId",
@@ -3397,11 +3321,7 @@
         "tags": [
           "Comments"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "responses": {
           "200": {
             "description": "评论列表"
@@ -3413,11 +3333,7 @@
         "tags": [
           "Comments"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -3715,17 +3631,74 @@
         }
       }
     },
+    "/api/v1/comments/discussion": {
+      "get": {
+        "summary": "解析 slug/scope 对应的 Discussion",
+        "tags": [
+          "Comments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "创建/确保 Discussion 映射",
+        "tags": [
+          "Comments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/comments/discussion/maps": {
+      "post": {
+        "summary": "手动创建映射",
+        "tags": [
+          "Comments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/comments/discussion/maps/{id}": {
+      "put": {
+        "summary": "更新映射",
+        "tags": [
+          "Comments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "删除映射",
+        "tags": [
+          "Comments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/discoveries": {
       "get": {
         "summary": "获取友链列表",
         "tags": [
           "Discoveries"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "responses": {
           "200": {
             "description": "友情链接列表"
@@ -3737,11 +3710,7 @@
         "tags": [
           "Discoveries"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -3819,11 +3788,7 @@
         "tags": [
           "Discoveries"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -3978,11 +3943,7 @@
         "tags": [
           "GitHub"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
+        "security": []
       }
     },
     "/api/v1/github/files": {
@@ -4133,11 +4094,7 @@
         "tags": [
           "Hello"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "responses": {
           "200": {
             "description": "Hello message"
@@ -5227,11 +5184,7 @@
         "tags": [
           "Posts"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "page",
@@ -5483,11 +5436,7 @@
         "tags": [
           "Posts"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "slug",
@@ -5530,11 +5479,7 @@
         "tags": [
           "Posts"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "year",
@@ -5577,11 +5522,7 @@
         "tags": [
           "Posts"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "slug",
@@ -6662,11 +6603,7 @@
         "tags": [
           "User"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "username",
@@ -6759,11 +6696,7 @@
         "tags": [
           "User"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "id",
@@ -7188,11 +7121,7 @@
         "tags": [
           "System Info"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "responses": {
           "200": {
             "description": "系统信息"
@@ -7206,11 +7135,7 @@
         "tags": [
           "Tags"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "page",
@@ -7354,11 +7279,7 @@
         "tags": [
           "Tags"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "name": "id",
@@ -7621,6 +7542,10 @@
     {
       "name": "Comments",
       "description": "评论管理相关接口"
+    },
+    {
+      "name": "Comments",
+      "description": "评论映射"
     },
     {
       "name": "Discoveries",

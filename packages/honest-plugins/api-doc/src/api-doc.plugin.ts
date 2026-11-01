@@ -305,13 +305,16 @@ export class ApiDocPlugin implements IPlugin {
         ...(apiDoc?.description && { description: apiDoc.description }),
         tags: tagName,
         // Add security requirements
-        ...(apiDoc?.security
+        ...(apiDoc?.security !== undefined
           ? { security: apiDoc.security }
-          : this.defaultSecurity
-            ? { security: this.defaultSecurity }
-            : this.securitySchemes
-              ? { security: Object.keys(this.securitySchemes).map((n) => ({ [n]: [] })) }
-              : {}),
+          : Reflect.getMetadata("public", route.controllerClass as any, route.handler) === true ||
+            Reflect.getMetadata('public', route.controllerClass?.prototype, route.handler) === true
+            ? { security: [] }
+            : this.defaultSecurity
+              ? { security: this.defaultSecurity }
+              : this.securitySchemes
+                ? { security: Object.keys(this.securitySchemes).map((n) => ({ [n]: [] })) }
+                : {}),
       };
 
       // Handle parameters (path params from Zod schema + query params)
