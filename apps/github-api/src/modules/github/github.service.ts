@@ -85,6 +85,14 @@ export class GitHubService {
     };
     const normalizedCandidate = normalize(candidate);
     if (!normalizedCandidate) return fallback;
+    try {
+      const host = new URL(normalizedCandidate).hostname;
+      if (host === 'localhost' || host === '127.0.0.1') {
+        return normalizedCandidate.replace(/^https?:\/\//, '');
+      }
+    } catch {
+      // ignore
+    }
     const normalizedAllowed = allowed
       .map((origin) => normalize(origin))
       .filter(Boolean);

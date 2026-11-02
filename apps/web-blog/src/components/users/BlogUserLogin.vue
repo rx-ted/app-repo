@@ -71,7 +71,7 @@ const ssoProviders = [
     key: 'github',
     label: 'GitHub',
     icon: 'mdi:github',
-    url: `${httpConfig.baseURL}/auth/oauth/github?redirect=${ssoRedirect.value}`,
+    url: `${httpConfig.baseURL}/auth/oauth/github?redirect=${ssoRedirect.value}&frontend=${encodeURIComponent(window.location.host)}`,
   },
 ] as const;
 

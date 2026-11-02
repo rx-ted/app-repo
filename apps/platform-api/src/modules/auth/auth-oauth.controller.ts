@@ -56,6 +56,12 @@ class AuthOAuthController {
     };
     const normalizedCandidate = normalize(frontend);
     if (!normalizedCandidate) return false;
+    try {
+      const host = new URL(normalizedCandidate).hostname;
+      if (host === 'localhost' || host === '127.0.0.1') return true;
+    } catch {
+      // ignore
+    }
     return this.getAllowedFrontends()
       .map((item) => normalize(item))
       .filter(Boolean)
@@ -113,7 +119,16 @@ class AuthOAuthController {
       source,
       redirect,
     });
-    if (frontend) params.set('frontend', frontend);
+    let resolvedFrontend = frontend;
+    if (!resolvedFrontend) {
+      const origin = c.req.header('origin') || c.req.header('referer');
+      try {
+        if (origin) resolvedFrontend = new URL(origin).host;
+      } catch {
+        // ignore
+      }
+    }
+    if (resolvedFrontend) params.set('frontend', resolvedFrontend);
     const res = await fetch(`${githubApiBase}/github/auth/url?${params.toString()}`);
     const data = await res.json();
     if (!res.ok || !data?.url || !data?.state) {
