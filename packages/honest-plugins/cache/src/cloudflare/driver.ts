@@ -96,7 +96,7 @@ class CloudflareKvDriver implements CacheDriver {
     if (!this.namespace) return false;
     const value = await this.namespace.get(key);
     if (value === null) return false;
-    await this.namespace.put(key, value, { expirationTtl: ttl });
+    await this.namespace.put(key, value, { expirationTtl: Math.max(ttl, 60) });
     return true;
   }
 
