@@ -5,7 +5,7 @@ export const envParams = {
     return env.var('API_PREFIX', '/api/v1');
   },
   get FRONTEND_DOMAIN() {
-    return env.var('FRONTEND_DOMAIN', 'blog.19981204.xyz');
+    return env.var('FRONTEND_DOMAIN', 'localhost:8080');
   },
   get FRONTEND_ALLOWED_ORIGINS(): string[] {
     const raw = env.var('FRONTEND_ALLOWED_ORIGINS', this.FRONTEND_DOMAIN);

@@ -140,7 +140,7 @@ class AuthOAuthController {
         redirect: data.redirect ?? redirect,
         userId: undefined,
         source,
-        frontend: data.frontend,
+        frontend: resolvedFrontend ?? data.frontend,
       }),
       OAUTH_STATE_TTL,
     );

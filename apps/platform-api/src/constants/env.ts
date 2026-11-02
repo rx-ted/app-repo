@@ -12,7 +12,7 @@ export const envParams = {
     return env.var('SITE_DOMAIN', 'localhost:3000');
   },
   get FRONTEND_DOMAIN() {
-    return env.var('FRONTEND_DOMAIN', 'blog.19981204.xyz');
+    return env.var('FRONTEND_DOMAIN', 'localhost:8080');
   },
   get FRONTEND_ALLOWED_ORIGINS() {
     const raw = env.var('FRONTEND_ALLOWED_ORIGINS', this.FRONTEND_DOMAIN);
