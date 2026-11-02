@@ -34,9 +34,10 @@ function getUser(c: Context): AuthEntity {
 }
 
 function setRefreshCookie(c: Context, token: string, maxAge: number = AUTH.COOKIE_MAX_AGE_SECONDS) {
+  const isHttps = typeof c.req?.url === 'string' && c.req.url.startsWith('https://');
   setCookie(c, AUTH.COOKIE_NAME, token, {
     httpOnly: true,
-    secure: true,
+    secure: c.req?.url ? isHttps : true,
     sameSite: 'Lax',
     path: AUTH.COOKIE_PATH,
     maxAge,
