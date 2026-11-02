@@ -39,6 +39,7 @@
 		"MAIL_SMTP_FROM_NAME": "rx-ted",
 		"GITHUB_CLIENT_ID": "Iv23libiF0w1ybmvskWW",
 		"FRONTEND_DOMAIN": "blog.19981204.xyz",
+		"GITHUB_API_BASE_URL": "https://github.19981204.xyz/api/v1",
 	},
 	"d1_databases": [
 		{

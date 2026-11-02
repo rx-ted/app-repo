@@ -2,6 +2,7 @@ import {
   Controller,
   Ctx,
   Get,
+  Post,
   Inject,
   Query,
   UseGuards,
@@ -9,6 +10,7 @@ import {
 import type { Context } from 'hono';
 import { AuthGuard } from '@/common/guards';
 import { Public } from '@/common/decorators';
+import { HTTPException } from 'hono/http-exception';
 import { env } from '@rx-ted/packages-core';
 import GitHubService from '@/modules/github/github.service';
 import {
@@ -57,6 +59,74 @@ export class GitHubAuthController {
   @ApiOkResponse({ description: 'GitHub 登录结果' })
   async authCallback(@Query('code') code: string, @Query('state') state: string) {
     return this.githubService.handleCallback(code ?? '', state ?? '');
+  }
+
+  private async resolveCode(c: Context): Promise<string> {
+    const queryCode = c.req.query('code');
+    if (queryCode) return queryCode;
+    const text = await c.req.text().catch(() => '');
+    try {
+      const json = JSON.parse(text);
+      if (json?.code) return String(json.code);
+    } catch {
+      // ignore
+    }
+    const params = new URLSearchParams(text);
+    return params.get('code') ?? '';
+  }
+
+  private async exchangeProxy(c: Context) {
+    const code = await this.resolveCode(c);
+    if (!code) throw new HTTPException(400, { message: 'missing_code' });
+    return this.githubService.exchangeCodeForAccessToken(code);
+  }
+
+  @Public()
+  @Post('auth/token')
+  async authTokenPost(@Ctx() c: Context) {
+    return this.exchangeProxy(c);
+  }
+
+  @Public()
+  @Get('auth/token')
+  async authTokenGet(@Ctx() c: Context) {
+    return this.exchangeProxy(c);
+  }
+
+  @Public()
+  @Post('oauth/token')
+  async oauthTokenPost(@Ctx() c: Context) {
+    return this.exchangeProxy(c);
+  }
+
+  @Public()
+  @Get('oauth/token')
+  async oauthTokenGet(@Ctx() c: Context) {
+    return this.exchangeProxy(c);
+  }
+
+  @Public()
+  @Post('oauth/access_token')
+  async oauthAccessTokenPost(@Ctx() c: Context) {
+    return this.exchangeProxy(c);
+  }
+
+  @Public()
+  @Get('oauth/access_token')
+  async oauthAccessTokenGet(@Ctx() c: Context) {
+    return this.exchangeProxy(c);
+  }
+
+  @Public()
+  @Post('login/oauth/access_token')
+  async loginOauthAccessTokenPost(@Ctx() c: Context) {
+    return this.exchangeProxy(c);
+  }
+
+  @Public()
+  @Get('login/oauth/access_token')
+  async loginOauthAccessTokenGet(@Ctx() c: Context) {
+    return this.exchangeProxy(c);
   }
 }
 

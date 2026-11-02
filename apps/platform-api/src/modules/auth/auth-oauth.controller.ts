@@ -68,39 +68,6 @@ class AuthOAuthController {
     return candidate.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   }
 
-  private async generateState(
-    redirect: string,
-    userId?: string,
-    source?: string,
-    frontend?: string,
-  ): Promise<string> {
-    const state = crypto.randomUUID();
-    const data: Record<string, string> = { redirect };
-    if (userId) data.userId = userId;
-    if (source) data.source = source;
-    data.frontend = this.resolveFrontend(frontend);
-    await this.cache.set(`oauth:state:${state}`, JSON.stringify(data), OAUTH_STATE_TTL);
-    return state;
-  }
-
-  private async consumeState(state: string): Promise<{
-    redirect: string;
-    userId?: string;
-    source?: string;
-    frontend?: string;
-  } | null> {
-    const key = `oauth:state:${state}`;
-    const raw = await this.cache.get<string>(key);
-    if (!raw) return null;
-    await this.cache.delete(key);
-    return JSON.parse(raw) as {
-      redirect: string;
-      userId?: string;
-      source?: string;
-      frontend?: string;
-    };
-  }
-
   private getFrontendUrl(frontend?: string): string {
     const domain = this.resolveFrontend(
       frontend ? `https://${frontend.replace(/^https?:\/\//, '')}` : undefined,
@@ -137,14 +104,32 @@ class AuthOAuthController {
     @Query('frontend') frontend: string | undefined,
     @Ctx() c: Context,
   ) {
-    const clientId = env.var('GITHUB_CLIENT_ID', '');
-    if (!clientId) throw new HTTPException(500, { message: 'GitHub OAuth not configured' });
-
-    const state = await this.generateState(redirect, undefined, source, frontend);
-    const callbackUrl = `${this.getApiUrl(c)}/api/v1/auth/oauth/github/callback`;
-
-    const url = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${state}&scope=user:email`;
-    return c.redirect(url);
+    const githubApiBase = (env.var('GITHUB_API_BASE_URL', 'http://localhost:3001/api/v1') ?? '')
+      .trim()
+      .replace(/\/$/, '');
+    const platformCallback = `${this.getApiUrl(c)}/api/v1/auth/oauth/github/callback`;
+    const params = new URLSearchParams({
+      redirectUri: platformCallback,
+      source,
+      redirect,
+    });
+    if (frontend) params.set('frontend', frontend);
+    const res = await fetch(`${githubApiBase}/github/auth/url?${params.toString()}`);
+    const data = await res.json();
+    if (!res.ok || !data?.url || !data?.state) {
+      throw new HTTPException(502, { message: 'github_auth_unavailable' });
+    }
+    await this.cache.set(
+      `oauth:platform:${data.state}`,
+      JSON.stringify({
+        redirect: data.redirect ?? redirect,
+        userId: undefined,
+        source,
+        frontend: data.frontend,
+      }),
+      OAUTH_STATE_TTL,
+    );
+    return c.redirect(data.url);
   }
 
   @Public()
@@ -164,13 +149,20 @@ class AuthOAuthController {
   ) {
     if (!code || !state) throw new HTTPException(400, { message: 'Missing code or state' });
 
-    const stored = await this.consumeState(state);
-    if (!stored) throw new HTTPException(400, { message: 'Invalid or expired state' });
+    const raw = await this.cache.get<string>(`oauth:platform:${state}`);
+    if (!raw) throw new HTTPException(400, { message: 'Invalid or expired state' });
+    await this.cache.delete(`oauth:platform:${state}`);
+    const stored = JSON.parse(raw) as {
+      redirect?: string;
+      userId?: string;
+      source?: string;
+      frontend?: string;
+    };
 
     const frontendUrl = this.getFrontendUrl(stored?.frontend);
 
     try {
-      const providerUser = await this.oauthService.exchangeGitHubCode(code);
+      const providerUser = await this.oauthService.exchangeGitHubCode(code, state);
       const existingLink = await this.authRepo.getUserByOAuthProvider(
         'github',
         providerUser.providerUserId,
@@ -241,7 +233,8 @@ class AuthOAuthController {
         }
       }
 
-      const redirectUrl = `${frontendUrl}/login?token=${result.accessToken}&redirect=${encodeURIComponent(stored.redirect)}`;
+      const redirectParam = stored.redirect ?? providerUser.redirect ?? '/';
+      const redirectUrl = `${frontendUrl}/login?token=${result.accessToken}&redirect=${encodeURIComponent(redirectParam)}`;
       this.setRefreshCookie(c, result.refreshToken);
       return c.redirect(redirectUrl);
     } catch (e) {
@@ -260,14 +253,27 @@ class AuthOAuthController {
   })
   async githubBind(@Query('redirect') redirect: string = '/profile', @Ctx() c: Context) {
     const user = getUser(c);
-    const clientId = env.var('GITHUB_CLIENT_ID', '');
-    if (!clientId) throw new HTTPException(500, { message: 'GitHub OAuth not configured' });
-
-    const state = await this.generateState(redirect, user.userId);
-    const callbackUrl = `${this.getApiUrl(c)}/api/v1/auth/oauth/github/bind/callback`;
-
-    const url = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${state}&scope=user:email`;
-    return { url };
+    const githubApiBase = (env.var('GITHUB_API_BASE_URL', 'http://localhost:3001/api/v1') ?? '')
+      .trim()
+      .replace(/\/$/, '');
+    const platformCallback = `${this.getApiUrl(c)}/api/v1/auth/oauth/github/bind/callback`;
+    const params = new URLSearchParams({
+      redirectUri: platformCallback,
+      source: 'github',
+      redirect,
+    });
+    params.set('username', user.username ?? user.userId);
+    const res = await fetch(`${githubApiBase}/github/auth/url?${params.toString()}`);
+    const data = await res.json();
+    if (!res.ok || !data?.url || !data?.state) {
+      throw new HTTPException(502, { message: 'github_auth_unavailable' });
+    }
+    await this.cache.set(
+      `oauth:platform:${data.state}`,
+      JSON.stringify({ redirect, userId: user.userId, source: 'github', frontend: data.frontend }),
+      OAUTH_STATE_TTL,
+    );
+    return { url: data.url };
   }
 
   @Public()
@@ -285,14 +291,17 @@ class AuthOAuthController {
   ) {
     if (!code || !state) throw new HTTPException(400, { message: 'Missing code or state' });
 
-    const stored = await this.consumeState(state);
+    const raw = await this.cache.get<string>(`oauth:platform:${state}`);
+    if (!raw) throw new HTTPException(400, { message: 'Invalid or expired state' });
+    await this.cache.delete(`oauth:platform:${state}`);
+    const stored = JSON.parse(raw) as { redirect?: string; userId?: string; frontend?: string };
     if (!stored?.userId) throw new HTTPException(400, { message: 'Invalid or expired state' });
 
     const frontendUrl = this.getFrontendUrl(stored?.frontend);
-    const redirect = stored.redirect.startsWith('/') ? stored.redirect : '/profile';
+    const redirect = stored.redirect?.startsWith('/') ? stored.redirect : '/profile';
 
     try {
-      await this.oauthService.bindGitHub(stored.userId, code);
+      await this.oauthService.bindGitHub(stored.userId, code, state);
       return c.redirect(`${frontendUrl}${redirect}?github=connected`);
     } catch (e) {
       const errorMsg = e instanceof HTTPException ? e.message : 'GitHub binding failed';

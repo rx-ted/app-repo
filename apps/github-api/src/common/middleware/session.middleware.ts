@@ -15,7 +15,7 @@ interface SessionRecord {
   expiresAt: string;
 }
 
-const SESSION_COOKIE = 'github_session';
+const SESSION_COOKIE = 'session';
 const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 function isValidSessionId(value: string): boolean {
@@ -35,7 +35,7 @@ export class SessionMiddleware {
     let sessionId = c.req.header('x-session-id') || '';
     // Also read cookie if present.
     const cookieHeader = c.req.header('cookie') || '';
-    const cookieMatch = cookieHeader.match(/(?:^|;\s*)github_session=([^;]+)/);
+    const cookieMatch = cookieHeader.match(/(?:^|;\s*)(?:session|github_session)=([^;]+)/);
     if (!sessionId && cookieMatch) sessionId = decodeURIComponent(cookieMatch[1]);
 
     if (!sessionId || !isValidSessionId(sessionId)) {

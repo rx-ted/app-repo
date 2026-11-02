@@ -2,14 +2,11 @@ import { Inject, Service } from '@rx-ted/packages-honest';
 import { DbService } from '@rx-ted/packages-honest-plugins/db';
 import { postDiscussionMaps } from '@/schema';
 import { eq, and } from 'drizzle-orm';
-import GitHubService from '@/modules/github/github.service';
+import { env } from '@rx-ted/packages-core';
 
 @Service()
 class CommentDiscussionService {
-  constructor(
-    @Inject(DbService) private db: DbService,
-    @Inject(GitHubService) private github?: GitHubService,
-  ) {}
+  constructor(@Inject(DbService) private db: DbService) {}
 
   private guestbookSlug(): string {
     return 'guestbook';
@@ -129,7 +126,6 @@ class CommentDiscussionService {
     const scope = this.normalizeScope(input.scope);
     const slug = this.normalizeSlug(scope, input.slug);
     if (!slug) throw new Error('slug is required');
-    if (!this.github) throw new Error('github service unavailable');
 
     const existing = (
       await this.db
@@ -149,18 +145,31 @@ class CommentDiscussionService {
       };
     }
 
-    const created = await this.github.createDiscussion(
-      input.githubOwner,
-      input.githubOwner,
-      input.githubRepo,
-      input.postTitle,
-      '',
-      input.categoryId,
-      input.categorySlug,
-      input.blogUrl,
-      input.postTitle,
-      slug,
-    );
+    const baseUrl = (env.var('GITHUB_API_BASE_URL', 'http://localhost:3001/api/v1') ?? '')
+      .trim()
+      .replace(/\/$/, '');
+    const createdRes = await fetch(`${baseUrl}/github/discussions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Username': input.githubOwner,
+      },
+      body: JSON.stringify({
+        owner: input.githubOwner,
+        repo: input.githubRepo,
+        title: input.postTitle,
+        body: '',
+        categoryId: input.categoryId,
+        categorySlug: input.categorySlug,
+        blogUrl: input.blogUrl,
+        postTitle: input.postTitle,
+        slug,
+      }),
+    });
+    if (!createdRes.ok) {
+      throw new Error(`github-api create discussion failed: ${createdRes.status}`);
+    }
+    const created = (await createdRes.json()) as { number: number; url: string };
 
     const mapping = await this.createMapping({
       scope,

@@ -187,14 +187,19 @@ export class GitHubService {
     if (username && this.normalizeLogin(username) !== this.normalizeLogin(login)) {
       await this.cache.set(toStringKey(username), record, expiresIn);
     }
+    let resolvedSessionId: string | null = sessionId ?? null;
     if (sessionId) {
       const existingSession = await this.cache.get<any>(`session:${sessionId}`);
       const now = new Date();
       const tokenExpiryMs = new Date(record.expiresAt).getTime();
       const sessionExpiryMs = tokenExpiryMs + 10 * 60 * 1000;
+      // Rotate the session id after a successful login so an anonymous/random
+      // session id carried to the backend cannot be reused to access the
+      // authenticated session. Drop the old session key from KV at the same time.
+      resolvedSessionId = crypto.randomUUID();
       const sessionRecord = {
         ...(existingSession || {}),
-        sessionId,
+        sessionId: resolvedSessionId,
         platformUsername: username ?? existingSession?.platformUsername,
         githubLogin: login,
         githubTokenKey: this.tokenKey(login),
@@ -206,7 +211,14 @@ export class GitHubService {
         expiresAt: new Date(sessionExpiryMs).toISOString(),
       };
       const ttlSeconds = Math.max(60, Math.floor((sessionExpiryMs - Date.now()) / 1000));
-      await this.cache.set(`session:${sessionId}`, sessionRecord, ttlSeconds);
+      await this.cache.set(`session:${resolvedSessionId}`, sessionRecord, ttlSeconds);
+      if (sessionId !== resolvedSessionId) {
+        try {
+          await this.cache.delete(`session:${sessionId}`);
+        } catch {
+          // ignore
+        }
+      }
     }
 
     return {
@@ -218,9 +230,36 @@ export class GitHubService {
       source,
       redirect,
       frontend,
-      sessionId: sessionId ?? null,
+      sessionId: resolvedSessionId,
       stored: true,
     };
+  }
+
+  async exchangeCodeForAccessToken(code: string): Promise<Record<string, unknown>> {
+    const clientId = (env.var('GITHUB_CLIENT_ID', '') ?? '').trim();
+    const clientSecret = (env.var('GITHUB_CLIENT_SECRET', '') ?? env.var('GITHUB_SECRET', '') ?? '').trim();
+    if (!clientId || !clientSecret) {
+      throw new HTTPException(500, { message: 'github_not_configured' });
+    }
+    const res = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
+    });
+    const text = await res.text();
+    let data: Record<string, unknown>;
+    try {
+      data = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      throw new HTTPException(502, { message: 'github_unavailable' });
+    }
+    if (!res.ok || (data as any)?.error) {
+      throw new HTTPException(401, { message: String((data as any)?.error_description || (data as any)?.error || 'github_reauth_required') });
+    }
+    return data;
   }
 
   async getToken(ownerOrUsername: string): Promise<GitHubTokenRecord | null> {

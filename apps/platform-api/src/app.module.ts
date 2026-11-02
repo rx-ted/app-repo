@@ -16,7 +16,6 @@ import CommentModule from '@/modules/comment/comment.module';
 
 import DiscoverModule from '@/modules/discover/discover.module';
 
-import GitHubModule from '@/modules/github/github.module';
 import HelloModule from '@/modules/hello/hello.module';
 import MailModule from '@/modules/mail/mail.module';
 
@@ -56,8 +55,6 @@ import SearchModule from '@/modules/search/search.module';
     CommentMapModule,
 
     DiscoverModule,
-
-    GitHubModule,
 
     HelloModule,
     MailModule,
