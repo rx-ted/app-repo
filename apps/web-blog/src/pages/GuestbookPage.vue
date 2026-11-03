@@ -20,64 +20,6 @@
       </ul>
     </div>
 
-    <div class="guestbook-form">
-      <template v-if="!isAuthenticated">
-        <div class="form-row">
-          <input
-            v-model="authorName"
-            class="form-input"
-            :placeholder="t('guestbook.form.name')"
-            maxlength="50"
-          >
-          <input
-            v-model="authorEmail"
-            class="form-input"
-            type="email"
-            :placeholder="t('guestbook.form.email')"
-            maxlength="100"
-          >
-        </div>
-      </template>
-      <div v-else class="auth-info">
-        {{ t('guestbook.form.postingAs') }} <strong>{{ userDisplayName }}</strong>
-      </div>
-      <textarea
-        v-model="form.content"
-        class="form-textarea"
-        :placeholder="t('guestbook.form.placeholder')"
-        maxlength="2000"
-        rows="4"
-      ></textarea>
-      <div class="form-actions">
-        <span v-if="submitError" class="submit-error">{{ t('guestbook.form.error') }}</span>
-        <button class="submit-btn" :disabled="submitting || !formValid" @click="submit">
-          {{ submitting ? t('guestbook.form.submitting') : t('guestbook.form.submit') }}
-        </button>
-      </div>
-    </div>
-
-    <div v-if="store.loading && !store.comments.length" class="loading-state">
-      {{ t('guestbook.loading') }}
-    </div>
-
-    <div v-else-if="!store.comments.length && !store.loading" class="empty-state">
-      {{ t('guestbook.empty') }}
-    </div>
-
-    <div v-else class="messages-list">
-      <div v-for="msg in store.comments" :key="msg.id" class="message-item">
-        <div class="msg-avatar">{{ msg.author.username.charAt(0) }}</div>
-        <div class="msg-body">
-          <div class="msg-meta">
-            <span class="msg-name">{{ msg.author.displayName || msg.author.username }}</span>
-            <span v-if="msg.author.location" class="msg-city">{{ msg.author.location }}</span>
-            <span class="msg-date">{{ formatDate(msg.createdAt) }}</span>
-          </div>
-          <p class="msg-content">{{ msg.content }}</p>
-        </div>
-      </div>
-    </div>
-
     <section class="gitalk-section">
       <h2 class="gitalk-title">Gitalk 评论</h2>
       <div v-if="!session.isAuthenticated" class="empty-state">
