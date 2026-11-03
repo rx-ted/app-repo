@@ -79,7 +79,7 @@ export class AuthGuard implements IGuard {
       }
 
       const session = await this.authContext.findSession(sessionCookie);
-      if (!session || !session.username) {
+      if (!session?.username) {
         throw new HTTPException(401, { message: 'Session has been revoked' });
       }
 

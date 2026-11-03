@@ -35,12 +35,19 @@ class CommentDiscussionService {
       await this.db
         .select()
         .from(postDiscussionMaps)
-        .where(and(eq(postDiscussionMaps.scope, scope as any), eq(postDiscussionMaps.postSlug, slug)))
+        .where(
+          and(eq(postDiscussionMaps.scope, scope as any), eq(postDiscussionMaps.postSlug, slug)),
+        )
         .limit(1)
     )[0];
     if (existing) {
       return {
-        status: existing.status === 'active' ? 'active' : (existing.status === 'archived' ? 'disabled' : 'pending'),
+        status:
+          existing.status === 'active'
+            ? 'active'
+            : existing.status === 'archived'
+              ? 'disabled'
+              : 'pending',
         discussionNumber: existing.discussionNumber,
         discussionUrl: existing.discussionUrl ?? null,
         created: false,
@@ -65,9 +72,10 @@ class CommentDiscussionService {
 
     const owner = env.var('GITHUB_REPO_OWNER', 'rx-ted');
     const repo = env.var('GITHUB_REPO_NAME', 'app-repo');
-    const blogUrl = scope === 'post'
-      ? `https://${envParams.FRONTEND_DOMAIN}/posts/${slug}`
-      : `https://${envParams.FRONTEND_DOMAIN}/${slug === 'guestbook' ? 'guestbook' : slug}`;
+    const blogUrl =
+      scope === 'post'
+        ? `https://${envParams.FRONTEND_DOMAIN}/posts/${slug}`
+        : `https://${envParams.FRONTEND_DOMAIN}/${slug === 'guestbook' ? 'guestbook' : slug}`;
     try {
       const ensured = await this.ensureMapping({
         scope,

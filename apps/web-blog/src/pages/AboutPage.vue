@@ -178,7 +178,11 @@ const gitalkOptions = computed(() => {
     clientID,
     repo: (import.meta.env.VITE_GITALK_REPO as string | undefined) || 'app-repo',
     owner: (import.meta.env.VITE_GITALK_OWNER as string | undefined) || 'rx-ted',
-    admin: (import.meta.env.VITE_GITALK_ADMINS as string | undefined)?.split(',').map((v) => v.trim()).filter(Boolean) || [],
+    admin:
+      (import.meta.env.VITE_GITALK_ADMINS as string | undefined)
+        ?.split(',')
+        .map((v) => v.trim())
+        .filter(Boolean) || [],
     id: 'about',
     number: discussionNumber.value ?? undefined,
     title: 'About',

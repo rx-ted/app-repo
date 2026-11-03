@@ -97,7 +97,11 @@ class AuthOAuthController {
     });
   }
 
-  private setSessionCookie(c: Context, sessionId: string, maxAge: number = AUTH.COOKIE_MAX_AGE_SECONDS) {
+  private setSessionCookie(
+    c: Context,
+    sessionId: string,
+    maxAge: number = AUTH.COOKIE_MAX_AGE_SECONDS,
+  ) {
     const isHttps = typeof c.req?.url === 'string' && c.req.url.startsWith('https://');
     setCookie(c, 'session', sessionId, {
       httpOnly: true,
