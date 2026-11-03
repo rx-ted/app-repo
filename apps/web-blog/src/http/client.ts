@@ -119,6 +119,7 @@ export const createHttpClient = (config: HttpConfig, interceptors?: HttpIntercep
         headers: fetchConfig.headers,
         body: fetchConfig.body,
         signal: fetchConfig.signal,
+        credentials: config.withCredentials ? 'include' : 'same-origin',
       });
 
       const responseType = options.responseType ?? 'json';

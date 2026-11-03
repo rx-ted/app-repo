@@ -10,6 +10,7 @@ export interface AuthSession {
   ip: string | null;
   lastActiveAt: string;
   userId: string;
+  username?: string;
 }
 
 export abstract class IAuthContextService {

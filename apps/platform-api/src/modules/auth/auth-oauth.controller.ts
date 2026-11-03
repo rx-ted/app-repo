@@ -97,6 +97,17 @@ class AuthOAuthController {
     });
   }
 
+  private setSessionCookie(c: Context, sessionId: string, maxAge: number = AUTH.COOKIE_MAX_AGE_SECONDS) {
+    const isHttps = typeof c.req?.url === 'string' && c.req.url.startsWith('https://');
+    setCookie(c, 'session', sessionId, {
+      httpOnly: true,
+      secure: c.req?.url ? isHttps : true,
+      sameSite: 'Lax',
+      path: '/',
+      maxAge,
+    });
+  }
+
   @Public()
   @Get('github', {
     apiDoc: {
@@ -252,6 +263,7 @@ class AuthOAuthController {
       const redirectParam = stored.redirect ?? providerUser.redirect ?? '/';
       const redirectUrl = `${frontendUrl}/login?token=${result.accessToken}&redirect=${encodeURIComponent(redirectParam)}`;
       this.setRefreshCookie(c, result.refreshToken);
+      this.setSessionCookie(c, result.sessionId);
       return c.redirect(redirectUrl);
     } catch (e) {
       logger.error({ err: e }, '[OAuth] githubCallback error');

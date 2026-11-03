@@ -18,64 +18,87 @@ export class AuthGuard implements IGuard {
     if (isPublicHandler(c)) return true;
 
     const authHeader = c.req.header('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
+    let username: string | undefined;
+    let sessionId: string | null = null;
+
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      if (!token) {
+        throw new HTTPException(401, { message: 'Token is empty' });
+      }
+
+      let payload: { username: string; sessionId?: string; tokenVersion?: number };
+      try {
+        payload = jwt.verify(token, env.require('JWT_SECRET')) as {
+          username: string;
+          sessionId?: string;
+          tokenVersion?: number;
+        };
+      } catch {
+        throw new HTTPException(401, { message: 'Invalid or expired token' });
+      }
+
+      username = payload.username;
+      sessionId = payload.sessionId ?? null;
+
+      // session validation when a sessionId is present in the bearer token.
+      if (sessionId) {
+        const session = await this.authContext.findSession(sessionId);
+        if (!session) {
+          throw new HTTPException(401, { message: 'Session has been revoked' });
+        }
+
+        const anomalyMode = env.var('ANOMALY_DETECTION_MODE', 'off');
+        if (anomalyMode !== 'off') {
+          const currentIp =
+            c.req.header('x-forwarded-for') ?? c.req.header('cf-connecting-ip') ?? null;
+          if (session.ip && currentIp && session.ip !== currentIp) {
+            const lastActive = new Date(session.lastActiveAt).getTime();
+            const now = Date.now();
+            if (now - lastActive < AUTH.ANOMALY_WINDOW_MS) {
+              if (anomalyMode === 'reject') {
+                throw new HTTPException(401, { message: 'Suspicious activity detected' });
+              }
+              logger.warn(
+                { sessionId, oldIp: session.ip, newIp: currentIp },
+                'Anomaly: IP changed for session',
+              );
+            }
+          }
+        }
+
+        await this.authContext.touchSession(session);
+      }
+    } else {
+      // Fall back to the HttpOnly session-id cookie when no bearer token is supplied.
+      const cookieHeader = c.req.header('Cookie') || '';
+      const cookieMatch = cookieHeader.match(/(?:^|;\\s*)session=([^;]+)/);
+      const sessionCookie = cookieMatch ? decodeURIComponent(cookieMatch[1]) : '';
+      if (!sessionCookie) {
+        throw new HTTPException(401, { message: 'Missing or invalid authorization header' });
+      }
+
+      const session = await this.authContext.findSession(sessionCookie);
+      if (!session || !session.username) {
+        throw new HTTPException(401, { message: 'Session has been revoked' });
+      }
+
+      username = session.username;
+      sessionId = session.id;
+      await this.authContext.touchSession(session);
+    }
+
+    if (!username) {
       throw new HTTPException(401, { message: 'Missing or invalid authorization header' });
     }
 
-    const token = authHeader.slice(7);
-    if (!token) {
-      throw new HTTPException(401, { message: 'Token is empty' });
-    }
-
-    let payload: { username: string; sessionId?: string; tokenVersion?: number };
-    try {
-      payload = jwt.verify(token, env.require('JWT_SECRET')) as {
-        username: string;
-        sessionId?: string;
-        tokenVersion?: number;
-      };
-    } catch {
-      throw new HTTPException(401, { message: 'Invalid or expired token' });
-    }
-
-    const user = await this.authContext.resolveUser(payload.username);
+    const user = await this.authContext.resolveUser(username);
     if (!user) {
       throw new HTTPException(401, { message: 'User not found' });
     }
 
-    // session validation
-    if (payload.sessionId) {
-      const session = await this.authContext.findSession(payload.sessionId);
-      if (!session) {
-        throw new HTTPException(401, { message: 'Session has been revoked' });
-      }
-
-      // anomaly detection (opt-in) — check before updating lastActiveAt
-      const anomalyMode = env.var('ANOMALY_DETECTION_MODE', 'off');
-      if (anomalyMode !== 'off') {
-        const currentIp =
-          c.req.header('x-forwarded-for') ?? c.req.header('cf-connecting-ip') ?? null;
-        if (session.ip && currentIp && session.ip !== currentIp) {
-          const lastActive = new Date(session.lastActiveAt).getTime();
-          const now = Date.now();
-          if (now - lastActive < AUTH.ANOMALY_WINDOW_MS) {
-            if (anomalyMode === 'reject') {
-              throw new HTTPException(401, { message: 'Suspicious activity detected' });
-            }
-            logger.warn(
-              { sessionId: payload.sessionId, oldIp: session.ip, newIp: currentIp },
-              'Anomaly: IP changed for session',
-            );
-          }
-        }
-      }
-
-      // device tracking: update last active timestamp
-      await this.authContext.touchSession(session);
-    }
-
     c.set('user', user);
-    c.set('sessionId', payload.sessionId ?? null);
+    c.set('sessionId', sessionId);
     return true;
   }
 }

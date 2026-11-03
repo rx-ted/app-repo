@@ -17,7 +17,7 @@ const resolvedBaseURL = (import.meta.env.VITE_API_BASE_URL as string | undefined
 export const httpConfig: HttpConfig = {
   baseURL: resolvedBaseURL,
   timeoutMs: resolveNumber(import.meta.env.VITE_HTTP_TIMEOUT_MS, 15000),
-  withCredentials: import.meta.env.VITE_HTTP_WITH_CREDENTIALS === 'true',
+  withCredentials: import.meta.env.VITE_HTTP_WITH_CREDENTIALS !== 'false',
   defaultHeaders: {
     Accept: 'application/json',
   },

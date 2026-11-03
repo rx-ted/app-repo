@@ -44,6 +44,17 @@ function setRefreshCookie(c: Context, token: string, maxAge: number = AUTH.COOKI
   });
 }
 
+function setSessionCookie(c: Context, sessionId: string, maxAge: number = AUTH.COOKIE_MAX_AGE_SECONDS) {
+  const isHttps = typeof c.req?.url === 'string' && c.req.url.startsWith('https://');
+  setCookie(c, 'session', sessionId, {
+    httpOnly: true,
+    secure: c.req?.url ? isHttps : true,
+    sameSite: 'Lax',
+    path: '/',
+    maxAge,
+  });
+}
+
 @UseGuards(AuthGuard)
 @Controller('auth', {
   tag: { name: 'Auth', description: 'Authentication endpoints' },
@@ -104,6 +115,7 @@ class AuthController {
     const result = await this.passwordAuth.login(validated.username, validated.password, ip, ua);
 
     setRefreshCookie(c, result.refreshToken);
+    setSessionCookie(c, result.sessionId);
 
     return {
       accessToken: result.accessToken,
@@ -243,6 +255,7 @@ class AuthController {
     }
 
     setRefreshCookie(c, result.refreshToken);
+    setSessionCookie(c, result.sessionId);
 
     return c.json({
       accessToken: result.accessToken,

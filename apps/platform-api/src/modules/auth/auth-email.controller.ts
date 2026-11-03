@@ -33,6 +33,17 @@ function setRefreshCookie(c: Context, token: string, maxAge: number = AUTH.COOKI
   });
 }
 
+function setSessionCookie(c: Context, sessionId: string, maxAge: number = AUTH.COOKIE_MAX_AGE_SECONDS) {
+  const isHttps = typeof c.req?.url === 'string' && c.req.url.startsWith('https://');
+  setCookie(c, 'session', sessionId, {
+    httpOnly: true,
+    secure: c.req?.url ? isHttps : true,
+    sameSite: 'Lax',
+    path: '/',
+    maxAge,
+  });
+}
+
 @Controller('auth/email', {
   tag: { name: 'Auth', description: '邮箱验证码认证' },
 })
@@ -104,6 +115,7 @@ class AuthEmailController {
     const { email, code } = EmailLoginSchema.parse(body);
     const result = await this.emailAuth.emailLogin(email, code, ip, userAgent);
     setRefreshCookie(c, result.refreshToken);
+    setSessionCookie(c, result.sessionId);
     return {
       accessToken: result.accessToken,
       expiresIn: result.expiresIn,

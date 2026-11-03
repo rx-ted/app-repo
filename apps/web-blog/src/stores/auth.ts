@@ -110,6 +110,23 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function bootstrap() {
     let currentToken = token.value;
+
+    // Cookie-based session recovery (session id is stored in an HttpOnly cookie).
+    if (!user.value) {
+      try {
+        const response = await http.get<ApiResponse<SessionUser>>(API.AUTH_ME);
+        if (response.data) {
+          user.value = response.data;
+          applyLocale(response.data.preferredLocale);
+          startHeartbeat();
+          _resolveReady();
+          return;
+        }
+      } catch {
+        /* no cookie session */
+      }
+    }
+
     if (!currentToken) {
       try {
         const response = await http.post<ApiResponse<{ accessToken: string; expiresIn: string }>>(
@@ -125,7 +142,11 @@ export const useAuthStore = defineStore('auth', () => {
         /* no refresh possible */
       }
     }
-    if (!currentToken) {
+    if (!currentToken && !user.value) {
+      _resolveReady();
+      return;
+    }
+    if (user.value) {
       _resolveReady();
       return;
     }

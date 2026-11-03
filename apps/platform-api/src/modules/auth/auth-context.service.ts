@@ -35,6 +35,7 @@ export class AuthContextService extends IAuthContextService {
       ip: record.ip,
       lastActiveAt: record.lastActiveAt,
       userId: record.userId,
+      username: record.username,
     };
   }
 
