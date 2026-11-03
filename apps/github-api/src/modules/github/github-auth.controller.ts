@@ -133,6 +133,11 @@ export class GitHubAuthController {
   @Public()
   @All('proxy/*')
   async githubProxy(@Ctx() c: Context) {
+    const reqPath = String(c.req.path ?? '');
+    if (reqPath.endsWith('/oauth/authorize') || reqPath.endsWith('/login/oauth/authorize')) {
+      const target = `https://github.com/login/oauth/authorize${new URL(c.req.url).search}`;
+      return c.redirect(target, 302);
+    }
     const result = await this.githubService.proxyGitHub(c);
     Object.entries(result.headers).forEach(([key, value]) => c.header(key, value));
     return c.body(result.body, result.status as any);
