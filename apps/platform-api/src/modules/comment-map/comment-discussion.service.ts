@@ -22,8 +22,8 @@ class CommentDiscussionService {
     return (slug ?? '').trim();
   }
 
-  async ensureForPost(slugRaw?: string): Promise<any> {
-    const scope = 'post';
+  async ensureForScope(scopeRaw?: string, slugRaw?: string): Promise<any> {
+    const scope = this.normalizeScope(scopeRaw);
     const slug = this.normalizeSlug(scope, slugRaw);
     if (!slug) {
       return { status: 'not_initialized', discussionNumber: null, discussionUrl: null };
@@ -45,20 +45,32 @@ class CommentDiscussionService {
       };
     }
 
-    const posts = await this.db.select().from(postCore).where(eq(postCore.slug, slug)).limit(1);
-    const post = posts[0];
-    if (!post) {
-      return { status: 'not_initialized', discussionNumber: null, discussionUrl: null };
+    let title = slug;
+    if (scope === 'post') {
+      const posts = await this.db.select().from(postCore).where(eq(postCore.slug, slug)).limit(1);
+      const post = posts[0];
+      if (!post) {
+        return { status: 'not_initialized', discussionNumber: null, discussionUrl: null };
+      }
+      title = String(post.title ?? slug);
+    } else if (scope === 'guestbook') {
+      title = 'Guestbook';
+    } else if (scope === 'discover') {
+      title = 'Discover';
+    } else if (scope === 'about') {
+      title = 'About';
     }
 
     const owner = env.var('GITHUB_REPO_OWNER', 'rx-ted');
     const repo = env.var('GITHUB_REPO_NAME', 'app-repo');
-    const blogUrl = `https://${envParams.FRONTEND_DOMAIN}/posts/${slug}`;
+    const blogUrl = scope === 'post'
+      ? `https://${envParams.FRONTEND_DOMAIN}/posts/${slug}`
+      : `https://${envParams.FRONTEND_DOMAIN}/${slug === 'guestbook' ? 'guestbook' : slug}`;
     try {
       const ensured = await this.ensureMapping({
         scope,
         slug,
-        postTitle: String(post.title ?? slug),
+        postTitle: title,
         blogUrl,
         githubOwner: owner,
         githubRepo: repo,

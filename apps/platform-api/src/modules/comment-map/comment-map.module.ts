@@ -37,10 +37,7 @@ export class CommentDiscussionController {
     apiDoc: { summary: '自动确保 slug/scope 对应的 Discussion', tags: ['Comments'] },
   })
   async ensurePost(@Query('scope') scope?: string, @Query('slug') slug?: string) {
-    if (scope === 'post' || !scope) {
-      return this.service.ensureForPost(slug);
-    }
-    return this.service.resolve(scope, slug);
+    return this.service.ensureForScope(scope, slug);
   }
 
   @Post('discussion', { apiDoc: { summary: '创建/确保 Discussion 映射', tags: ['Comments'] } })
