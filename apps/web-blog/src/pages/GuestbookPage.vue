@@ -137,6 +137,7 @@ const gitalkOptions = computed(() => {
     body: 'Guestbook for rx-ted blog',
     backend: 'discussions' as const,
     category: (import.meta.env.VITE_GITALK_CATEGORY as string | undefined) || 'General',
+    createIssueManually: false,
     proxy: import.meta.env.VITE_GITALK_PROXY as string | undefined,
     language: 'zh-CN',
     perPage: 20,
