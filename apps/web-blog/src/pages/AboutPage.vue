@@ -143,7 +143,7 @@
           去登录
         </router-link>
       </div>
-      <div v-else-if="gitalkOptions.clientID" class="gitalk-container">
+      <div v-else-if="gitalkOptions" class="gitalk-container">
         <component :is="GitalkComponent" :options="gitalkOptions" />
       </div>
       <p v-else class="empty-state">
@@ -154,34 +154,54 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue';
+import { defineAsyncComponent, ref, computed, onMounted } from 'vue';
 import { useI18n } from '@/composables/useI18n';
 import { useSessionStore } from '@/stores/session';
+import { http } from '@/http';
+import { API } from '@/constants/api';
 
 import '@aifire/gitalk/style.css';
 
 const { t } = useI18n();
 const sessionStore = useSessionStore();
 
+const discussionNumber = ref<number | null>(null);
+
 const GitalkComponent = defineAsyncComponent(() =>
   import('@aifire/gitalk-vue').then((m) => m.default || (m as any).Gitalk),
 );
 
-const gitalkOptions = {
-  clientID: import.meta.env.VITE_GITALK_CLIENT_ID as string | undefined,
-  repo: (import.meta.env.VITE_GITALK_REPO as string | undefined) || 'app-repo',
-  owner: (import.meta.env.VITE_GITALK_OWNER as string | undefined) || 'rx-ted',
-  admin: (import.meta.env.VITE_GITALK_ADMINS as string | undefined)?.split(',').map((v) => v.trim()).filter(Boolean) || [],
-  id: 'about',
-  title: 'About',
-  body: `${window.location.href}\n\nAbout page comments`,
-  backend: 'discussions' as const,
-  category: (import.meta.env.VITE_GITALK_CATEGORY as string | undefined) || 'General',
-  createIssueManually: false,
-  proxy: import.meta.env.VITE_GITALK_PROXY as string | undefined,
-  language: 'zh-CN',
-  perPage: 20,
-};
+const gitalkOptions = computed(() => {
+  const clientID = import.meta.env.VITE_GITALK_CLIENT_ID as string | undefined;
+  if (!clientID) return null;
+  return {
+    clientID,
+    repo: (import.meta.env.VITE_GITALK_REPO as string | undefined) || 'app-repo',
+    owner: (import.meta.env.VITE_GITALK_OWNER as string | undefined) || 'rx-ted',
+    admin: (import.meta.env.VITE_GITALK_ADMINS as string | undefined)?.split(',').map((v) => v.trim()).filter(Boolean) || [],
+    id: 'about',
+    number: discussionNumber.value ?? undefined,
+    title: 'About',
+    body: `${window.location.href}\n\nAbout page comments`,
+    backend: 'discussions' as const,
+    category: (import.meta.env.VITE_GITALK_CATEGORY as string | undefined) || 'General',
+    createIssueManually: false,
+    proxy: import.meta.env.VITE_GITALK_PROXY as string | undefined,
+    language: 'zh-CN',
+    perPage: 20,
+  };
+});
+
+onMounted(() => {
+  http
+    .get(API.COMMENTS_DISCUSSION_ENSURE, { query: { scope: 'about' } })
+    .then((res: any) => {
+      discussionNumber.value = res?.data?.discussionNumber ?? res?.discussionNumber ?? null;
+    })
+    .catch(() => {
+      discussionNumber.value = null;
+    });
+});
 
 const FOCUS_URLS: Record<string, string | null> = {
   TypeScript: 'https://typescriptlang.org',

@@ -167,6 +167,8 @@ const GitalkComponent = defineAsyncComponent(() =>
   import('@aifire/gitalk-vue').then((m) => m.default || (m as any).Gitalk),
 );
 
+const discussionNumber = ref<number | null>(null);
+
 const gitalkOptions = computed(() => {
   const clientID = import.meta.env.VITE_GITALK_CLIENT_ID as string | undefined;
   const owner = (import.meta.env.VITE_GITALK_OWNER as string | undefined) || 'rx-ted';
@@ -178,6 +180,7 @@ const gitalkOptions = computed(() => {
     owner,
     admin: (import.meta.env.VITE_GITALK_ADMINS as string | undefined)?.split(',').map((v) => v.trim()).filter(Boolean) || [],
     id: 'discover',
+    number: discussionNumber.value ?? undefined,
     title: 'Discover',
     body: `${window.location.href}\n\ndiscover page comments`,
     backend: 'discussions' as const,
@@ -258,6 +261,17 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+});
+
+onMounted(() => {
+  http
+    .get(API.COMMENTS_DISCUSSION_ENSURE, { query: { scope: 'discover' } })
+    .then((res: any) => {
+      discussionNumber.value = res?.data?.discussionNumber ?? res?.discussionNumber ?? null;
+    })
+    .catch(() => {
+      discussionNumber.value = null;
+    });
 });
 
 const showModal = ref(false);

@@ -19,6 +19,8 @@ class CommentDiscussionService {
 
   private normalizeSlug(scope: string, slug?: string): string {
     if (scope === 'guestbook') return this.guestbookSlug();
+    if (scope === 'discover') return (slug ?? 'discover').trim() || 'discover';
+    if (scope === 'about') return (slug ?? 'about').trim() || 'about';
     return (slug ?? '').trim();
   }
 

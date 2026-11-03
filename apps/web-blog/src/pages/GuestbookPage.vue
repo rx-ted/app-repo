@@ -101,6 +101,8 @@ import { ref, computed, onMounted, defineAsyncComponent } from 'vue';
 import { useI18n } from '@/composables/useI18n';
 import { useSessionStore } from '@/stores/session';
 import { useCommentStore } from '@/stores/comment';
+import { http } from '@/http';
+import { API } from '@/constants/api';
 
 import '@aifire/gitalk/style.css';
 
@@ -122,6 +124,8 @@ const authorEmail = ref('');
 const isAuthenticated = computed(() => session.isAuthenticated);
 const userDisplayName = computed(() => session.user?.nickname || session.user?.username || '');
 
+const discussionNumber = ref<number | null>(null);
+
 const gitalkOptions = computed(() => {
   const clientID = import.meta.env.VITE_GITALK_CLIENT_ID as string | undefined;
   const owner = (import.meta.env.VITE_GITALK_OWNER as string | undefined) || 'rx-ted';
@@ -133,6 +137,7 @@ const gitalkOptions = computed(() => {
     owner,
     admin: (import.meta.env.VITE_GITALK_ADMINS as string | undefined)?.split(',')?.map((v) => v.trim()).filter(Boolean) || [],
     id: 'guestbook',
+    number: discussionNumber.value ?? undefined,
     title: 'Guestbook',
     body: 'Guestbook for rx-ted blog',
     backend: 'discussions' as const,
@@ -186,6 +191,14 @@ function formatDate(iso: string): string {
 
 onMounted(() => {
   store.fetchComments(undefined, 'guestbook');
+  http
+    .get(API.COMMENTS_DISCUSSION_ENSURE, { query: { scope: 'guestbook' } })
+    .then((res: any) => {
+      discussionNumber.value = res?.data?.discussionNumber ?? res?.discussionNumber ?? null;
+    })
+    .catch(() => {
+      discussionNumber.value = null;
+    });
 });
 </script>
 
