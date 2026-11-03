@@ -43,6 +43,7 @@ const content = computed(() => stripFrontMatter(item.value?.content ?? ''));
 const views = ref(0);
 const likes = ref(0);
 const comments = ref(0);
+const discussionNumber = ref<number | null>(null);
 
 const gitalkOptions = computed(() => {
   const clientID = import.meta.env.VITE_GITALK_CLIENT_ID as string | undefined;
@@ -55,8 +56,9 @@ const gitalkOptions = computed(() => {
     owner,
     admin: (import.meta.env.VITE_GITALK_ADMINS as string | undefined)?.split(',').map((v) => v.trim()).filter(Boolean) || [],
     id: slug.value,
+    number: discussionNumber.value ?? undefined,
     title: item.value.title,
-    body: `${window.location.href}\n\n${item.value.title}`,
+    body: `${window.location.href}\n\n${item.value.title}\n\nslug: ${slug.value}\nurl: ${window.location.href}`,
     backend: 'discussions' as const,
     category: (import.meta.env.VITE_GITALK_CATEGORY as string | undefined) || 'General',
     createIssueManually: false,
@@ -77,6 +79,14 @@ watch(
         comments.value = item.value.comments ?? 0;
         views.value++;
         http.post(`${API.POSTS_STATS}/${item.value.id}/views`).catch(() => {});
+        http
+          .get(API.COMMENTS_DISCUSSION_ENSURE, { query: { scope: 'post', slug: newSlug } })
+          .then((res: any) => {
+            discussionNumber.value = res?.data?.discussionNumber ?? res?.discussionNumber ?? null;
+          })
+          .catch(() => {
+            discussionNumber.value = null;
+          });
       }
     }
   },

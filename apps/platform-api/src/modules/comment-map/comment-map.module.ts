@@ -13,7 +13,7 @@ import {
   Query,
 } from '@rx-ted/packages-honest';
 import { AuthGuard, RolesGuard } from '@/common/guards';
-import { Roles } from '@/common/decorators';
+import { Roles, Public } from '@/common/decorators';
 import { ROLES } from '@/constants';
 import { z } from '@/lib/openapi';
 
@@ -29,6 +29,17 @@ export class CommentDiscussionController {
     apiDoc: { summary: '解析 slug/scope 对应的 Discussion', tags: ['Comments'] },
   })
   async resolve(@Query('scope') scope?: string, @Query('slug') slug?: string) {
+    return this.service.resolve(scope, slug);
+  }
+
+  @Public()
+  @Get('discussion/ensure', {
+    apiDoc: { summary: '自动确保 slug/scope 对应的 Discussion', tags: ['Comments'] },
+  })
+  async ensurePost(@Query('scope') scope?: string, @Query('slug') slug?: string) {
+    if (scope === 'post' || !scope) {
+      return this.service.ensureForPost(slug);
+    }
     return this.service.resolve(scope, slug);
   }
 

@@ -23,6 +23,8 @@ export const API = {
   USER_EMAIL_UPDATE: '/user/me/email',
   USER_LAYOUT: '/user-layout',
   COMMENTS_PAGE: '/comments/page',
+  COMMENTS_DISCUSSION: '/comments/discussion',
+  COMMENTS_DISCUSSION_ENSURE: '/comments/discussion/ensure',
   COMMENTS_REPLY_PAGE: '/comments/replyPage',
   COMMENTS_CREATE: '/comments',
   COMMENTS_EDIT: (id: number) => `/comments/${id}`,

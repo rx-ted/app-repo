@@ -3655,6 +3655,15 @@
         ]
       }
     },
+    "/api/v1/comments/discussion/ensure": {
+      "get": {
+        "summary": "自动确保 slug/scope 对应的 Discussion",
+        "tags": [
+          "Comments"
+        ],
+        "security": []
+      }
+    },
     "/api/v1/comments/discussion/maps": {
       "post": {
         "summary": "手动创建映射",

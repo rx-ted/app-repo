@@ -1,8 +1,9 @@
 import { Inject, Service } from '@rx-ted/packages-honest';
 import { DbService } from '@rx-ted/packages-honest-plugins/db';
-import { postDiscussionMaps } from '@/schema';
+import { postDiscussionMaps, postCore } from '@/schema';
 import { eq, and } from 'drizzle-orm';
 import { env } from '@rx-ted/packages-core';
+import { envParams } from '@/constants/env';
 
 @Service()
 class CommentDiscussionService {
@@ -19,6 +20,62 @@ class CommentDiscussionService {
   private normalizeSlug(scope: string, slug?: string): string {
     if (scope === 'guestbook') return this.guestbookSlug();
     return (slug ?? '').trim();
+  }
+
+  async ensureForPost(slugRaw?: string): Promise<any> {
+    const scope = 'post';
+    const slug = this.normalizeSlug(scope, slugRaw);
+    if (!slug) {
+      return { status: 'not_initialized', discussionNumber: null, discussionUrl: null };
+    }
+
+    const existing = (
+      await this.db
+        .select()
+        .from(postDiscussionMaps)
+        .where(and(eq(postDiscussionMaps.scope, scope as any), eq(postDiscussionMaps.postSlug, slug)))
+        .limit(1)
+    )[0];
+    if (existing) {
+      return {
+        status: existing.status === 'active' ? 'active' : (existing.status === 'archived' ? 'disabled' : 'pending'),
+        discussionNumber: existing.discussionNumber,
+        discussionUrl: existing.discussionUrl ?? null,
+        created: false,
+      };
+    }
+
+    const posts = await this.db.select().from(postCore).where(eq(postCore.slug, slug)).limit(1);
+    const post = posts[0];
+    if (!post) {
+      return { status: 'not_initialized', discussionNumber: null, discussionUrl: null };
+    }
+
+    const owner = env.var('GITHUB_REPO_OWNER', 'rx-ted');
+    const repo = env.var('GITHUB_REPO_NAME', 'app-repo');
+    const blogUrl = `https://${envParams.FRONTEND_DOMAIN}/posts/${slug}`;
+    try {
+      const ensured = await this.ensureMapping({
+        scope,
+        slug,
+        postTitle: String(post.title ?? slug),
+        blogUrl,
+        githubOwner: owner,
+        githubRepo: repo,
+        categorySlug: 'general',
+      });
+      return {
+        ...ensured,
+        status: 'active',
+      };
+    } catch (error) {
+      console.error('[comment-discussion] auto ensure failed', error);
+      return {
+        status: 'temporarily_unavailable',
+        discussionNumber: null,
+        discussionUrl: null,
+      };
+    }
   }
 
   async resolve(scopeRaw?: string, slugRaw?: string): Promise<any> {
