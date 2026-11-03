@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia';
-import { computed, watch, ref } from 'vue';
+import { computed, watch, ref, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { usePostDetailStore } from '@/stores/postDetail';
 import { MarkdownRenderer, stripFrontMatter } from '@rx-ted/packages-markdown-editor';
@@ -10,11 +10,19 @@ import { http } from '@/http';
 import { API } from '@/constants/api';
 import { useThemeStore } from '@/stores/theme';
 import { useI18n } from '@/composables/useI18n';
+import { useSessionStore } from '@/stores/session';
+
+import '@aifire/gitalk/style.css';
+
+const GitalkComponent = defineAsyncComponent(() =>
+  import('@aifire/gitalk-vue').then((m) => m.default || (m as any).Gitalk),
+);
 
 const route = useRoute();
 const router = useRouter();
 const detailStore = usePostDetailStore();
 const themeStore = useThemeStore();
+const sessionStore = useSessionStore();
 const { locale } = useI18n();
 const { item, loading, error } = storeToRefs(detailStore);
 
@@ -35,6 +43,28 @@ const content = computed(() => stripFrontMatter(item.value?.content ?? ''));
 const views = ref(0);
 const likes = ref(0);
 const comments = ref(0);
+
+const gitalkOptions = computed(() => {
+  const clientID = import.meta.env.VITE_GITALK_CLIENT_ID as string | undefined;
+  const owner = (import.meta.env.VITE_GITALK_OWNER as string | undefined) || 'rx-ted';
+  const repo = (import.meta.env.VITE_GITALK_REPO as string | undefined) || 'app-repo';
+  if (!clientID || !item.value) return null;
+  return {
+    clientID,
+    repo,
+    owner,
+    admin: (import.meta.env.VITE_GITALK_ADMINS as string | undefined)?.split(',').map((v) => v.trim()).filter(Boolean) || [],
+    id: slug.value,
+    title: item.value.title,
+    body: `${window.location.href}\n\n${item.value.title}`,
+    backend: 'discussions' as const,
+    category: (import.meta.env.VITE_GITALK_CATEGORY as string | undefined) || 'General',
+    createIssueManually: false,
+    proxy: import.meta.env.VITE_GITALK_PROXY as string | undefined,
+    language: 'zh-CN',
+    perPage: 20,
+  };
+});
 
 watch(
   slug,
@@ -113,6 +143,22 @@ watch(
             @click="router.push(`/tags/${encodeURIComponent(tag)}`)"
           >{{ item.tagNames?.[i] ?? tag }}</span>
         </div>
+
+        <section class="gitalk-section">
+          <h2 class="gitalk-title">Gitalk 评论</h2>
+          <div v-if="!sessionStore.isAuthenticated" class="empty-state">
+            请先登录，并绑定或登录 GitHub，才能使用 Gitalk 评论。
+            <router-link to="/login" class="submit-btn" style="display:inline-block;margin-top:12px;text-decoration:none;">
+              去登录
+            </router-link>
+          </div>
+          <div v-else-if="gitalkOptions" class="gitalk-container">
+            <component :is="GitalkComponent" :options="gitalkOptions" />
+          </div>
+          <p v-else class="empty-state">
+            请配置 VITE_GITALK_CLIENT_ID / VITE_GITALK_OWNER / VITE_GITALK_REPO
+          </p>
+        </section>
       </template>
     </n-spin>
   </article>
