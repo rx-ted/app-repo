@@ -44,6 +44,7 @@ const views = ref(0);
 const likes = ref(0);
 const comments = ref(0);
 const discussionNumber = ref<number | null>(null);
+const discussionLoaded = ref(false);
 
 const gitalkOptions = computed(() => {
   const clientID = import.meta.env.VITE_GITALK_CLIENT_ID as string | undefined;
@@ -83,9 +84,11 @@ watch(
           .get(API.COMMENTS_DISCUSSION_ENSURE, { query: { scope: 'post', slug: newSlug } })
           .then((res: any) => {
             discussionNumber.value = res?.data?.discussionNumber ?? res?.discussionNumber ?? null;
+            discussionLoaded.value = true;
           })
           .catch(() => {
             discussionNumber.value = null;
+            discussionLoaded.value = true;
           });
       }
     }
@@ -162,8 +165,11 @@ watch(
               去登录
             </router-link>
           </div>
-          <div v-else-if="gitalkOptions" class="gitalk-container">
+          <div v-else-if="discussionLoaded && gitalkOptions" class="gitalk-container">
             <component :is="GitalkComponent" :options="gitalkOptions" />
+          </div>
+          <div v-else-if="sessionStore.isAuthenticated && item" class="empty-state">
+            正在初始化评论区...
           </div>
           <p v-else class="empty-state">
             请配置 VITE_GITALK_CLIENT_ID / VITE_GITALK_OWNER / VITE_GITALK_REPO
