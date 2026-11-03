@@ -24,7 +24,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run --pass-with-no-tests"
   },
   "dependencies": {
     "@rx-ted/packages-core": "workspace:^"
