@@ -11,7 +11,7 @@
     "nodejs_compat"
   ],
   "vars": {
-    "DEBUG": "true",
+    "DEBUG": "false",
     "GITHUB_CLIENT_ID": "Iv23libiF0w1ybmvskWW",
     "FRONTEND_DOMAIN": "blog.19981204.xyz",
     "FRONTEND_ALLOWED_ORIGINS": "https://blog.19981204.xyz,https://doc.19981204.xyz,https://github.19981204.xyz"
@@ -24,10 +24,10 @@
   ],
   "workers_dev": false,
   "preview_urls": false,
-  "observability": {
-    "logs": {
-      "enabled": true,
-      "invocation_logs": true
-    }
-  }
+  // "observability": {
+  //   "logs": {
+  //     "enabled": true,
+  //     "invocation_logs": true
+  //   }
+  // }
 }
