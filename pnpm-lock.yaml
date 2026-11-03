@@ -187,6 +187,9 @@ importers:
 
   apps/web-blog:
     dependencies:
+      '@aifire/gitalk':
+        specifier: 2.0.0-beta.2
+        version: 2.0.0-beta.2
       '@aifire/gitalk-vue':
         specifier: 2.0.0-beta.2
         version: 2.0.0-beta.2(vue@3.5.40(typescript@6.0.3))

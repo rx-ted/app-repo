@@ -102,6 +102,8 @@ import { useI18n } from '@/composables/useI18n';
 import { useSessionStore } from '@/stores/session';
 import { useCommentStore } from '@/stores/comment';
 
+import '@aifire/gitalk/style.css';
+
 const GitalkComponent = defineAsyncComponent(() =>
   import('@aifire/gitalk-vue').then((m) => m.default || (m as any).Gitalk),
 );
