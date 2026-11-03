@@ -86,7 +86,7 @@ const routes: RouteRecordRaw[] = [
           },
           after: {
             show: true,
-            components: ['share-tools', 'donate', 'prev-next', 'comments'],
+            components: ['share-tools', 'donate', 'prev-next'],
           },
         },
       },
