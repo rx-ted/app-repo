@@ -270,6 +270,77 @@ export class GitHubService {
     return data;
   }
 
+  async proxyGitHub(c: any): Promise<{ status: number; headers: Record<string, string>; body: string }> {
+    const rawPath = String(c?.req?.path ?? '');
+    const marker = '/github/proxy';
+    const idx = rawPath.indexOf(marker);
+    const suffix = idx >= 0 ? rawPath.slice(idx + marker.length).replace(/^\/+/, '') : '';
+    if (!suffix) {
+      throw new HTTPException(400, { message: 'invalid_proxy_target' });
+    }
+
+    const isTokenEndpoint = suffix.startsWith('login/oauth/access_token');
+    const targetBase = isTokenEndpoint ? 'https://github.com' : 'https://api.github.com';
+    const search = new URL(String(c?.req?.url ?? 'http://localhost')).search;
+    const target = `${targetBase}/${suffix}${search}`;
+
+    const corsHeaders: Record<string, string> = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': '*',
+      'Access-Control-Allow-Methods': '*',
+    };
+    const method = String(c?.req?.method ?? 'GET').toUpperCase();
+    if (method === 'OPTIONS') {
+      return { status: 204, headers: corsHeaders, body: '' };
+    }
+
+    let bodyText = '';
+    if (method !== 'GET' && method !== 'HEAD') {
+      bodyText = await c.req.text();
+    }
+
+    const headers = new Headers();
+    const skipHeaders = new Set(['host', 'origin', 'referer', 'content-length', 'connection']);
+    for (const [key, value] of (c.req.raw?.headers?.entries?.() ?? [])) {
+      if (!skipHeaders.has(String(key).toLowerCase())) headers.set(key, value);
+    }
+
+    if (isTokenEndpoint) {
+      let params: Record<string, string> = {};
+      try {
+        params = bodyText ? JSON.parse(bodyText) : {};
+      } catch {
+        params = Object.fromEntries(new URLSearchParams(bodyText));
+      }
+      try {
+        params = { ...Object.fromEntries(new URL(target).searchParams), ...params };
+      } catch {
+        // ignore
+      }
+      const clientId = (env.var('GITHUB_CLIENT_ID', '') ?? '').trim();
+      const clientSecret = (env.var('GITHUB_CLIENT_SECRET', '') ?? env.var('GITHUB_SECRET', '') ?? '').trim();
+      if (clientId && !params.client_id) params.client_id = clientId;
+      if (clientSecret) params.client_secret = clientSecret;
+      headers.set('Accept', 'application/json');
+      headers.set('Content-Type', 'application/json');
+      bodyText = JSON.stringify(params);
+    }
+
+    const res = await fetch(target, {
+      method,
+      headers,
+      body: bodyText ? bodyText : undefined,
+    });
+    const text = await res.text();
+    const responseHeaders: Record<string, string> = { ...corsHeaders };
+    res.headers.forEach((value, key) => {
+      if (!['content-encoding', 'transfer-encoding', 'connection', 'content-length'].includes(key.toLowerCase())) {
+        responseHeaders[key] = value;
+      }
+    });
+    return { status: res.status, headers: responseHeaders, body: text };
+  }
+
   async getToken(ownerOrUsername: string): Promise<GitHubTokenRecord | null> {
     const record = await this.cache.get<GitHubTokenRecord>(this.tokenKey(ownerOrUsername));
     if (!record) return null;

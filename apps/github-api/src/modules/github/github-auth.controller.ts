@@ -3,6 +3,7 @@ import {
   Ctx,
   Get,
   Post,
+  All,
   Inject,
   Query,
   UseGuards,
@@ -127,6 +128,14 @@ export class GitHubAuthController {
   @Get('login/oauth/access_token')
   async loginOauthAccessTokenGet(@Ctx() c: Context) {
     return this.exchangeProxy(c);
+  }
+
+  @Public()
+  @All('proxy/*')
+  async githubProxy(@Ctx() c: Context) {
+    const result = await this.githubService.proxyGitHub(c);
+    Object.entries(result.headers).forEach(([key, value]) => c.header(key, value));
+    return c.body(result.body, result.status as any);
   }
 }
 
