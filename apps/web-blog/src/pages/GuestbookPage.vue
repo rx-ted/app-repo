@@ -80,7 +80,13 @@
 
     <section class="gitalk-section">
       <h2 class="gitalk-title">Gitalk 评论</h2>
-      <div v-if="gitalkOptions" class="gitalk-container">
+      <div v-if="!session.isAuthenticated" class="empty-state">
+        请先登录，并绑定或登录 GitHub，才能使用 Gitalk 评论。
+        <router-link to="/login" class="submit-btn" style="display:inline-block;margin-top:12px;text-decoration:none;">
+          去登录
+        </router-link>
+      </div>
+      <div v-else-if="gitalkOptions" class="gitalk-container">
         <component :is="GitalkComponent" :options="gitalkOptions" />
       </div>
       <p v-else class="empty-state">
