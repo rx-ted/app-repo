@@ -279,10 +279,21 @@ export class GitHubService {
       throw new HTTPException(400, { message: 'invalid_proxy_target' });
     }
 
-    const isTokenEndpoint = suffix.startsWith('login/oauth/access_token');
-    const targetBase = isTokenEndpoint ? 'https://github.com' : 'https://api.github.com';
     const search = new URL(String(c?.req?.url ?? 'http://localhost')).search;
-    const target = `${targetBase}/${suffix}${search}`;
+    let target = '';
+    const isAuthorizeEndpoint = suffix === 'oauth/authorize' || suffix === 'login/oauth/authorize';
+    const isTokenEndpoint =
+      suffix === 'oauth/token' ||
+      suffix === 'oauth/access_token' ||
+      suffix === 'login/oauth/access_token' ||
+      suffix === 'login/oauth/token';
+    if (isAuthorizeEndpoint) {
+      target = `https://github.com/login/oauth/authorize${search}`;
+    } else if (isTokenEndpoint) {
+      target = `https://github.com/login/oauth/access_token${search}`;
+    } else {
+      target = `https://api.github.com/${suffix}${search}`;
+    }
 
     const corsHeaders: Record<string, string> = {
       'Access-Control-Allow-Origin': '*',
