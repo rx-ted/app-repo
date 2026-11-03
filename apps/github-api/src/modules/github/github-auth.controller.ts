@@ -134,10 +134,51 @@ export class GitHubAuthController {
   @All('proxy/*')
   async githubProxy(@Ctx() c: Context) {
     const reqPath = String(c.req.path ?? '');
+    const url = new URL(c.req.url);
+
     if (reqPath.endsWith('/oauth/authorize') || reqPath.endsWith('/login/oauth/authorize')) {
-      const target = `https://github.com/login/oauth/authorize${new URL(c.req.url).search}`;
+      const returnTo = url.searchParams.get('return_to') || '';
+      const clientId = env.require('GITHUB_CLIENT_ID');
+      const redirectUri = `${url.origin}/api/v1/github/proxy/oauth/callback?return_to=${encodeURIComponent(returnTo)}`;
+      const state = url.searchParams.get('state') || crypto.randomUUID();
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        state,
+        scope: 'repo user:email read:user',
+      });
+      const returnToValue = url.searchParams.get('return_to');
+      if (returnToValue) params.set('return_to', returnToValue);
+      return c.redirect(`https://github.com/login/oauth/authorize?${params.toString()}`, 302);
+    }
+
+    if (reqPath.endsWith('/oauth/callback') || reqPath.endsWith('/login/oauth/callback')) {
+      const code = url.searchParams.get('code') || '';
+      const returnTo = url.searchParams.get('return_to') || '/';
+      const target = `${returnTo}${returnTo.includes('?') ? '&' : '?'}gitalk_session=${encodeURIComponent(code)}`;
       return c.redirect(target, 302);
     }
+
+    if (reqPath.endsWith('/oauth/token') || reqPath.endsWith('/oauth/access_token') || reqPath.endsWith('/login/oauth/token') || reqPath.endsWith('/login/oauth/access_token')) {
+      const rawBody = await c.req.text().catch(() => '');
+      let payload: Record<string, string> = {};
+      try {
+        payload = rawBody ? JSON.parse(rawBody) : {};
+      } catch {
+        payload = Object.fromEntries(new URLSearchParams(rawBody));
+      }
+      const code = String(payload.session || payload.code || url.searchParams.get('code') || '');
+      if (!code) throw new HTTPException(400, { message: 'missing_code' });
+      const data = await this.githubService.exchangeCodeForAccessToken(code);
+      return c.json({
+        access_token: data.access_token,
+        token_type: data.token_type || 'bearer',
+        scope: data.scope || '',
+        expires_in: Number(data.expires_in ?? 28800),
+        session: code,
+      });
+    }
+
     const result = await this.githubService.proxyGitHub(c);
     Object.entries(result.headers).forEach(([key, value]) => c.header(key, value));
     return c.body(result.body, result.status as any);
