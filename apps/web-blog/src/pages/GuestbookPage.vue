@@ -77,14 +77,28 @@
         </div>
       </div>
     </div>
+
+    <section class="gitalk-section">
+      <h2 class="gitalk-title">Gitalk 评论</h2>
+      <div v-if="gitalkOptions" class="gitalk-container">
+        <component :is="GitalkComponent" :options="gitalkOptions" />
+      </div>
+      <p v-else class="empty-state">
+        请配置 VITE_GITALK_CLIENT_ID / VITE_GITALK_OWNER / VITE_GITALK_REPO
+      </p>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue';
 import { useI18n } from '@/composables/useI18n';
 import { useSessionStore } from '@/stores/session';
 import { useCommentStore } from '@/stores/comment';
+
+const GitalkComponent = defineAsyncComponent(() =>
+  import('@aifire/gitalk-vue').then((m) => m.default || (m as any).Gitalk),
+);
 
 const { t } = useI18n();
 const session = useSessionStore();
@@ -99,6 +113,27 @@ const authorEmail = ref('');
 
 const isAuthenticated = computed(() => session.isAuthenticated);
 const userDisplayName = computed(() => session.user?.nickname || session.user?.username || '');
+
+const gitalkOptions = computed(() => {
+  const clientID = import.meta.env.VITE_GITALK_CLIENT_ID as string | undefined;
+  const owner = (import.meta.env.VITE_GITALK_OWNER as string | undefined) || 'rx-ted';
+  const repo = (import.meta.env.VITE_GITALK_REPO as string | undefined) || 'app-repo';
+  if (!clientID) return null;
+  return {
+    clientID,
+    repo,
+    owner,
+    admin: (import.meta.env.VITE_GITALK_ADMINS as string | undefined)?.split(',')?.map((v) => v.trim()).filter(Boolean) || [],
+    id: 'guestbook',
+    title: 'Guestbook',
+    body: 'Guestbook for rx-ted blog',
+    backend: 'discussions' as const,
+    category: (import.meta.env.VITE_GITALK_CATEGORY as string | undefined) || 'General',
+    proxy: import.meta.env.VITE_GITALK_PROXY as string | undefined,
+    language: 'zh-CN',
+    perPage: 20,
+  };
+});
 
 const formValid = computed(() => {
   if (!form.value.content.trim().length) return false;
