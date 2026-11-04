@@ -1,7 +1,7 @@
 {
   "name": "@rx-ted/platform-api",
   "private": true,
-  "version": "1.0.3",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "DEBUG=true bun run --watch runtime/bun.ts",

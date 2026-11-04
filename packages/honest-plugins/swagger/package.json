@@ -1,6 +1,6 @@
 {
   "name": "@rx-ted/packages-honest-plugins-swagger",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "NestJS-style Swagger decorators and metadata for @rx-ted/packages-honest",
   "type": "module",
