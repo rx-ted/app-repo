@@ -1,4 +1,4 @@
-.markdown-body-root[data-me-preview-theme="vscode"] {
+.markdown-body-root[data-me-preview-theme=vscode] {
   --me-text: #1f1f1f;
   --me-text-secondary: #616161;
   --me-text-muted: #8a8a8a;
@@ -19,15 +19,14 @@
   --me-bg-danger: rgba(161, 38, 13, 0.12);
   --me-bg-info: rgba(0, 106, 177, 0.12);
   --me-error: #a1260d;
-  --me-font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Noto Sans",
-    "PingFang SC", "Microsoft YaHei", sans-serif;
+  --me-font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI',
+    system-ui, 'Noto Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --me-font-size: 16px;
   --me-line-height: 1.6;
   --me-content-max-width: 100%;
   --me-content-padding: 32px 40px 48px;
 }
-.markdown-body-root[data-me-preview-theme="vscode"][data-me-mode="dark"] {
+.markdown-body-root[data-me-preview-theme=vscode][data-me-mode=dark] {
   --me-text: #d4d4d4;
   --me-text-secondary: #cccccc;
   --me-text-muted: #808080;

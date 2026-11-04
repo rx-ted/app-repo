@@ -1,5 +1,11 @@
 # @rx-ted/packages-markdown-editor
 
+## 0.1.2
+
+### Patch Changes
+
+- 15dbcbe: Support @Api\* decorators in API docs and markdown theme regeneration during github-api extraction.
+
 ## 0.1.1
 
 ### Patch Changes

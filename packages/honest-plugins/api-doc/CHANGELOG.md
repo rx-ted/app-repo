@@ -1,5 +1,13 @@
 # @rx-ted/packages-honest-plugins-api-doc
 
+## 1.0.3
+
+### Patch Changes
+
+- 15dbcbe: Support @Api\* decorators in API docs and markdown theme regeneration during github-api extraction.
+- Updated dependencies [15dbcbe]
+  - @rx-ted/packages-honest-plugins-swagger@1.0.1
+
 ## 1.0.2
 
 ### Patch Changes
