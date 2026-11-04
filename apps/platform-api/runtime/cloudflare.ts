@@ -13,8 +13,8 @@ function addCorsHeaders(request: Request, response: Response): Response {
   const headers = new Headers(response.headers);
   headers.set('Access-Control-Allow-Origin', origin);
   headers.set('Access-Control-Allow-Credentials', 'true');
-  headers.set('Access-Control-Allow-Methods', '*');
-  headers.set('Access-Control-Allow-Headers', '*');
+  headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  headers.set('Access-Control-Allow-Headers', 'Authorization,Content-Type,Accept');
   headers.set('Access-Control-Expose-Headers', '*');
   return new Response(response.body, {
     status: response.status,
@@ -31,8 +31,8 @@ export default {
         headers: {
           'Access-Control-Allow-Origin': request.headers.get('Origin') ?? '*',
           'Access-Control-Allow-Credentials': 'true',
-          'Access-Control-Allow-Methods': '*',
-          'Access-Control-Allow-Headers': '*',
+          'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+          'Access-Control-Allow-Headers': 'Authorization,Content-Type,Accept',
           'Access-Control-Max-Age': '86400',
         },
       });
