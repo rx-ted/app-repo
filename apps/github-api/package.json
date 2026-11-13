@@ -19,7 +19,7 @@
     "@rx-ted/packages-honest": "workspace:^",
     "@rx-ted/packages-honest-plugins": "workspace:^",
     "@rx-ted/packages-honest-plugins-swagger": "workspace:^",
-    "hono": "^4.12.34",
+    "hono": "^4.13.16",
     "reflect-metadata": "^0.2.2",
     "zod": "^4.6.6"
   },
