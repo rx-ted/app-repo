@@ -67,7 +67,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: ^2.1.6
-        version: 2.1.6(hono@4.12.34)
+        version: 2.1.6(hono@4.13.16)
       '@rx-ted/packages-core':
         specifier: workspace:^
         version: link:../../packages/core
@@ -81,8 +81,8 @@ importers:
         specifier: workspace:^
         version: link:../../packages/honest-plugins/swagger
       hono:
-        specifier: ^4.12.34
-        version: 4.12.34
+        specifier: ^4.13.16
+        version: 4.13.16
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -92,7 +92,7 @@ importers:
     devDependencies:
       '@hono/vite-dev-server':
         specifier: ^0.26.0
-        version: 0.26.1(hono@4.12.34)(miniflare@4.20260504.0)(wrangler@4.88.0)
+        version: 0.26.1(hono@4.13.16)(miniflare@4.20260504.0)(wrangler@4.88.0)
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.2
@@ -110,7 +110,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: ^2.1.6
-        version: 2.1.6(hono@4.12.34)
+        version: 2.1.6(hono@4.13.16)
       '@noble/hashes':
         specifier: ^1.8.0
         version: 1.8.0
@@ -133,8 +133,8 @@ importers:
         specifier: ^4.0.3
         version: 4.0.3
       hono:
-        specifier: ^4.12.34
-        version: 4.12.34
+        specifier: ^4.13.16
+        version: 4.13.16
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
@@ -159,7 +159,7 @@ importers:
     devDependencies:
       '@hono/vite-dev-server':
         specifier: ^0.26.0
-        version: 0.26.1(hono@4.12.34)(miniflare@4.20260504.0)(wrangler@4.88.0)
+        version: 0.26.1(hono@4.13.16)(miniflare@4.20260504.0)(wrangler@4.88.0)
       '@types/jsonwebtoken':
         specifier: ^9.0.10
         version: 9.0.10
@@ -4070,6 +4070,10 @@ packages:
     resolution: {integrity: sha512-GqXJqY/xJkJmuloTrnV1ZEXG3fqte+VjkUqoRNZXcrUidiUOP4fMSIHHY4tsqZBK++kVyWmt/AAfSUuy57/eSA==}
     engines: {node: '>=16.9.0'}
 
+  hono@4.13.16:
+    resolution: {integrity: sha512-AOLOEhvrV+iH92xXCnFr/5+3KjPKcI3xP63XJtX5spAnkznPdHijlIsUTpi7/9EhWqrTCekw5c5zh1K+YsVw7A==}
+    engines: {node: '>=16.9.0'}
+
   hookable@5.5.3:
     resolution: {integrity: sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ==}
 
@@ -7401,18 +7405,18 @@ snapshots:
   '@getbrevo/brevo@5.0.4':
     optional: true
 
-  '@hono/node-server@1.19.19(hono@4.12.34)':
+  '@hono/node-server@1.19.19(hono@4.13.16)':
     dependencies:
-      hono: 4.12.34
+      hono: 4.13.16
 
-  '@hono/node-server@2.1.6(hono@4.12.34)':
+  '@hono/node-server@2.1.6(hono@4.13.16)':
     dependencies:
-      hono: 4.12.34
+      hono: 4.13.16
 
-  '@hono/vite-dev-server@0.26.1(hono@4.12.34)(miniflare@4.20260504.0)(wrangler@4.88.0)':
+  '@hono/vite-dev-server@0.26.1(hono@4.13.16)(miniflare@4.20260504.0)(wrangler@4.88.0)':
     dependencies:
-      '@hono/node-server': 1.19.19(hono@4.12.34)
-      hono: 4.12.34
+      '@hono/node-server': 1.19.19(hono@4.13.16)
+      hono: 4.13.16
       minimatch: 9.0.9
     optionalDependencies:
       miniflare: 4.20260504.0
@@ -9634,6 +9638,8 @@ snapshots:
   highlight.js@11.11.1: {}
 
   hono@4.12.34: {}
+
+  hono@4.13.16: {}
 
   hookable@5.5.3: {}
 
